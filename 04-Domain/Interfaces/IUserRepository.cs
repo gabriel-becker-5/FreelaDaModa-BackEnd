@@ -23,7 +23,8 @@ namespace _04_Domain.Interfaces
         Task<FreelancerSpecialties> AddFreelancerSpecialtyAsync(FreelancerSpecialties freelancerSpecialties);
         Task<FreelancerOwnMachines> AddFreelancerOwnMachineAsync(FreelancerOwnMachines freelancerOwnMachines);
 
-        Task<ICollection<User>> GetAllUsersAsync();
+        Task<ICollection<User>> GetAllUsersAsync(int skip, int take);
+        Task<int> CountUsersAsync();
 
         Task<User?> GetUserByIdAsync(int id);
 

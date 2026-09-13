@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace _01_Presentation.Controllers
 {
@@ -33,6 +34,7 @@ namespace _01_Presentation.Controllers
         /// <response code="401">Acesso não autorizado, e-mail ou senha incorretos.</response>
         [HttpPost("login")]
         [AllowAnonymous]
+        [EnableRateLimiting("login")]
         [ProducesResponseType(401)]
         [ProducesResponseType(200)]
         public async Task<IActionResult> Login(LoginRequest login)

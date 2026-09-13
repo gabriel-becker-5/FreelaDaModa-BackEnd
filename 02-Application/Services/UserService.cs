@@ -42,7 +42,7 @@ namespace _02_Application.Services
                 LegalResponsibleFullName = dto.LegalResponsibleFullName,
                 LegalResponsibleDocument = dto.LegalResponsibleDocument,
                 Address = dto.Address,
-                AddressNumber = dto.AddressNumber,
+                AddressNumber = dto.AddressNumber ?? 0,
                 Quarter = dto.Quarter,
                 City = dto.City,
                 State = dto.State,
@@ -335,17 +335,28 @@ namespace _02_Application.Services
             return MapToDto(result);
         }
 
-        public async Task<ICollection<UserDto>> GetAllUsersAsync()
+        public async Task<PagedResult<UserDto>> GetAllUsersAsync(int page, int pageSize)
         {
-            ICollection<User> result = await _userRepository.GetAllUsersAsync();
-            List<UserDto> listUsersDto = [];
+            int skip = (page - 1) * pageSize;
 
-            foreach (User user in result)
+            ICollection<User> users = await _userRepository.GetAllUsersAsync(skip, pageSize);
+            int total = await _userRepository.CountUsersAsync();
+
+            List<UserDto> items = [];
+
+            foreach (User user in users)
             {
-                listUsersDto.Add(MapToDto(user));
+                items.Add(MapToDto(user));
             }
 
-            return listUsersDto;
+            return new PagedResult<UserDto>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = total,
+                TotalPages = (int)Math.Ceiling(total / (double)pageSize)
+            };
         }
 
         // Leitura de perfil
@@ -471,65 +482,7 @@ namespace _02_Application.Services
                 return ProfileUpdateResult.EmailInUse;
             }
 
-            if (dto.LegalResponsibleFullName != null && dto.LegalResponsibleFullName != user.LegalResponsibleFullName)
-            {
-                user.LegalResponsibleFullName = dto.LegalResponsibleFullName;
-            }
-
-            if (dto.LegalResponsibleDocument != null && dto.LegalResponsibleDocument != user.LegalResponsibleDocument)
-            {
-                user.LegalResponsibleDocument = dto.LegalResponsibleDocument;
-            }
-
-            if (dto.Email != null && dto.Email != user.Email)
-            {
-                user.Email = dto.Email;
-            }
-
-            if (dto.ContactNumber != null && dto.ContactNumber != user.ContactNumber)
-            {
-                user.ContactNumber = dto.ContactNumber;
-            }
-
-            if (dto.PostalCode != null && dto.PostalCode != user.PostalCode)
-            {
-                user.PostalCode = dto.PostalCode;
-            }
-
-            if (dto.Address != null && dto.Address != user.Address)
-            {
-                user.Address = dto.Address;
-            }
-
-            if (dto.AddressNumber != null && dto.AddressNumber != user.AddressNumber)
-            {
-                user.AddressNumber = (int)dto.AddressNumber;
-            }
-
-            if (dto.Quarter != null && dto.Quarter != user.Quarter)
-            {
-                user.Quarter = dto.Quarter;
-            }
-
-            if (dto.AdditionalAddressInfo != null && dto.AdditionalAddressInfo != user.AdditionalAddressInfo)
-            {
-                user.AdditionalAddressInfo = dto.AdditionalAddressInfo;
-            }
-
-            if (dto.City != null && dto.City != user.City)
-            {
-                user.City = dto.City;
-            }
-
-            if (dto.State != null && dto.State != user.State)
-            {
-                user.State = dto.State;
-            }
-
-            if (dto.PublicProfileDescription != null && dto.PublicProfileDescription != user.PublicProfileDescription)
-            {
-                user.PublicProfileDescription = dto.PublicProfileDescription;
-            }
+            ApplyUserChanges(user, dto);
 
             if (dto.BirthDate != null && dto.BirthDate != profile.BirthDate)
             {
@@ -705,65 +658,7 @@ namespace _02_Application.Services
                 return ProfileUpdateResult.EmailInUse;
             }
 
-            if (dto.LegalResponsibleFullName != null && dto.LegalResponsibleFullName != user.LegalResponsibleFullName)
-            {
-                user.LegalResponsibleFullName = dto.LegalResponsibleFullName;
-            }
-
-            if (dto.LegalResponsibleDocument != null && dto.LegalResponsibleDocument != user.LegalResponsibleDocument)
-            {
-                user.LegalResponsibleDocument = dto.LegalResponsibleDocument;
-            }
-
-            if (dto.Email != null && dto.Email != user.Email)
-            {
-                user.Email = dto.Email;
-            }
-
-            if (dto.ContactNumber != null && dto.ContactNumber != user.ContactNumber)
-            {
-                user.ContactNumber = dto.ContactNumber;
-            }
-
-            if (dto.PostalCode != null && dto.PostalCode != user.PostalCode)
-            {
-                user.PostalCode = dto.PostalCode;
-            }
-
-            if (dto.Address != null && dto.Address != user.Address)
-            {
-                user.Address = dto.Address;
-            }
-
-            if (dto.AddressNumber != null && dto.AddressNumber != user.AddressNumber)
-            {
-                user.AddressNumber = (int)dto.AddressNumber;
-            }
-
-            if (dto.Quarter != null && dto.Quarter != user.Quarter)
-            {
-                user.Quarter = dto.Quarter;
-            }
-
-            if (dto.AdditionalAddressInfo != null && dto.AdditionalAddressInfo != user.AdditionalAddressInfo)
-            {
-                user.AdditionalAddressInfo = dto.AdditionalAddressInfo;
-            }
-
-            if (dto.City != null && dto.City != user.City)
-            {
-                user.City = dto.City;
-            }
-
-            if (dto.State != null && dto.State != user.State)
-            {
-                user.State = dto.State;
-            }
-
-            if (dto.PublicProfileDescription != null && dto.PublicProfileDescription != user.PublicProfileDescription)
-            {
-                user.PublicProfileDescription = dto.PublicProfileDescription;
-            }
+            ApplyUserChanges(user, dto);
 
             if (dto.LegalName != null && dto.LegalName != profile.LegalName)
             {
@@ -844,6 +739,69 @@ namespace _02_Application.Services
             }
 
             return _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+        }
+
+        private static void ApplyUserChanges(User user, UserDto dto)
+        {
+            if (dto.LegalResponsibleFullName != null && dto.LegalResponsibleFullName != user.LegalResponsibleFullName)
+            {
+                user.LegalResponsibleFullName = dto.LegalResponsibleFullName;
+            }
+
+            if (dto.LegalResponsibleDocument != null && dto.LegalResponsibleDocument != user.LegalResponsibleDocument)
+            {
+                user.LegalResponsibleDocument = dto.LegalResponsibleDocument;
+            }
+
+            if (dto.Email != null && dto.Email != user.Email)
+            {
+                user.Email = dto.Email;
+            }
+
+            if (dto.ContactNumber != null && dto.ContactNumber != user.ContactNumber)
+            {
+                user.ContactNumber = dto.ContactNumber;
+            }
+
+            if (dto.PostalCode != null && dto.PostalCode != user.PostalCode)
+            {
+                user.PostalCode = dto.PostalCode;
+            }
+
+            if (dto.Address != null && dto.Address != user.Address)
+            {
+                user.Address = dto.Address;
+            }
+
+            if (dto.AddressNumber != null && dto.AddressNumber != user.AddressNumber)
+            {
+                user.AddressNumber = (int)dto.AddressNumber;
+            }
+
+            if (dto.Quarter != null && dto.Quarter != user.Quarter)
+            {
+                user.Quarter = dto.Quarter;
+            }
+
+            if (dto.AdditionalAddressInfo != null && dto.AdditionalAddressInfo != user.AdditionalAddressInfo)
+            {
+                user.AdditionalAddressInfo = dto.AdditionalAddressInfo;
+            }
+
+            if (dto.City != null && dto.City != user.City)
+            {
+                user.City = dto.City;
+            }
+
+            if (dto.State != null && dto.State != user.State)
+            {
+                user.State = dto.State;
+            }
+
+            if (dto.PublicProfileDescription != null && dto.PublicProfileDescription != user.PublicProfileDescription)
+            {
+                user.PublicProfileDescription = dto.PublicProfileDescription;
+            }
         }
 
         private static UserDto MapToDto(User user)

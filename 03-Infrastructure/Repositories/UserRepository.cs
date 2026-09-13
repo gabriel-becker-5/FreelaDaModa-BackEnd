@@ -89,9 +89,19 @@ namespace _03_Infrastructure.Repositories
             return freelancerOwnMachines;
         }
 
-        public async Task<ICollection<User>> GetAllUsersAsync()
+        public async Task<ICollection<User>> GetAllUsersAsync(int skip, int take)
         {
-            return await _context.Users.AsNoTracking().ToListAsync();
+            return await _context.Users
+                .AsNoTracking()
+                .OrderBy(u => u.Id)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountUsersAsync()
+        {
+            return await _context.Users.AsNoTracking().CountAsync();
         }
 
         public async Task<User?> GetUserByIdAsync(int id)

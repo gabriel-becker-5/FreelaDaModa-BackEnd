@@ -10,6 +10,7 @@ using _03_Infrastructure.Services;
 using _04_Domain.Interfaces;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -60,6 +61,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             RoleClaimType = "roles"
         };
     });
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("login", limiter =>
+    {       
+        limiter.PermitLimit = 25; // Observação: o limite é por IP público. Valor não pode ser muito baixo.
+        limiter.Window = TimeSpan.FromMinutes(1);
+    });
+});
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -122,6 +133,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseCors("AllowFrontend");
 app.UseAuthorization();
 app.MapControllers();

@@ -1,9 +1,7 @@
 ﻿using _02_Application.Authorization;
-using _02_Application.DTOs.Freelancer;
+using _02_Application.DTOs;
 using _02_Application.DTOs.User;
 using _02_Application.Interfaces;
-using _02_Application.Services;
-using _04_Domain.Entities.Identity;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -30,18 +28,16 @@ namespace _01_Presentation.Controllers
         /// <summary>Painel de Admin - Lista todos os usuários cadastrados</summary>
         /// <returns>Retorna a lista de usuários ou lista vazia.</returns>
         /// <response code="200">Ok, lista de usuários.</response>
-        /// <response code="404">Não há usuários cadastrados.</response>
         [ProducesResponseType(200)]
-        [ProducesResponseType(404)]
         [HttpGet("listaUsuarios")]
-        public async Task<IActionResult> GetAllUsersAsync()
+        public async Task<IActionResult> GetAllUsersAsync(int page = 1, int pageSize = 10)
         {
-            ICollection<UserDto> result = await _userService.GetAllUsersAsync();
+            if (page < 1) { page = 1; }
+            if (page > 1000) { page = 1000; } // teto para evitar requests gigantes
+            if (pageSize < 1) { pageSize = 10; }
+            if (pageSize > 50) { pageSize = 50; }   // teto para evitar requests gigantes
 
-            if (result.Count == 0)
-            {
-                return NotFound();
-            }
+            PagedResult<UserDto> result = await _userService.GetAllUsersAsync(page, pageSize);
 
             return Ok(result);
         }

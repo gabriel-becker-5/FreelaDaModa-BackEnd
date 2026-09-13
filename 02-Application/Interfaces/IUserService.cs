@@ -25,7 +25,7 @@ namespace _02_Application.Interfaces
 
         Task<UserDto?> GetUserByIdAsync(int id);
 
-        Task<ICollection<UserDto>> GetAllUsersAsync();
+        Task<PagedResult<UserDto>> GetAllUsersAsync(int page, int pageSize);
 
         Task<GetFreelancerDto?> GetFreelancerProfileByEmailAsync(string userEmail);
 
