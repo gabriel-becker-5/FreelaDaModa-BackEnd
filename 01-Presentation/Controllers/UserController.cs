@@ -1,12 +1,15 @@
 ﻿using _02_Application.Authorization;
-using _02_Application.DTOs;
+using _02_Application.DTOs.Company;
+using _02_Application.DTOs.Freelancer;
 using _02_Application.Interfaces;
-using _04_Domain.Entities.UserInfo;
+using _04_Domain.Entities.Profiles;
+using _04_Domain.Entities.Identity;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using _02_Application.DTOs.User;
 
 namespace _01_Presentation.Controllers
 {
@@ -18,114 +21,228 @@ namespace _01_Presentation.Controllers
     {
         private readonly IUserService _userService;
         private readonly IRoleService _roleService;
+        private readonly IFreelancerFieldsService _freelancerFieldsService;
 
         public UserController(IUserService userservice,
-                                        IRoleService roleService)
+                              IRoleService roleService,
+                              IFreelancerFieldsService freelancerFieldsService)
         {
             _userService = userservice;
             _roleService = roleService;
+            _freelancerFieldsService = freelancerFieldsService;
         }
 
-        private string? GetLoggedInUserEmailAddress()
+        private string? GetLoggedUserEmailAddress()
         {
             return User.FindFirstValue(JwtRegisteredClaimNames.Name);
         }
 
-        /// <summary>
-        /// Cria um novo usuário na base de dados.
-        /// </summary>
-        /// <param name="dto">Campos: Email, Senha, Nome e Data de nascimento.</param>
-        /// <returns>A conta do usuário criada.</returns>
-        /// <response code="201">Conta do usuário criada com sucesso.</response>
+        // Criação
+        /// <summary>Cria um novo usuário do tipo Freelancer</summary>
+        /// <param name="dto">Campos: Nome completo do responsável legal, CPF do responsável legal, E-mail, Senha, Telefone, CEP, Endereço, Número, Bairro, Cidade, Estado, Complemento, Descrição Pública do Perfil, Data de nascimento, Tipo de negócio, Tempo de experiência, Tamanho da oficina, Especialidades, Máquinas que possui, Como costuma fecha serviços, Disponibilidade de tempo, Preferências do Freelancer, Faturamento médio, Já tem produtor fixo?, Possui veículo para buscar/entregar as peças?</param>
+        /// <returns>Conta/perfil do usuário criada.</returns>
+        /// <response code="201">Conta/perfil criada com sucesso.</response>
         /// <response code="400">Informações inseridas inválidas.</response>
         [ProducesResponseType(201)]
         [ProducesResponseType(400)]
-        [HttpPost("cadastrar")]
+        [HttpPost("cadastrar/freelancer")]
         [AllowAnonymous]
-        public async Task<IActionResult> RegisterAsync(UserRegisterDto dto)
+        public async Task<IActionResult> CreateFreelancerAsync(CreateFreelancerDto dto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest();
             }
 
-            Role role = await _roleService.GetRoleAsync(Roles.Default);
+            int? roleId = await _roleService.GetRoleIdByNameAsync(Roles.Freelancer);
 
-            if (role == null)
+            if (roleId == null)
             {
                 return BadRequest();
             }
 
-            User newUser = await _userService.CreateUserAsync(dto);
+            int? newUser = await _userService.CreateFreelancerAsync(dto);
 
             if (newUser == null)
             {
                 return BadRequest();
             }
 
-            await _userService.CreateUserRoleAsync(newUser, role);
+            await _userService.CreateUserRoleAsync((int)newUser, (int)roleId);
 
-            UserRegisterDto userDto = new()
+            return CreatedAtAction(null, null);
+        }
+
+        /// <summary>Cria um novo usuário do tipo Empresa/Confecção</summary>
+        /// <param name="dto">Campos: Nome completo do responsável legal, CPF do responsável legal, E-mail, Senha, Telefone, CEP, Endereço, Número, Bairro, Cidade, Estado, Complemento, Descrição Pública do Perfil, Razão Social, Nome Fantasia, CNPJ, Ramo de atuação.</param>
+        /// <returns>Conta/perfil do usuário criada.</returns>
+        /// <response code="201">Conta/perfil criada com sucesso.</response>
+        /// <response code="400">Informações inseridas inválidas.</response>
+        [ProducesResponseType(201)]
+        [ProducesResponseType(400)]
+        [HttpPost("cadastrar/empresa")]
+        [AllowAnonymous]
+        public async Task<IActionResult> CreateCompanyAsync(CreateCompanyDto dto)
+        {
+            if (!ModelState.IsValid)
             {
-                Email = newUser.Email,
-                Name = newUser.Name
+                return BadRequest();
+            }
+
+            int? roleId = await _roleService.GetRoleIdByNameAsync(Roles.Company);
+
+            if (roleId == null)
+            {
+                return BadRequest();
+            }
+
+            int? newUser = await _userService.CreateCompanyAsync(dto);
+
+            if (newUser == null)
+            {
+                return BadRequest();
+            }
+
+            await _userService.CreateUserRoleAsync((int)newUser, (int)roleId);
+
+            return CreatedAtAction(null, null);
+        }
+
+
+        // Leitura
+        /// <summary>Obtém o perfil completo do usuário logado - Freelancer </summary>
+        /// <response code="200">Ok, retorna o perfil do usuário logado.</response>
+        /// <response code="400">Usuário inválido.</response>
+        /// <response code="404">Usuário não localizado.</response>
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [HttpGet("perfil/freelancer")]
+        [Authorize(Roles = Roles.Freelancer)]
+        public async Task<IActionResult> GetUserFreelancerAsync()
+        {
+            string? userEmail = GetLoggedUserEmailAddress();
+
+            if (userEmail == null || !ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
+            int? id = await _userService.GetUserIdByEmailAsync(userEmail);
+
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            FreelancerProfile? loggedProfile = await _userService.GetFreelancerProfileAsync((int)id);
+
+            if (loggedProfile == null)
+            {
+                return NotFound();
+            }
+
+            FreelancerProfileDto? freelancerProfile = await _freelancerFieldsService.GetProfileFieldsNames(loggedProfile.Id);
+
+            if (freelancerProfile == null)
+            {
+                return NotFound();
+            }
+
+            UserDto loggedUser = await _userService.GetUserByEmailAsync(userEmail);
+
+            GetFreelancerDto dtoLoggedUser = new()
+            {
+                Email = loggedUser.Email,
+                PublicProfileDescription = loggedUser.PublicProfileDescription,
+                ContactNumber = loggedUser.ContactNumber,
+                LegalResponsibleDocument = loggedUser.LegalResponsibleDocument,
+                LegalResponsibleFullName = loggedUser.LegalResponsibleFullName,
+                Address = loggedUser.Address,
+                AddressNumber = loggedUser.AddressNumber,
+                Quarter = loggedUser.Quarter,
+                City = loggedUser.City,
+                State = loggedUser.State,
+                AdditionalAddressInfo = loggedUser.AdditionalAddressInfo,
+                PostalCode = loggedUser.PostalCode,
+                HasFixedProducer = freelancerProfile.HasFixedProducer,
+                HasOwnCar = freelancerProfile.HasOwnCar,
+                BirthDate = freelancerProfile.BirthDate,
+                OwnMachineNames = freelancerProfile.OwnMachines,
+                SpecialtyNames = freelancerProfile.Specialties,
+                AvailableTimeName = freelancerProfile.AvailableTimeName,
+                AverageRevenueName = freelancerProfile.AverageRevenueName,
+                HowUsuallyArrangeServicesName = freelancerProfile.HowUsuallyArrangeServicesName,
+                BusinessTypeName = freelancerProfile.BusinessTypeName,
+                ExperienceYearsName = freelancerProfile.ExperienceYearsName,
+                FreelancerPreferencesName = freelancerProfile.FreelancerPreferencesName,
+                WorkshopSizeName = freelancerProfile.WorkshopSizeName
             };
 
-            return CreatedAtAction(nameof(GetUserByIdAsync),
-                new { id = newUser.Id },
-                userDto);
+            return Ok(dtoLoggedUser);
         }
 
-        /// <summary>
-        /// Painel de Admin - Lista todos os usuários cadastrados
-        /// </summary>
-        /// <returns>Retorna a lista de usuários ou lista vazia.</returns>
-        /// <response code="200">Ok, lista de usuários.</response>
-        /// <response code="404">Não há usuários cadastrados.</response>
+        /// <summary>Obtém o perfil completo do usuário logado - Empresa/Confecção </summary>
+        /// <response code="200">Ok, retorna o perfil do usuário logado.</response>
+        /// <response code="400">Usuário inválido.</response>
+        /// <response code="404">Usuário não localizado.</response>
         [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
         [ProducesResponseType(404)]
-        [HttpGet("listarTodos")]
-        [Authorize(Roles = Roles.Admin)]
-        public async Task<IActionResult> GetAllUserAsync()
+        [HttpGet("perfil/empresa")]
+        [Authorize(Roles = Roles.Company)]
+        public async Task<IActionResult> GetUserCompanyAsync()
         {
-            List<User>? result = await _userService.GetAllUsersAsync();
+            string? userEmail = GetLoggedUserEmailAddress();
 
-            if (result == null)
+            if (userEmail == null || !ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
+            int? id = await _userService.GetUserIdByEmailAsync(userEmail);
+
+            if (id == null)
             {
                 return NotFound();
             }
 
-            return Ok(result);
-        }
+            CompanyProfile? loggedProfile = await _userService.GetCompanyProfileAsync((int)id);
 
-        /// <summary>
-        /// Painel de Admin - Pesquisa um usuário pelo seu ID único.
-        /// </summary>
-        /// <param name="id">ID único do usuário.</param>
-        /// <returns>O usuário, se estiver cadastrado.</returns>
-        /// <response code="200">Ok, retorna o cadastro do usuário.</response>
-        /// <response code="404">Usuário não encontrado.</response>
-        [ProducesResponseType(200)]
-        [ProducesResponseType(404)]
-        [ActionName(nameof(GetUserByIdAsync))]
-        [HttpGet("pesquisarPorId")]
-        [Authorize(Roles = Roles.Admin)]
-        public async Task<IActionResult> GetUserByIdAsync(int id)
-        {
-            User? result = await _userService.GetUserByIdAsync(id);
-
-            if (result == null)
+            if (loggedProfile == null)
             {
                 return NotFound();
             }
 
-            return Ok(result);
+            UserDto loggedUser = await _userService.GetUserByEmailAsync(userEmail);
+
+            GetCompanyDto dtoLoggedUser = new()
+            {
+                Email = loggedUser.Email,
+                PublicProfileDescription = loggedUser.PublicProfileDescription,
+                ContactNumber = loggedUser.ContactNumber,
+                LegalResponsibleDocument = loggedUser.LegalResponsibleDocument,
+                LegalResponsibleFullName = loggedUser.LegalResponsibleFullName,
+                Address = loggedUser.Address,
+                AddressNumber = loggedUser.AddressNumber,
+                Quarter = loggedUser.Quarter,
+                City = loggedUser.City,
+                State = loggedUser.State,
+                AdditionalAddressInfo = loggedUser.AdditionalAddressInfo,
+                PostalCode = loggedUser.PostalCode,
+                LegalName = loggedProfile.LegalName,
+                CompanyName = loggedProfile.CompanyName,
+                CompanyRegistrationDocument = loggedProfile.CompanyRegistrationDocument,
+                CoreBusiness = loggedProfile.CoreBusiness
+            };
+
+            return Ok(dtoLoggedUser);
         }
 
-        /// <summary>
-        /// Atualiza o perfil do usuário logado.
-        /// </summary>
-        /// <param name="dto">Campos: Email, Nome and Data de nascimento.</param>
+
+        // Atualização
+        /// <summary>Atualiza o perfil do usuário logado - Freelancer </summary>
+        /// <param name="dto">Campos: Nome completo do responsável legal, CPF do responsável legal, E-mail, Telefone, CEP, Endereço, Número, Bairro, Cidade, Estado, Complemento, Descrição Pública do Perfil, Data de nascimento, Tipo de negócio, Tempo de experiência, Tamanho da oficina, Especialidades, Máquinas que possui, Como costuma fecha serviços, Disponibilidade de tempo, Preferências do Freelancer, Faturamento médio, Já tem produtor fixo?, Possui veículo para buscar/entregar as peças?</param>
         /// <response code="200">Ok, perfil atualizado.</response>
         /// <response code="400">As informações inseridas são inválidas.</response>
         /// <response code="401">Acesso não autorizado, o email já está associado à outra conta.</response>
@@ -134,250 +251,126 @@ namespace _01_Presentation.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(401)]
         [ProducesResponseType(404)]
-        [HttpPut("atualizarCadastro")]
-        public async Task<IActionResult> UpdateUserAsync(UserUpdateDto dto)
+        [HttpPut("atualizarcadastro/freelancer")]
+        [Authorize(Roles = Roles.Freelancer)]
+        public async Task<IActionResult> UpdateUserFreelancerAsync(UpdateFreelancerDto dto)
         {
-            string? userEmail = GetLoggedInUserEmailAddress();
+            string? userEmail = GetLoggedUserEmailAddress();
+
+            if (userEmail == null || !ModelState.IsValid)
+            {
+                return BadRequest(new { message = "Os dados informados são inválidos." });
+            }
+
+            int? id = await _userService.GetUserIdByEmailAsync(userEmail);
+
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            FreelancerProfile? loggedProfile = await _userService.GetFreelancerProfileAsync((int)id);
+
+            if (loggedProfile == null)
+            {
+                return NotFound();
+            }
+
+            UserDto loggedUser = await _userService.GetUserByEmailAsync(userEmail);
+
+            if (dto.Email != loggedUser.Email && await _userService.IsUserEmailRegistered(dto.Email))
+            {
+                return Unauthorized();
+            }
+
+            if (!await _userService.UpdateUserFreelancerAsync(dto, loggedUser, loggedProfile))
+            {
+                return BadRequest(new { message = "Os dados informados são inválidos." });
+            }
+            
+            return Ok();
+        }
+
+        /// <summary>Atualiza o perfil do usuário logado - Empresa/Confecção</summary>
+        /// <param name="dto">Campos: Nome completo do responsável legal, CPF do responsável legal, E-mail, Telefone, CEP, Endereço, Número, Bairro, Cidade, Estado, Complemento, Descrição Pública do Perfil, Razão Social, Nome Fantasia, CNPJ, Ramo de atuação.</param>
+        /// <response code="200">Ok, perfil atualizado.</response>
+        /// <response code="400">As informações inseridas são inválidas.</response>
+        /// <response code="401">Acesso não autorizado, o email já está associado à outra conta.</response>
+        /// <response code="404">Usuário não localizado.</response>
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(404)]
+        [HttpPut("atualizarcadastro/empresa")]
+        [Authorize(Roles = Roles.Company)]
+        public async Task<IActionResult> UpdateUserCompanyAsync(UpdateCompanyDto dto)
+        {
+            string? userEmail = GetLoggedUserEmailAddress();
 
             if (userEmail == null || !ModelState.IsValid)
             {
                 return BadRequest();
             }
 
-            User loggedinUser = await _userService.GetUserByEmailAsync(userEmail);
+            int? id = await _userService.GetUserIdByEmailAsync(userEmail);
 
-            if (loggedinUser == null)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            if (dto.Email != loggedinUser.Email && await _userService.IsUserEmailRegistered(dto.Email))
+            UserDto loggedUser = await _userService.GetUserByEmailAsync(userEmail);
+
+            CompanyProfile? loggedProfile = await _userService.GetCompanyProfileAsync((int)id);
+
+            if (loggedProfile == null)
+            {
+                return NotFound();
+            }
+
+            if (dto.Email != loggedUser.Email && await _userService.IsUserEmailRegistered(dto.Email))
             {
                 return Unauthorized();
             }
 
-            await _userService.UpdateUserAsync(dto, loggedinUser);
+            if (!await _userService.UpdateUserCompanyAsync(dto, loggedUser, loggedProfile))
+            {
+                return BadRequest(new { message = "Os dados informados são inválidos." });
+            }
+
             return Ok();
         }
 
-        /// <summary>
-        /// Deleta a conta do usuário logado.
-        /// </summary>
+
+        // Exclusão
+        /// <summary>Deleta a conta do usuário logado - Freelancer e Empresa/Confecção</summary>
         /// <response code="204">Ok, usuário deletado.</response>
         /// <response code="400">A informação inserida é inválida.</response>
         /// <response code="404">Usuário não encontrado.</response>
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [ProducesResponseType(204)]
-        [HttpDelete("deletarCadastro")]
-        [Authorize(Roles = Roles.Default)]
-        public async Task<IActionResult> DeleteUserAsync()
+        [HttpDelete("deletarcadastro")]
+        [Authorize(Roles = $"{Roles.Freelancer}, {Roles.Company}")]
+        public async Task<IActionResult> DeleteCurrentUserAsync()
         {
-            string? userEmail = GetLoggedInUserEmailAddress();
+            string? userEmail = GetLoggedUserEmailAddress();
 
             if (userEmail == null)
             {
                 return BadRequest();
             }
 
-            User loggedinUser = await _userService.GetUserByEmailAsync(userEmail);
+            int? id = await _userService.GetUserIdByEmailAsync(userEmail);
 
-            if (loggedinUser == null)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            await _userService.DeleteUserAsync(loggedinUser);
+            await _userService.DeleteUserByIdAsync((int)id);
+
             return NoContent();
-        }
-
-        /// <summary>
-        /// Painel de Admin - Deleta qualquer usuário a partir do e-mail.
-        /// </summary>
-        /// <param name="userEmail">E-mail do usuário.</param>
-        /// <response code="204">Ok, usuário deletado.</response>
-        /// <response code="400">A informação inserida é inválida.</response>
-        /// <response code="404">Usuário não encontrado.</response>
-        [ProducesResponseType(204)]
-        [ProducesResponseType(404)]
-        [ProducesResponseType(400)]
-        [HttpDelete("deletarCadastroAdmin")]
-        [Authorize(Roles = Roles.Admin)]
-        public async Task<IActionResult> AdminDeleteUserAsync(string userEmail)
-        {
-            if (string.IsNullOrEmpty(userEmail))
-            {
-                return BadRequest();
-            }
-
-            User loggedinUser = await _userService.GetUserByEmailAsync(userEmail);
-
-            if (loggedinUser == null)
-            {
-                return NotFound();
-            }
-
-            await _userService.DeleteUserAsync(loggedinUser);
-            return NoContent();
-        }
-
-        /// <summary>
-        /// Painel de Admin - Lista todas as Roles existentes.
-        /// </summary>
-        /// <response code="200">Retorna a lista de roles ou uma lista vazia.</response>
-        [ProducesResponseType(200)]
-        [HttpGet("listarRoles")]
-        [Authorize(Roles = Roles.Admin)]
-        public async Task<IActionResult> GetAllRolesAsync()
-        {
-            return Ok(await _roleService.GetAllRolesAsync());
-        }
-
-        /// <summary>
-        /// Painel de Admin - Pesquisa a Role pelo ID único.
-        /// </summary>
-        /// <param name="roleId">ID única da role.</param>
-        /// <returns>A role, se encontrada.</returns>
-        /// <response code="200">Ok, retorna a role.</response>
-        /// <response code="404">Role não encontrada.</response>
-        [ProducesResponseType(200)]
-        [ProducesResponseType(404)]
-        [HttpGet("pesquisarRolePorId")]
-        [Authorize(Roles = Roles.Admin)]
-        public async Task<IActionResult> GetRoleByIdAsync(int roleId)
-        {
-            Role? result = await _roleService.GetRoleIdAsync(roleId);
-
-            if (result == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(result);
-        }
-
-        /// <summary>
-        /// Painel de Admin - Concede acesso à role definida para o usuário.
-        /// </summary>
-        /// <param name="userEmail">E-mail do usuário.</param>
-        /// <param name="roleName">Posição em que será concedido acesso.</param>
-        /// <response code="200">Ok, permissão concedida.</response>
-        /// <response code="404">Usuário ou Role não encontrados.</response>
-        [ProducesResponseType(404)]
-        [ProducesResponseType(200)]
-        [HttpPost("concederAcesso")]
-        [Authorize(Roles = Roles.Admin)]
-        public async Task<IActionResult> AddRoleToUserAsync(string userEmail, string roleName)
-        {
-            User? user = await _userService.GetUserByEmailAsync(userEmail);
-
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            Role? role = await _roleService.GetRoleAsync(roleName);
-
-            if (role == null)
-            {
-                return NotFound();
-            }
-
-            await _userService.CreateUserRoleAsync(user, role);
-            return Ok();
-        }
-
-        /// <summary>
-        /// Painel de Admin - Revoga acesso à role definida para o usuário.
-        /// </summary>
-        /// <param name="userEmail">E-mail do usuário.</param>
-        /// <param name="roleName">Posição em que será removido o acesso.</param>
-        /// <response code="200">Ok, acesso revogado.</response>
-        /// <response code="404">Usuário ou Role não encontrados.</response>
-        [ProducesResponseType(200)]
-        [ProducesResponseType(404)]
-        [HttpDelete("revogarAcesso")]
-        [Authorize(Roles = Roles.Admin)]
-        public async Task<IActionResult> RemoveRoleFromUserAsync(string userEmail, string roleName)
-        {
-            User? user = await _userService.GetUserByEmailAsync(userEmail);
-
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            Role? role = await _roleService.GetRoleAsync(roleName);
-
-            if (role == null)
-            {
-                return NotFound();
-            }
-
-            await _userService.RemoveRoleFromUserAsync(user, role);
-            return Ok();
-        }
-
-        /// <summary>
-        /// Painel de Admin - Revoga o acesso à todas as roles do usuário.
-        /// </summary>
-        /// <param name="userEmail">E-mail do usuário.</param>
-        /// <response code="200">Ok, acessos removidos.</response>
-        /// <response code="404">Usuário ou Role não encontrados.</response>
-        [ProducesResponseType(404)]
-        [ProducesResponseType(200)]
-        [HttpDelete("revogarTodosAcessos")]
-        [Authorize(Roles = Roles.Admin)]
-        public async Task<IActionResult> RemoveAllRolesFromUserAsync(string userEmail)
-        {
-            User? user = await _userService.GetUserByEmailAsync(userEmail);
-
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            await _userService.RemoveAllRolesFromUserAsync(user);
-
-            return Ok();
-        }
-
-        /// <summary>
-        /// Painel de Admin - Lista todas as roles que um usuário tem permissão de acesso.
-        /// </summary>
-        /// <param name="userEmail">E-mail do usuário.</param>
-        /// <returns>Lista de todas as roles do usuário.</returns>
-        /// <response code="200">Ok, retorna lista com todas as roles do usuário.</response>
-        /// <response code="404">Usuário ou Role não encontrados.</response>
-        [ProducesResponseType(404)]
-        [ProducesResponseType(200)]
-        [HttpGet("mostrarAcessosDoUsuario")]
-        [Authorize(Roles = Roles.Admin)]
-        public async Task<IActionResult> ListUserRolesAsync(string userEmail)
-        {
-            User? user = await _userService.GetUserByEmailAsync(userEmail);
-
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            List<int> allUserRolesInteger = await _userService.GetUserRolesAsync(user);
-            List<string?> allUserRolesString = await _roleService.GetRoleNameByIdAsync(allUserRolesInteger);
-            List<UserRoleDto> allUserRoles = [];
-
-            for (int i = 0; i < allUserRolesInteger.Count; i++)
-            {
-                UserRoleDto newUserRoleDto = new()
-                {
-                    RoleId = allUserRolesInteger[i],
-                    RoleName = allUserRolesString[i]
-                };
-
-                allUserRoles.Add(newUserRoleDto);
-            }
-
-            return Ok(allUserRoles);
         }
     }
 }
