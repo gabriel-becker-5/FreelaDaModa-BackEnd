@@ -1,12 +1,14 @@
-﻿using _02_Application.DTOs.Company;
+﻿using _02_Application.Authorization;
+using _02_Application.DTOs;
+using _02_Application.DTOs.Company;
 using _02_Application.DTOs.Freelancer;
+using _02_Application.DTOs.User;
 using _02_Application.Interfaces;
 using _04_Domain.Entities.ObjectsFields;
 using _04_Domain.Entities.Profiles;
 using _04_Domain.Entities.Identity;
 using _04_Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
-using _02_Application.DTOs.User;
 
 namespace _02_Application.Services
 {
@@ -14,13 +16,16 @@ namespace _02_Application.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IFreelancerFieldsRepository _freelancerFieldsRepository;
+        private readonly IRoleService _roleService;
         private readonly PasswordHasher<User> _passwordHasher = new();
 
         public UserService(IUserRepository userRepository,
-                           IFreelancerFieldsRepository freelancerFieldsRepository)
+                           IFreelancerFieldsRepository freelancerFieldsRepository,
+                           IRoleService roleService)
         {
             _userRepository = userRepository;
             _freelancerFieldsRepository = freelancerFieldsRepository;
+            _roleService = roleService;
         }
 
         // Criação de usuário
@@ -104,7 +109,53 @@ namespace _02_Application.Services
             return true;
         }
 
-        public async Task<int?> CreateFreelancerAsync(CreateFreelancerDto dto)
+        public async Task<int?> RegisterFreelancerAsync(CreateFreelancerDto dto)
+        {
+            if (await _userRepository.IsUserEmailRegistered(dto.Email) || !await IsFreelancerFieldsValid(dto))
+            {
+                return null;
+            }
+
+            int? roleId = await _roleService.GetRoleIdByNameAsync(Roles.Freelancer);
+            if (roleId == null)
+            {
+                return null;
+            }
+
+            int? userId = await CreateFreelancerAsync(dto);
+            if (userId == null)
+            {
+                return null;
+            }
+
+            bool userRoleCreated = await CreateUserRoleAsync((int)userId, (int)roleId);
+            return userRoleCreated ? userId : null;
+        }
+
+        public async Task<int?> RegisterCompanyAsync(CreateCompanyDto dto)
+        {
+            if (await _userRepository.IsUserEmailRegistered(dto.Email))
+            {
+                return null;
+            }
+
+            int? roleId = await _roleService.GetRoleIdByNameAsync(Roles.Company);
+            if (roleId == null)
+            {
+                return null;
+            }
+
+            int? userId = await CreateCompanyAsync(dto);
+            if (userId == null)
+            {
+                return null;
+            }
+
+            bool userRoleCreated = await CreateUserRoleAsync((int)userId, (int)roleId);
+            return userRoleCreated ? userId : null;
+        }
+
+        private async Task<int?> CreateFreelancerAsync(CreateFreelancerDto dto)
         {
             if (await _userRepository.IsUserEmailRegistered(dto.Email))
             {
@@ -183,7 +234,7 @@ namespace _02_Application.Services
             return createdUser.Id;
         }
 
-        public async Task<int?> CreateCompanyAsync(CreateCompanyDto dto)
+        private async Task<int?> CreateCompanyAsync(CreateCompanyDto dto)
         {
             if (await _userRepository.IsUserEmailRegistered(dto.Email))
             {
@@ -299,15 +350,88 @@ namespace _02_Application.Services
 
         // Leitura de perfil
 
-        public async Task<FreelancerProfile?> GetFreelancerProfileAsync(int userId)
+        public async Task<GetFreelancerDto?> GetFreelancerProfileByEmailAsync(string userEmail)
         {
-            return await _userRepository.GetFreelancerProfileAsync(userId);
+            User? user = await _userRepository.GetUserByEmailAsync(userEmail);
+            if (user == null)
+            {
+                return null;
+            }
+
+            FreelancerProfile? profile = await _userRepository.GetFreelancerProfileAsync(user.Id);
+            if (profile == null)
+            {
+                return null;
+            }
+
+            FreelancerProfileDto? fields = await _freelancerFieldsRepository.GetProfileFieldsNames(profile.Id);
+            if (fields == null)
+            {
+                return null;
+            }
+
+            return new GetFreelancerDto
+            {
+                Email = user.Email,
+                PublicProfileDescription = user.PublicProfileDescription,
+                ContactNumber = user.ContactNumber,
+                LegalResponsibleDocument = user.LegalResponsibleDocument,
+                LegalResponsibleFullName = user.LegalResponsibleFullName,
+                Address = user.Address,
+                AddressNumber = user.AddressNumber,
+                Quarter = user.Quarter,
+                City = user.City,
+                State = user.State,
+                AdditionalAddressInfo = user.AdditionalAddressInfo,
+                PostalCode = user.PostalCode,
+                HasFixedProducer = fields.HasFixedProducer,
+                HasOwnCar = fields.HasOwnCar,
+                BirthDate = fields.BirthDate,
+                OwnMachineNames = fields.OwnMachines,
+                SpecialtyNames = fields.Specialties,
+                AvailableTimeName = fields.AvailableTimeName,
+                AverageRevenueName = fields.AverageRevenueName,
+                HowUsuallyArrangeServicesName = fields.HowUsuallyArrangeServicesName,
+                BusinessTypeName = fields.BusinessTypeName,
+                ExperienceYearsName = fields.ExperienceYearsName,
+                FreelancerPreferencesName = fields.FreelancerPreferencesName,
+                WorkshopSizeName = fields.WorkshopSizeName
+            };
         }
 
-
-        public async Task<CompanyProfile?> GetCompanyProfileAsync(int userId)
+        public async Task<GetCompanyDto?> GetCompanyProfileByEmailAsync(string userEmail)
         {
-            return await _userRepository.GetCompanyProfileAsync(userId);
+            User? user = await _userRepository.GetUserByEmailAsync(userEmail);
+            if (user == null)
+            {
+                return null;
+            }
+
+            CompanyProfile? profile = await _userRepository.GetCompanyProfileAsync(user.Id);
+            if (profile == null)
+            {
+                return null;
+            }
+
+            return new GetCompanyDto
+            {
+                Email = user.Email,
+                PublicProfileDescription = user.PublicProfileDescription,
+                ContactNumber = user.ContactNumber,
+                LegalResponsibleDocument = user.LegalResponsibleDocument,
+                LegalResponsibleFullName = user.LegalResponsibleFullName,
+                Address = user.Address,
+                AddressNumber = user.AddressNumber,
+                Quarter = user.Quarter,
+                City = user.City,
+                State = user.State,
+                AdditionalAddressInfo = user.AdditionalAddressInfo,
+                PostalCode = user.PostalCode,
+                LegalName = profile.LegalName,
+                CompanyName = profile.CompanyName,
+                CompanyRegistrationDocument = profile.CompanyRegistrationDocument,
+                CoreBusiness = profile.CoreBusiness
+            };
         }
 
         public async Task<ICollection<int>> GetUserRolesAsync(int id)
@@ -327,8 +451,26 @@ namespace _02_Application.Services
 
 
         // Atualização de perfil
-        public async Task<bool> UpdateUserFreelancerAsync(UpdateFreelancerDto dto, UserDto user, FreelancerProfile profile)
+        public async Task<ProfileUpdateResult> UpdateUserFreelancerAsync(UpdateFreelancerDto dto, string userEmail)
         {
+            User? user = await _userRepository.GetUserByEmailAsync(userEmail);
+            if (user == null)
+            {
+                return ProfileUpdateResult.NotFound;
+            }
+
+            FreelancerProfile? profile = await _userRepository.GetFreelancerProfileAsync(user.Id);
+            if (profile == null)
+            {
+                return ProfileUpdateResult.NotFound;
+            }
+
+            if (dto.Email != null && dto.Email != user.Email &&
+                await _userRepository.IsUserEmailRegistered(dto.Email))
+            {
+                return ProfileUpdateResult.EmailInUse;
+            }
+
             if (dto.LegalResponsibleFullName != null && dto.LegalResponsibleFullName != user.LegalResponsibleFullName)
             {
                 user.LegalResponsibleFullName = dto.LegalResponsibleFullName;
@@ -403,7 +545,7 @@ namespace _02_Application.Services
                 }
                 else
                 {
-                    return false;
+                    return ProfileUpdateResult.InvalidData;
                 }
             }
 
@@ -415,7 +557,7 @@ namespace _02_Application.Services
                 }
                 else
                 {
-                    return false;
+                    return ProfileUpdateResult.InvalidData;
                 }
             }
 
@@ -427,7 +569,7 @@ namespace _02_Application.Services
                 }
                 else
                 {
-                    return false;
+                    return ProfileUpdateResult.InvalidData;
                 }
             }
 
@@ -439,7 +581,7 @@ namespace _02_Application.Services
                 }
                 else
                 {
-                    return false;
+                    return ProfileUpdateResult.InvalidData;
                 }
             }
 
@@ -451,7 +593,7 @@ namespace _02_Application.Services
                 }
                 else
                 {
-                    return false;
+                    return ProfileUpdateResult.InvalidData;
                 }
             }
 
@@ -463,7 +605,7 @@ namespace _02_Application.Services
                 }
                 else
                 {
-                    return false;
+                    return ProfileUpdateResult.InvalidData;
                 }
             }
 
@@ -475,7 +617,7 @@ namespace _02_Application.Services
                 }
                 else
                 {
-                    return false;
+                    return ProfileUpdateResult.InvalidData;
                 }
             }
 
@@ -510,7 +652,7 @@ namespace _02_Application.Services
                 }
                 else
                 {
-                    return false;
+                    return ProfileUpdateResult.InvalidData;
                 }
             }
 
@@ -534,17 +676,35 @@ namespace _02_Application.Services
                 }
                 else
                 {
-                    return false;
+                    return ProfileUpdateResult.InvalidData;
                 }
             }
 
             await _userRepository.UpdateFreelancerAsync(profile.Id, newFreelancerSpecialtiesList, newFreelancerOwnMachinesList);
 
-            return true;
+            return ProfileUpdateResult.Success;
         }
 
-        public async Task<bool> UpdateUserCompanyAsync(UpdateCompanyDto dto, UserDto user, CompanyProfile profile)
+        public async Task<ProfileUpdateResult> UpdateUserCompanyAsync(UpdateCompanyDto dto, string userEmail)
         {
+            User? user = await _userRepository.GetUserByEmailAsync(userEmail);
+            if (user == null)
+            {
+                return ProfileUpdateResult.NotFound;
+            }
+
+            CompanyProfile? profile = await _userRepository.GetCompanyProfileAsync(user.Id);
+            if (profile == null)
+            {
+                return ProfileUpdateResult.NotFound;
+            }
+
+            if (dto.Email != null && dto.Email != user.Email &&
+                await _userRepository.IsUserEmailRegistered(dto.Email))
+            {
+                return ProfileUpdateResult.EmailInUse;
+            }
+
             if (dto.LegalResponsibleFullName != null && dto.LegalResponsibleFullName != user.LegalResponsibleFullName)
             {
                 user.LegalResponsibleFullName = dto.LegalResponsibleFullName;
@@ -626,7 +786,7 @@ namespace _02_Application.Services
             }
 
             await _userRepository.UpdateCompanyAsync();
-            return true;
+            return ProfileUpdateResult.Success;
         }
 
         // Excluir perfil
@@ -641,9 +801,17 @@ namespace _02_Application.Services
             await _userRepository.RemoveAllRolesFromUserAsync(id);
         }
 
-        public async Task DeleteCurrentUserAsync(User user)
+        public async Task<bool> DeleteCurrentUserAsync(string userEmail)
         {
+            User? user = await _userRepository.GetUserByEmailAsync(userEmail);
+
+            if (user == null)
+            {
+                return false;
+            }
+
             await _userRepository.DeleteCurrentUserAsync(user);
+            return true;
         }
 
         public async Task<bool> DeleteUserByIdAsync(int id)

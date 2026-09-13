@@ -101,6 +101,7 @@ namespace _03_Infrastructure.Repositories
 
         public async Task<User?> GetUserByEmailAsync(string email)
         {
+            // ATENÇÃO: sem AsNoTracking de propósito — entidade mutada pelos fluxos de update/delete do UserService.
             User? result = await _context.Users.Where(u => u.Email == email).FirstOrDefaultAsync();
 
             if (result == null)
@@ -113,6 +114,7 @@ namespace _03_Infrastructure.Repositories
 
         public async Task<FreelancerProfile?> GetFreelancerProfileAsync(int userId)
         {
+            // ATENÇÃO: sem AsNoTracking de propósito — entidade mutada pelos fluxos de update/delete do UserService.
             FreelancerProfile? result = await _context.FreelancersProfiles.Where(fp => fp.UserId == userId).FirstOrDefaultAsync();
 
             if (result == null)
@@ -126,6 +128,7 @@ namespace _03_Infrastructure.Repositories
 
         public async Task<CompanyProfile?> GetCompanyProfileAsync(int userId)
         {
+            // ATENÇÃO: sem AsNoTracking de propósito — entidade mutada pelos fluxos de update/delete do UserService.
             CompanyProfile? result = await _context.CompaniesProfiles.Where(cp => cp.UserId == userId).FirstOrDefaultAsync();
 
             if (result == null)

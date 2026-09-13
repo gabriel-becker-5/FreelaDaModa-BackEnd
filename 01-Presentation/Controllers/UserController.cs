@@ -1,15 +1,13 @@
 ﻿using _02_Application.Authorization;
+using _02_Application.DTOs;
 using _02_Application.DTOs.Company;
 using _02_Application.DTOs.Freelancer;
 using _02_Application.Interfaces;
-using _04_Domain.Entities.Profiles;
-using _04_Domain.Entities.Identity;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using _02_Application.DTOs.User;
 
 namespace _01_Presentation.Controllers
 {
@@ -20,16 +18,10 @@ namespace _01_Presentation.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly IRoleService _roleService;
-        private readonly IFreelancerFieldsService _freelancerFieldsService;
 
-        public UserController(IUserService userservice,
-                              IRoleService roleService,
-                              IFreelancerFieldsService freelancerFieldsService)
+        public UserController(IUserService userservice)
         {
             _userService = userservice;
-            _roleService = roleService;
-            _freelancerFieldsService = freelancerFieldsService;
         }
 
         private string? GetLoggedUserEmailAddress()
@@ -54,21 +46,12 @@ namespace _01_Presentation.Controllers
                 return BadRequest();
             }
 
-            int? roleId = await _roleService.GetRoleIdByNameAsync(Roles.Freelancer);
-
-            if (roleId == null)
-            {
-                return BadRequest();
-            }
-
-            int? newUser = await _userService.CreateFreelancerAsync(dto);
+            int? newUser = await _userService.RegisterFreelancerAsync(dto);
 
             if (newUser == null)
             {
                 return BadRequest();
             }
-
-            await _userService.CreateUserRoleAsync((int)newUser, (int)roleId);
 
             return CreatedAtAction(null, null);
         }
@@ -89,21 +72,12 @@ namespace _01_Presentation.Controllers
                 return BadRequest();
             }
 
-            int? roleId = await _roleService.GetRoleIdByNameAsync(Roles.Company);
-
-            if (roleId == null)
-            {
-                return BadRequest();
-            }
-
-            int? newUser = await _userService.CreateCompanyAsync(dto);
+            int? newUser = await _userService.RegisterCompanyAsync(dto);
 
             if (newUser == null)
             {
                 return BadRequest();
             }
-
-            await _userService.CreateUserRoleAsync((int)newUser, (int)roleId);
 
             return CreatedAtAction(null, null);
         }
@@ -128,56 +102,12 @@ namespace _01_Presentation.Controllers
                 return BadRequest();
             }
 
-            int? id = await _userService.GetUserIdByEmailAsync(userEmail);
+            GetFreelancerDto? dtoLoggedUser = await _userService.GetFreelancerProfileByEmailAsync(userEmail);
 
-            if (id == null)
+            if (dtoLoggedUser == null)
             {
                 return NotFound();
             }
-
-            FreelancerProfile? loggedProfile = await _userService.GetFreelancerProfileAsync((int)id);
-
-            if (loggedProfile == null)
-            {
-                return NotFound();
-            }
-
-            FreelancerProfileDto? freelancerProfile = await _freelancerFieldsService.GetProfileFieldsNames(loggedProfile.Id);
-
-            if (freelancerProfile == null)
-            {
-                return NotFound();
-            }
-
-            UserDto loggedUser = await _userService.GetUserByEmailAsync(userEmail);
-
-            GetFreelancerDto dtoLoggedUser = new()
-            {
-                Email = loggedUser.Email,
-                PublicProfileDescription = loggedUser.PublicProfileDescription,
-                ContactNumber = loggedUser.ContactNumber,
-                LegalResponsibleDocument = loggedUser.LegalResponsibleDocument,
-                LegalResponsibleFullName = loggedUser.LegalResponsibleFullName,
-                Address = loggedUser.Address,
-                AddressNumber = loggedUser.AddressNumber,
-                Quarter = loggedUser.Quarter,
-                City = loggedUser.City,
-                State = loggedUser.State,
-                AdditionalAddressInfo = loggedUser.AdditionalAddressInfo,
-                PostalCode = loggedUser.PostalCode,
-                HasFixedProducer = freelancerProfile.HasFixedProducer,
-                HasOwnCar = freelancerProfile.HasOwnCar,
-                BirthDate = freelancerProfile.BirthDate,
-                OwnMachineNames = freelancerProfile.OwnMachines,
-                SpecialtyNames = freelancerProfile.Specialties,
-                AvailableTimeName = freelancerProfile.AvailableTimeName,
-                AverageRevenueName = freelancerProfile.AverageRevenueName,
-                HowUsuallyArrangeServicesName = freelancerProfile.HowUsuallyArrangeServicesName,
-                BusinessTypeName = freelancerProfile.BusinessTypeName,
-                ExperienceYearsName = freelancerProfile.ExperienceYearsName,
-                FreelancerPreferencesName = freelancerProfile.FreelancerPreferencesName,
-                WorkshopSizeName = freelancerProfile.WorkshopSizeName
-            };
 
             return Ok(dtoLoggedUser);
         }
@@ -200,41 +130,12 @@ namespace _01_Presentation.Controllers
                 return BadRequest();
             }
 
-            int? id = await _userService.GetUserIdByEmailAsync(userEmail);
+            GetCompanyDto? dtoLoggedUser = await _userService.GetCompanyProfileByEmailAsync(userEmail);
 
-            if (id == null)
+            if (dtoLoggedUser == null)
             {
                 return NotFound();
             }
-
-            CompanyProfile? loggedProfile = await _userService.GetCompanyProfileAsync((int)id);
-
-            if (loggedProfile == null)
-            {
-                return NotFound();
-            }
-
-            UserDto loggedUser = await _userService.GetUserByEmailAsync(userEmail);
-
-            GetCompanyDto dtoLoggedUser = new()
-            {
-                Email = loggedUser.Email,
-                PublicProfileDescription = loggedUser.PublicProfileDescription,
-                ContactNumber = loggedUser.ContactNumber,
-                LegalResponsibleDocument = loggedUser.LegalResponsibleDocument,
-                LegalResponsibleFullName = loggedUser.LegalResponsibleFullName,
-                Address = loggedUser.Address,
-                AddressNumber = loggedUser.AddressNumber,
-                Quarter = loggedUser.Quarter,
-                City = loggedUser.City,
-                State = loggedUser.State,
-                AdditionalAddressInfo = loggedUser.AdditionalAddressInfo,
-                PostalCode = loggedUser.PostalCode,
-                LegalName = loggedProfile.LegalName,
-                CompanyName = loggedProfile.CompanyName,
-                CompanyRegistrationDocument = loggedProfile.CompanyRegistrationDocument,
-                CoreBusiness = loggedProfile.CoreBusiness
-            };
 
             return Ok(dtoLoggedUser);
         }
@@ -262,33 +163,15 @@ namespace _01_Presentation.Controllers
                 return BadRequest(new { message = "Os dados informados são inválidos." });
             }
 
-            int? id = await _userService.GetUserIdByEmailAsync(userEmail);
+            ProfileUpdateResult result = await _userService.UpdateUserFreelancerAsync(dto, userEmail);
 
-            if (id == null)
+            return result switch
             {
-                return NotFound();
-            }
-
-            FreelancerProfile? loggedProfile = await _userService.GetFreelancerProfileAsync((int)id);
-
-            if (loggedProfile == null)
-            {
-                return NotFound();
-            }
-
-            UserDto loggedUser = await _userService.GetUserByEmailAsync(userEmail);
-
-            if (dto.Email != loggedUser.Email && await _userService.IsUserEmailRegistered(dto.Email))
-            {
-                return Unauthorized();
-            }
-
-            if (!await _userService.UpdateUserFreelancerAsync(dto, loggedUser, loggedProfile))
-            {
-                return BadRequest(new { message = "Os dados informados são inválidos." });
-            }
-            
-            return Ok();
+                ProfileUpdateResult.Success => Ok(),
+                ProfileUpdateResult.NotFound => NotFound(),
+                ProfileUpdateResult.EmailInUse => Unauthorized(),
+                _ => BadRequest(new { message = "Os dados informados são inválidos." })
+            };
         }
 
         /// <summary>Atualiza o perfil do usuário logado - Empresa/Confecção</summary>
@@ -309,36 +192,18 @@ namespace _01_Presentation.Controllers
 
             if (userEmail == null || !ModelState.IsValid)
             {
-                return BadRequest();
-            }
-
-            int? id = await _userService.GetUserIdByEmailAsync(userEmail);
-
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            UserDto loggedUser = await _userService.GetUserByEmailAsync(userEmail);
-
-            CompanyProfile? loggedProfile = await _userService.GetCompanyProfileAsync((int)id);
-
-            if (loggedProfile == null)
-            {
-                return NotFound();
-            }
-
-            if (dto.Email != loggedUser.Email && await _userService.IsUserEmailRegistered(dto.Email))
-            {
-                return Unauthorized();
-            }
-
-            if (!await _userService.UpdateUserCompanyAsync(dto, loggedUser, loggedProfile))
-            {
                 return BadRequest(new { message = "Os dados informados são inválidos." });
             }
 
-            return Ok();
+            ProfileUpdateResult result = await _userService.UpdateUserCompanyAsync(dto, userEmail);
+
+            return result switch
+            {
+                ProfileUpdateResult.Success => Ok(),
+                ProfileUpdateResult.NotFound => NotFound(),
+                ProfileUpdateResult.EmailInUse => Unauthorized(),
+                _ => BadRequest(new { message = "Os dados informados são inválidos." })
+            };
         }
 
 
@@ -361,14 +226,12 @@ namespace _01_Presentation.Controllers
                 return BadRequest();
             }
 
-            int? id = await _userService.GetUserIdByEmailAsync(userEmail);
+            bool deleted = await _userService.DeleteCurrentUserAsync(userEmail);
 
-            if (id == null)
+            if (!deleted)
             {
                 return NotFound();
             }
-
-            await _userService.DeleteUserByIdAsync((int)id);
 
             return NoContent();
         }
