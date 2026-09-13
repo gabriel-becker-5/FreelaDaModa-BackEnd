@@ -1,29 +1,50 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
-using _02_Application.DTOs.Vaga;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 using _02_Application.Services.Vaga;
-using _04_Domain.Interfaces;
+using _02_Application.DTOs.Vaga;
+using _02_Application.Interfaces;
 
 namespace _01_Presentation.Controllers
 {
+    [Route("api/[controller]")]
     [ApiController]
-    [Route("api/v{version}/[controller]")]
+    [Authorize]
     public class VagasController : ControllerBase
     {
-        private readonly IVagaRepository _vagaRepository;
+        private readonly IVagaService _vagaService;
 
-        public VagasController(IVagaRepository vagaRepository)
+        public VagasController(IVagaService vagaService)
         {
-            _vagaRepository = vagaRepository;
+            _vagaService = vagaService;
         }
 
         [HttpPost]
         public async Task<IActionResult> Registrar([FromBody] RequisicaoRegistrarVagaJson requisicao)
         {
-            var useCase = new RegistrarVagaUseCase(_vagaRepository);
-            var resposta = await useCase.Executar(requisicao);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
 
-            return StatusCode(201, resposta);
+            var emailUsuario = GetLoggedUserEmailAddress();
+            if (string.IsNullOrEmpty(emailUsuario))
+                return Unauthorized();
+
+            var resposta = await _vagaService.RegistrarAsync(requisicao, emailUsuario);
+
+            return Created(string.Empty, resposta);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ObterTodas()
+        {
+            var vagas = await _vagaService.ObterTodasAsync();
+            return Ok(vagas);
+        }
+
+        private string? GetLoggedUserEmailAddress()
+        {
+            return User.FindFirstValue(JwtRegisteredClaimNames.Name) ?? User.FindFirstValue(ClaimTypes.Name);
         }
     }
 }
