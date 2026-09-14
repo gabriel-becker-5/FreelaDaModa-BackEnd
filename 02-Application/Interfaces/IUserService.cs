@@ -27,22 +27,21 @@ namespace _02_Application.Interfaces
 
         Task<PagedResult<UserDto>> GetAllUsersAsync(int page, int pageSize);
 
-        Task<GetFreelancerDto?> GetFreelancerProfileByEmailAsync(string userEmail);
+        Task<GetFreelancerDto?> GetFreelancerProfileByIdAsync(int userId);
 
-        Task<GetCompanyDto?> GetCompanyProfileByEmailAsync(string userEmail);
+        Task<GetCompanyDto?> GetCompanyProfileByIdAsync(int userId);
 
         Task<ICollection<int>> GetUserRolesAsync(int id);
 
 
-        Task<ProfileUpdateResult> UpdateUserFreelancerAsync(UpdateFreelancerDto dto, string userEmail);
+        Task<ProfileUpdateResult> UpdateUserFreelancerAsync(UpdateFreelancerDto dto, int userId);
 
-        Task<ProfileUpdateResult> UpdateUserCompanyAsync(UpdateCompanyDto dto, string userEmail);
+        Task<ProfileUpdateResult> UpdateUserCompanyAsync(UpdateCompanyDto dto, int userId);
 
         Task RemoveRoleFromUserAsync(int userId, int roleId);
 
         Task RemoveAllRolesFromUserAsync(int id);
 
-        Task<bool> DeleteCurrentUserAsync(string userEmail);
         Task<bool> DeleteUserByIdAsync(int id);
 
         Task<bool> IsUserEmailRegistered(string email);

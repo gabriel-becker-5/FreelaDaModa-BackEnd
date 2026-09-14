@@ -24,9 +24,10 @@ namespace _01_Presentation.Controllers
             _userService = userservice;
         }
 
-        private string? GetLoggedUserEmailAddress()
+        private int? GetLoggedUserId()
         {
-            return User.FindFirstValue(JwtRegisteredClaimNames.Name);
+            string? userId = User.FindFirstValue(JwtRegisteredClaimNames.NameId);
+            return int.TryParse(userId, out int id) ? id : null;
         }
 
         // Criação
@@ -95,14 +96,14 @@ namespace _01_Presentation.Controllers
         [Authorize(Roles = Roles.Freelancer)]
         public async Task<IActionResult> GetUserFreelancerAsync()
         {
-            string? userEmail = GetLoggedUserEmailAddress();
+            int? userId = GetLoggedUserId();
 
-            if (userEmail == null || !ModelState.IsValid)
+            if (userId == null || !ModelState.IsValid)
             {
                 return BadRequest();
             }
 
-            GetFreelancerDto? dtoLoggedUser = await _userService.GetFreelancerProfileByEmailAsync(userEmail);
+            GetFreelancerDto? dtoLoggedUser = await _userService.GetFreelancerProfileByIdAsync((int)userId);
 
             if (dtoLoggedUser == null)
             {
@@ -123,14 +124,14 @@ namespace _01_Presentation.Controllers
         [Authorize(Roles = Roles.Company)]
         public async Task<IActionResult> GetUserCompanyAsync()
         {
-            string? userEmail = GetLoggedUserEmailAddress();
+            int? userId = GetLoggedUserId();
 
-            if (userEmail == null || !ModelState.IsValid)
+            if (userId == null || !ModelState.IsValid)
             {
                 return BadRequest();
             }
 
-            GetCompanyDto? dtoLoggedUser = await _userService.GetCompanyProfileByEmailAsync(userEmail);
+            GetCompanyDto? dtoLoggedUser = await _userService.GetCompanyProfileByIdAsync((int)userId);
 
             if (dtoLoggedUser == null)
             {
@@ -146,30 +147,30 @@ namespace _01_Presentation.Controllers
         /// <param name="dto">Campos: Nome completo do responsável legal, CPF do responsável legal, E-mail, Telefone, CEP, Endereço, Número, Bairro, Cidade, Estado, Complemento, Descrição Pública do Perfil, Data de nascimento, Tipo de negócio, Tempo de experiência, Tamanho da oficina, Especialidades, Máquinas que possui, Como costuma fecha serviços, Disponibilidade de tempo, Preferências do Freelancer, Faturamento médio, Já tem produtor fixo?, Possui veículo para buscar/entregar as peças?</param>
         /// <response code="200">Ok, perfil atualizado.</response>
         /// <response code="400">As informações inseridas são inválidas.</response>
-        /// <response code="401">Acesso não autorizado, o email já está associado à outra conta.</response>
+        /// <response code="409">O e-mail informado já está associado à outra conta.</response>
         /// <response code="404">Usuário não localizado.</response>
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(401)]
+        [ProducesResponseType(409)]
         [ProducesResponseType(404)]
         [HttpPut("atualizarcadastro/freelancer")]
         [Authorize(Roles = Roles.Freelancer)]
         public async Task<IActionResult> UpdateUserFreelancerAsync(UpdateFreelancerDto dto)
         {
-            string? userEmail = GetLoggedUserEmailAddress();
+            int? userId = GetLoggedUserId();
 
-            if (userEmail == null || !ModelState.IsValid)
+            if (userId == null || !ModelState.IsValid)
             {
                 return BadRequest(new { message = "Os dados informados são inválidos." });
             }
 
-            ProfileUpdateResult result = await _userService.UpdateUserFreelancerAsync(dto, userEmail);
+            ProfileUpdateResult result = await _userService.UpdateUserFreelancerAsync(dto, (int)userId);
 
             return result switch
             {
                 ProfileUpdateResult.Success => Ok(),
                 ProfileUpdateResult.NotFound => NotFound(),
-                ProfileUpdateResult.EmailInUse => Unauthorized(),
+                ProfileUpdateResult.EmailInUse => Conflict(new { message = "O e-mail informado já está em uso por outra conta." }),
                 _ => BadRequest(new { message = "Os dados informados são inválidos." })
             };
         }
@@ -178,30 +179,30 @@ namespace _01_Presentation.Controllers
         /// <param name="dto">Campos: Nome completo do responsável legal, CPF do responsável legal, E-mail, Telefone, CEP, Endereço, Número, Bairro, Cidade, Estado, Complemento, Descrição Pública do Perfil, Razão Social, Nome Fantasia, CNPJ, Ramo de atuação.</param>
         /// <response code="200">Ok, perfil atualizado.</response>
         /// <response code="400">As informações inseridas são inválidas.</response>
-        /// <response code="401">Acesso não autorizado, o email já está associado à outra conta.</response>
+        /// <response code="409">O e-mail informado já está associado à outra conta.</response>
         /// <response code="404">Usuário não localizado.</response>
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
-        [ProducesResponseType(401)]
+        [ProducesResponseType(409)]
         [ProducesResponseType(404)]
         [HttpPut("atualizarcadastro/empresa")]
         [Authorize(Roles = Roles.Company)]
         public async Task<IActionResult> UpdateUserCompanyAsync(UpdateCompanyDto dto)
         {
-            string? userEmail = GetLoggedUserEmailAddress();
+            int? userId = GetLoggedUserId();
 
-            if (userEmail == null || !ModelState.IsValid)
+            if (userId == null || !ModelState.IsValid)
             {
                 return BadRequest(new { message = "Os dados informados são inválidos." });
             }
 
-            ProfileUpdateResult result = await _userService.UpdateUserCompanyAsync(dto, userEmail);
+            ProfileUpdateResult result = await _userService.UpdateUserCompanyAsync(dto, (int)userId);
 
             return result switch
             {
                 ProfileUpdateResult.Success => Ok(),
                 ProfileUpdateResult.NotFound => NotFound(),
-                ProfileUpdateResult.EmailInUse => Unauthorized(),
+                ProfileUpdateResult.EmailInUse => Conflict(new { message = "O e-mail informado já está em uso por outra conta." }),
                 _ => BadRequest(new { message = "Os dados informados são inválidos." })
             };
         }
@@ -219,14 +220,14 @@ namespace _01_Presentation.Controllers
         [Authorize(Roles = $"{Roles.Freelancer}, {Roles.Company}")]
         public async Task<IActionResult> DeleteCurrentUserAsync()
         {
-            string? userEmail = GetLoggedUserEmailAddress();
+            int? userId = GetLoggedUserId();
 
-            if (userEmail == null)
+            if (userId == null)
             {
                 return BadRequest();
             }
 
-            bool deleted = await _userService.DeleteCurrentUserAsync(userEmail);
+            bool deleted = await _userService.DeleteUserByIdAsync((int)userId);
 
             if (!deleted)
             {

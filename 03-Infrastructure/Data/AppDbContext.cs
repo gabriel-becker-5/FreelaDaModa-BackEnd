@@ -68,6 +68,10 @@ namespace _03_Infrastructure.Data
                 .HasForeignKey(ur => ur.RoleId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<UserRole>()
+                .HasIndex(ur => new { ur.UserId, ur.RoleId })
+                .IsUnique();
+
             modelBuilder.Entity<FreelancerProfile>()
                 .HasOne(p => p.BusinessType)
                 .WithMany()

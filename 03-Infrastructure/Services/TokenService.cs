@@ -15,12 +15,15 @@ namespace _03_Infrastructure.Services
             _JwtKey = config["Jwt:Secret"]
                       ?? throw new InvalidOperationException("Jwt:Secret não configurado.");
 
-        public string GenerateToken(string user, ICollection<string> allUserRoles)
+        public string GenerateToken(int userId, string user, ICollection<string> allUserRoles)
         {
             List<Claim> claims = [];
 
             Claim? claimName = new Claim(JwtRegisteredClaimNames.Name, user);
             claims.Add(claimName);
+
+            Claim? claimId = new Claim(JwtRegisteredClaimNames.NameId, userId.ToString());
+            claims.Add(claimId);
 
             foreach (var userRole in allUserRoles)
             {

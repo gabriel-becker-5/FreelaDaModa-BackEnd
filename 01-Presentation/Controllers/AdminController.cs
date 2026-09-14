@@ -132,6 +132,7 @@ namespace _01_Presentation.Controllers
         /// <response code="200">Ok, permissão concedida.</response>
         /// <response code="404">Usuário ou Role não encontrados.</response>
         [ProducesResponseType(404)]
+        [ProducesResponseType(409)]
         [ProducesResponseType(200)]
         [HttpPost("concederAcesso")]
         public async Task<IActionResult> AddRoleToUserAsync(string userEmail, string roleName)
@@ -150,7 +151,13 @@ namespace _01_Presentation.Controllers
                 return NotFound();
             }
 
-            await _userService.CreateUserRoleAsync((int)id, (int)roleId);
+            bool created = await _userService.CreateUserRoleAsync((int)id, (int)roleId);
+
+            if (!created)
+            {
+                return Conflict(new { message = "O usuário já possui esse acesso." });
+            }
+
             return Ok();
         }
 

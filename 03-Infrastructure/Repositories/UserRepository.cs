@@ -106,7 +106,8 @@ namespace _03_Infrastructure.Repositories
 
         public async Task<User?> GetUserByIdAsync(int id)
         {
-            return await _context.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id);
+            // ATENÇÃO: sem AsNoTracking de propósito — entidade mutada pelos fluxos de update/delete do UserService.
+            return await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
         }
 
         public async Task<User?> GetUserByEmailAsync(string email)
@@ -240,8 +241,7 @@ namespace _03_Infrastructure.Repositories
 
         public async Task DeleteCurrentUserAsync(User user)
         {
-            user.IsDeleted = true;
-            _context.Users.Update(user);
+            user.IsDeleted = true; // entidade já trackeada: change tracker gera UPDATE apenas do IsDeleted
             await _context.SaveChangesAsync();
         }
 

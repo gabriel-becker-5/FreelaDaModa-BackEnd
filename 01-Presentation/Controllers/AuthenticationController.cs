@@ -61,7 +61,7 @@ namespace _01_Presentation.Controllers
                 return Unauthorized();
             }
 
-            string token = _tokenService.GenerateToken(login.Email, UserRoleString);
+            string token = _tokenService.GenerateToken((int)userId, login.Email, UserRoleString);
             return Ok(new { token });
         }
     }

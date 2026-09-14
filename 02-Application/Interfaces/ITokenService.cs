@@ -2,6 +2,6 @@
 {
     public interface ITokenService
     {
-        string GenerateToken(string user, ICollection<string> allUserRoles);
+        string GenerateToken(int userId, string user, ICollection<string> allUserRoles);
     }
 }

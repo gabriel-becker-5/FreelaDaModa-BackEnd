@@ -361,9 +361,9 @@ namespace _02_Application.Services
 
         // Leitura de perfil
 
-        public async Task<GetFreelancerDto?> GetFreelancerProfileByEmailAsync(string userEmail)
+        public async Task<GetFreelancerDto?> GetFreelancerProfileByIdAsync(int userId)
         {
-            User? user = await _userRepository.GetUserByEmailAsync(userEmail);
+            User? user = await _userRepository.GetUserByIdAsync(userId);
             if (user == null)
             {
                 return null;
@@ -410,9 +410,9 @@ namespace _02_Application.Services
             };
         }
 
-        public async Task<GetCompanyDto?> GetCompanyProfileByEmailAsync(string userEmail)
+        public async Task<GetCompanyDto?> GetCompanyProfileByIdAsync(int userId)
         {
-            User? user = await _userRepository.GetUserByEmailAsync(userEmail);
+            User? user = await _userRepository.GetUserByIdAsync(userId);
             if (user == null)
             {
                 return null;
@@ -462,9 +462,9 @@ namespace _02_Application.Services
 
 
         // Atualização de perfil
-        public async Task<ProfileUpdateResult> UpdateUserFreelancerAsync(UpdateFreelancerDto dto, string userEmail)
+        public async Task<ProfileUpdateResult> UpdateUserFreelancerAsync(UpdateFreelancerDto dto, int userId)
         {
-            User? user = await _userRepository.GetUserByEmailAsync(userEmail);
+            User? user = await _userRepository.GetUserByIdAsync(userId);
             if (user == null)
             {
                 return ProfileUpdateResult.NotFound;
@@ -638,9 +638,9 @@ namespace _02_Application.Services
             return ProfileUpdateResult.Success;
         }
 
-        public async Task<ProfileUpdateResult> UpdateUserCompanyAsync(UpdateCompanyDto dto, string userEmail)
+        public async Task<ProfileUpdateResult> UpdateUserCompanyAsync(UpdateCompanyDto dto, int userId)
         {
-            User? user = await _userRepository.GetUserByEmailAsync(userEmail);
+            User? user = await _userRepository.GetUserByIdAsync(userId);
             if (user == null)
             {
                 return ProfileUpdateResult.NotFound;
@@ -694,19 +694,6 @@ namespace _02_Application.Services
         public async Task RemoveAllRolesFromUserAsync(int id)
         {
             await _userRepository.RemoveAllRolesFromUserAsync(id);
-        }
-
-        public async Task<bool> DeleteCurrentUserAsync(string userEmail)
-        {
-            User? user = await _userRepository.GetUserByEmailAsync(userEmail);
-
-            if (user == null)
-            {
-                return false;
-            }
-
-            await _userRepository.DeleteCurrentUserAsync(user);
-            return true;
         }
 
         public async Task<bool> DeleteUserByIdAsync(int id)
@@ -783,7 +770,11 @@ namespace _02_Application.Services
                 user.Quarter = dto.Quarter;
             }
 
-            if (dto.AdditionalAddressInfo != null && dto.AdditionalAddressInfo != user.AdditionalAddressInfo)
+            if (dto.AdditionalAddressInfo == "")
+            {
+                user.AdditionalAddressInfo = null; // permite limpar o complemento
+            }
+            else if (dto.AdditionalAddressInfo != null && dto.AdditionalAddressInfo != user.AdditionalAddressInfo)
             {
                 user.AdditionalAddressInfo = dto.AdditionalAddressInfo;
             }
