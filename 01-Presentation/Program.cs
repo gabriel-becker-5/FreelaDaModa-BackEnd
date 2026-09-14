@@ -10,9 +10,11 @@ using _03_Infrastructure.Services;
 using _04_Domain.Interfaces;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
 using System.Text;
 
@@ -36,6 +38,8 @@ builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IFreelancerFieldsRepository, FreelancerFieldsRepository>();
+builder.Services.AddScoped<IFreelancerFieldsService, FreelancerFieldsService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 options.UseMySQL(
@@ -44,15 +48,29 @@ options.UseMySQL(
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"])),
             ValidateIssuer = false,
-            ValidateAudience = false
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            NameClaimType = JwtRegisteredClaimNames.Name,
+            RoleClaimType = "roles"
         };
     });
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("login", limiter =>
+    {       
+        limiter.PermitLimit = 25; // Observação: o limite é por IP público. Valor não pode ser muito baixo.
+        limiter.Window = TimeSpan.FromMinutes(1);
+    });
+});
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -115,6 +133,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseCors("AllowFrontend");
 app.UseAuthorization();
 app.MapControllers();
@@ -123,7 +142,8 @@ using (IServiceScope scope = app.Services.CreateScope())
 {
     IRoleService roleservice = scope.ServiceProvider.GetRequiredService<IRoleService>();
     IUserService usuarioservice = scope.ServiceProvider.GetRequiredService<IUserService>();
-    await SeedData.Initializer(roleservice, usuarioservice);
+    IFreelancerFieldsService freelancerfieldsservice = scope.ServiceProvider.GetRequiredService<IFreelancerFieldsService>();
+    await SeedData.Initializer(roleservice, usuarioservice, freelancerfieldsservice);
 }
 
 app.Run();

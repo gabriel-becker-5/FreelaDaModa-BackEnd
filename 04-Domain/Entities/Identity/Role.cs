@@ -1,11 +1,8 @@
-﻿namespace _04_Domain.Entities.UserInfo
+﻿namespace _04_Domain.Entities.Identity
 {
-    public class Role
+    public class Role : BaseEntity
     {
-        public int Id { get; set; }
-
         public string RoleName { get; set; }
-
         public ICollection<UserRole> UserRoles { get; set; }
     }
 }

@@ -1,19 +1,23 @@
-﻿using _04_Domain.Entities.UserInfo;
+﻿using _04_Domain.Entities.Identity;
 
 namespace _04_Domain.Interfaces
 {
     public interface IRoleRepository
     {
-        public Task<Role> CreateRoleAsync(Role newRole);
+        Task<Role> CreateRoleAsync(Role newRole);
 
-        public Task<List<Role?>?> GetAllRolesAsync();
+        Task<ICollection<Role?>> GetAllRolesAsync();
 
-        public Task<bool> RoleExists(string roleName);
+        Task<Role?> GetRoleAsync(string roleName);
 
-        public Task<Role?> GetRoleAsync(string roleName);
+        Task<Role?> GetRoleByIdAsync(int id);
 
-        public Task<Role?> GetRoleByIdAsync(int id);
+        Task<string?> GetRoleNameByIdAsync(int id);
 
-        public Task<string?> GetRoleNameByIdAsync(int id);
+        Task<bool> RoleExists(string roleName);
+
+        Task UpdateRoleAsync(Role role);
+        Task<bool?> DeleteRoleAsync(int id);
+
     }
 }

@@ -1,10 +1,12 @@
-﻿using _02_Application.Interfaces;
-using _04_Domain.Entities.UserInfo;
+﻿using _02_Application.DTOs.User;
+using _02_Application.Interfaces;
+using _04_Domain.Entities.Identity;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace _01_Presentation.Controllers
 {
@@ -14,7 +16,7 @@ namespace _01_Presentation.Controllers
     [Authorize]
     public class AuthenticationController : ControllerBase
     {
-        private readonly ITokenService _tokenservice;
+        private readonly ITokenService _tokenService;
         private readonly IUserService _userService;
         private readonly IRoleService _roleService;
 
@@ -22,40 +24,44 @@ namespace _01_Presentation.Controllers
                                         IUserService userservice,
                                         IRoleService roleService)
         {
-            _tokenservice = tokenservice;
+            _tokenService = tokenservice;
             _userService = userservice;
             _roleService = roleService;
         }
 
-        /// <summary>
-        /// Realiza o login no sistema e gera o Token JWT.
-        /// </summary>
+        /// <summary>Realiza o login no sistema e gera o Token JWT</summary>
         /// <response code="200">Acesso autorizado.</response>
         /// <response code="401">Acesso não autorizado, e-mail ou senha incorretos.</response>
         [HttpPost("login")]
         [AllowAnonymous]
+        [EnableRateLimiting("login")]
         [ProducesResponseType(401)]
         [ProducesResponseType(200)]
         public async Task<IActionResult> Login(LoginRequest login)
         {
-            User? user = await _userService.GetUserByEmailAsync(login.Email);
+            int? userId = await _userService.GetUserIdByEmailAsync(login.Email);
 
-            if (user == null)
+            if (userId == null)
             {
                 return Unauthorized();
             }
 
-            PasswordVerificationResult isPasswordCorrect = _userService.VerifyPassword(user, login.Password);
+            PasswordVerificationResult isPasswordCorrect = await _userService.VerifyPassword((int)userId, login.Password);
 
             if (isPasswordCorrect != PasswordVerificationResult.Success)
             {
                 return Unauthorized();
             }
 
-            List<int> UserRolesInteger = await _userService.GetUserRolesAsync(user);
-            List<string> UserRolesString = await _roleService.GetRoleNameByIdAsync(UserRolesInteger);
-            string token = _tokenservice.GenerateToken(login.Email, UserRolesString);
+            ICollection<int> UserRoleInteger = await _userService.GetUserRolesAsync((int)userId);
+            ICollection<string> UserRoleString = await _roleService.GetRoleNameByIdAsync(UserRoleInteger);
 
+            if (!UserRoleString.Any())
+            {
+                return Unauthorized();
+            }
+
+            string token = _tokenService.GenerateToken((int)userId, login.Email, UserRoleString);
             return Ok(new { token });
         }
     }
