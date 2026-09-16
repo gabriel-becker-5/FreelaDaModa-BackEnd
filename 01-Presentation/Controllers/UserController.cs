@@ -12,7 +12,7 @@ namespace _01_Presentation.Controllers
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/[controller]")]
+    [Route("api/{version:apiVersion}/[controller]")]
     [Authorize]
     public class UserController : ControllerBase
     {
@@ -20,7 +20,7 @@ namespace _01_Presentation.Controllers
         private readonly IRoleService _roleService;
 
         public UserController(IUserService userservice,
-                                        IRoleService roleService)
+                              IRoleService roleService)
         {
             _userService = userservice;
             _roleService = roleService;
