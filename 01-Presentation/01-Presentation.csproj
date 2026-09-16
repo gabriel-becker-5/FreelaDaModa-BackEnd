@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>_01_Presentation</RootNamespace>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	<UserSecretsId>ce17b2f0-fb8f-466d-a29a-f8a2cf454e86</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

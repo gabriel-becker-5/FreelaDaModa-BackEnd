@@ -1,4 +1,5 @@
-﻿using _04_Domain.Entities.UserInfo;
+﻿using _04_Domain.Entities;
+using _04_Domain.Entities.UserInfo;
 using Microsoft.EntityFrameworkCore;
 
 namespace _03_Infrastructure.Data
@@ -9,5 +10,7 @@ namespace _03_Infrastructure.Data
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
+        public DbSet<OrdemServico> OrdensServico { get; set; }
+        public DbSet<Avaliacao> Avaliacoes { get; set; }
     }
 }
