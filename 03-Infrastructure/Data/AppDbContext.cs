@@ -1,9 +1,10 @@
 ﻿using _04_Domain.Entities;
-using _04_Domain.Entities.ObjectsFields;
 using _04_Domain.Entities.Profiles;
 using _04_Domain.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Text.Json;
+using _04_Domain.Enums;
 
 namespace _03_Infrastructure.Data
 {
@@ -11,21 +12,8 @@ namespace _03_Infrastructure.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
         public DbSet<User> Users { get; set; }
-        public DbSet<Role> Roles { get; set; }
-        public DbSet<UserRole> UserRoles { get; set; }
-        public DbSet<CompanyProfile> CompaniesProfiles { get; set; }
-        public DbSet<FreelancerProfile> FreelancersProfiles { get; set; }
-        public DbSet<AvailableTime> AvailableTimes { get; set; }
-        public DbSet<AverageRevenue> AverageRevenues { get; set; }
-        public DbSet<BusinessType> BusinessTypes { get; set; }
-        public DbSet<ExperienceYears> ExperienceYears { get; set; }
-        public DbSet<FreelancerOwnMachines> FreelancerOwnMachines { get; set; }
-        public DbSet<FreelancerSpecialties> FreelancerSpecialties { get; set; }
-        public DbSet<FreelancerPreferences> FreelancerPreferences { get; set; }
-        public DbSet<HowUsuallyArrangeServices> HowUsuallyArrangeServices { get; set; }
-        public DbSet<OwnMachine> OwnMachines { get; set; }
-        public DbSet<Specialty> Specialties { get; set; }
-        public DbSet<WorkshopSize> WorkshopSizes { get; set; }
+        public DbSet<CompanyProfile> CompanyProfiles { get; set; }
+        public DbSet<FreelancerProfile> FreelancerProfiles { get; set; }
 
         public override async Task<int> SaveChangesAsync(
             CancellationToken cancellationToken = default)
@@ -59,60 +47,64 @@ namespace _03_Infrastructure.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<User>()
-                .HasQueryFilter(u => !u.IsDeleted);
+            modelBuilder.Entity<User>(u =>
+            {
+                u.HasQueryFilter(x => !x.IsDeleted);
 
-            modelBuilder.Entity<UserRole>()
-                .HasOne(ur => ur.Role)
-                .WithMany(r => r.UserRoles)
-                .HasForeignKey(ur => ur.RoleId)
-                .OnDelete(DeleteBehavior.Restrict);
+                u.Property(x => x.LegalResponsibleFullName).HasMaxLength(100);
+                u.Property(x => x.LegalResponsibleDocument).HasMaxLength(14);
+                u.Property(x => x.Email).HasMaxLength(100);
+                u.Property(x => x.PasswordHash).HasMaxLength(512);
+                u.Property(x => x.ContactNumber).HasMaxLength(11);
+                u.Property(x => x.PublicProfileDescription).HasMaxLength(500);
+                u.Property(x => x.PostalCode).HasMaxLength(9);
+                u.Property(x => x.Address).HasMaxLength(150);
+                u.Property(x => x.Neighborhood).HasMaxLength(100);
+                u.Property(x => x.AdditionalAddressInfo).HasMaxLength(150);
+                u.Property(x => x.City).HasMaxLength(150);
+                u.Property(x => x.State).HasMaxLength(150);
 
-            modelBuilder.Entity<UserRole>()
-                .HasIndex(ur => new { ur.UserId, ur.RoleId })
-                .IsUnique();
+                u.Property(x => x.Roles)
+                    .HasColumnType("json")
+                    .HasConversion(
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                        v => JsonSerializer.Deserialize<List<Roles>>(v, (JsonSerializerOptions?)null)
+                    );
 
-            modelBuilder.Entity<FreelancerProfile>()
-                .HasOne(p => p.BusinessType)
-                .WithMany()
-                .HasForeignKey(p => p.BusinessTypeId)
-                .OnDelete(DeleteBehavior.Restrict);
+                u.HasIndex(x => x.Email)
+                    .IsUnique();
 
-            modelBuilder.Entity<FreelancerProfile>()
-                .HasOne(p => p.ExperienceYears)
-                .WithMany()
-                .HasForeignKey(p => p.ExperienceYearsId)
-                .OnDelete(DeleteBehavior.Restrict);
+                u.HasIndex(x => x.LegalResponsibleDocument)
+                    .IsUnique();
+            });
 
-            modelBuilder.Entity<FreelancerProfile>()
-                .HasOne(p => p.WorkshopSize)
-                .WithMany()
-                .HasForeignKey(p => p.WorkshopSizeId)
-                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<CompanyProfile>(c =>
+            {
+                c.Property(x => x.LegalName).HasMaxLength(150);
+                c.Property(x => x.CompanyName).HasMaxLength(150);
+                c.Property(x => x.CompanyRegistrationDocument).HasMaxLength(14);
+                c.Property(x => x.CoreBusiness).HasMaxLength(150);
 
-            modelBuilder.Entity<FreelancerProfile>()
-                .HasOne(p => p.HowUsuallyArrangeServices)
-                .WithMany()
-                .HasForeignKey(p => p.HowUsuallyArrangeServicesId)
-                .OnDelete(DeleteBehavior.Restrict);
+                c.HasIndex(x => x.CompanyRegistrationDocument)
+                    .IsUnique();
+            });
 
-            modelBuilder.Entity<FreelancerProfile>()
-                .HasOne(p => p.AvailableTime)
-                .WithMany()
-                .HasForeignKey(p => p.AvailableTimeId)
-                .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<FreelancerProfile>(f =>
+            {
+                f.Property(x => x.SpecialtiesIds)
+                    .HasColumnType("json")
+                    .HasConversion(
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                        v => JsonSerializer.Deserialize<List<Specialty>>(v, (JsonSerializerOptions?)null)
+                    );
 
-            modelBuilder.Entity<FreelancerProfile>()
-                .HasOne(p => p.FreelancerPreferences)
-                .WithMany()
-                .HasForeignKey(p => p.FreelancerPreferencesId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<FreelancerProfile>()
-                .HasOne(p => p.AverageRevenue)
-                .WithMany()
-                .HasForeignKey(p => p.AverageRevenueId)
-                .OnDelete(DeleteBehavior.Restrict);
+                f.Property(x => x.OwnMachinesIds)
+                    .HasColumnType("json")
+                    .HasConversion(
+                        v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                        v => JsonSerializer.Deserialize<List<OwnMachine>>(v, (JsonSerializerOptions?)null)
+                    );
+            });
         }
     }
 }

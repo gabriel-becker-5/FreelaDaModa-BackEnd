@@ -1,7 +1,7 @@
-﻿using _02_Application.Authorization;
-using _02_Application.DTOs;
-using _02_Application.DTOs.Company;
+﻿using _02_Application.DTOs.Company;
 using _02_Application.DTOs.Freelancer;
+using _04_Domain.Enums;
+using _02_Application.Enums;
 using _02_Application.Interfaces;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
@@ -42,12 +42,7 @@ namespace _01_Presentation.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> CreateFreelancerAsync(CreateFreelancerDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-
-            int? newUser = await _userService.RegisterFreelancerAsync(dto);
+            int? newUser = await _userService.CreateFreelancerAsync(dto);
 
             if (newUser == null)
             {
@@ -68,12 +63,7 @@ namespace _01_Presentation.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> CreateCompanyAsync(CreateCompanyDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest();
-            }
-
-            int? newUser = await _userService.RegisterCompanyAsync(dto);
+            int? newUser = await _userService.CreateCompanyAsync(dto);
 
             if (newUser == null)
             {
@@ -82,7 +72,6 @@ namespace _01_Presentation.Controllers
 
             return CreatedAtAction(null, null);
         }
-
 
         // Leitura
         /// <summary>Obtém o perfil completo do usuário logado - Freelancer </summary>
@@ -93,12 +82,12 @@ namespace _01_Presentation.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [HttpGet("perfil/freelancer")]
-        [Authorize(Roles = Roles.Freelancer)]
+        [Authorize(Roles = nameof(Roles.Freelancer))]
         public async Task<IActionResult> GetUserFreelancerAsync()
         {
             int? userId = GetLoggedUserId();
 
-            if (userId == null || !ModelState.IsValid)
+            if (userId == null)
             {
                 return BadRequest();
             }
@@ -121,12 +110,12 @@ namespace _01_Presentation.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(404)]
         [HttpGet("perfil/empresa")]
-        [Authorize(Roles = Roles.Company)]
+        [Authorize(Roles = nameof(Roles.Company))]
         public async Task<IActionResult> GetUserCompanyAsync()
         {
             int? userId = GetLoggedUserId();
 
-            if (userId == null || !ModelState.IsValid)
+            if (userId == null)
             {
                 return BadRequest();
             }
@@ -141,7 +130,6 @@ namespace _01_Presentation.Controllers
             return Ok(dtoLoggedUser);
         }
 
-
         // Atualização
         /// <summary>Atualiza o perfil do usuário logado - Freelancer </summary>
         /// <param name="dto">Campos: Nome completo do responsável legal, CPF do responsável legal, E-mail, Telefone, CEP, Endereço, Número, Bairro, Cidade, Estado, Complemento, Descrição Pública do Perfil, Data de nascimento, Tipo de negócio, Tempo de experiência, Tamanho da oficina, Especialidades, Máquinas que possui, Como costuma fecha serviços, Disponibilidade de tempo, Preferências do Freelancer, Faturamento médio, Já tem produtor fixo?, Possui veículo para buscar/entregar as peças?</param>
@@ -154,14 +142,14 @@ namespace _01_Presentation.Controllers
         [ProducesResponseType(409)]
         [ProducesResponseType(404)]
         [HttpPut("atualizarcadastro/freelancer")]
-        [Authorize(Roles = Roles.Freelancer)]
+        [Authorize(Roles = nameof(Roles.Freelancer))]
         public async Task<IActionResult> UpdateUserFreelancerAsync(UpdateFreelancerDto dto)
         {
             int? userId = GetLoggedUserId();
 
-            if (userId == null || !ModelState.IsValid)
+            if (userId == null)
             {
-                return BadRequest(new { message = "Os dados informados são inválidos." });
+                return BadRequest();
             }
 
             ProfileUpdateResult result = await _userService.UpdateUserFreelancerAsync(dto, (int)userId);
@@ -171,6 +159,7 @@ namespace _01_Presentation.Controllers
                 ProfileUpdateResult.Success => Ok(),
                 ProfileUpdateResult.NotFound => NotFound(),
                 ProfileUpdateResult.EmailInUse => Conflict(new { message = "O e-mail informado já está em uso por outra conta." }),
+                ProfileUpdateResult.DocumentInUse => Conflict(new { message = "O documento informado (CPF/CNPJ) já está em uso por outra conta." }),
                 _ => BadRequest(new { message = "Os dados informados são inválidos." })
             };
         }
@@ -186,12 +175,12 @@ namespace _01_Presentation.Controllers
         [ProducesResponseType(409)]
         [ProducesResponseType(404)]
         [HttpPut("atualizarcadastro/empresa")]
-        [Authorize(Roles = Roles.Company)]
+        [Authorize(Roles = nameof(Roles.Company))]
         public async Task<IActionResult> UpdateUserCompanyAsync(UpdateCompanyDto dto)
         {
             int? userId = GetLoggedUserId();
 
-            if (userId == null || !ModelState.IsValid)
+            if (userId == null)
             {
                 return BadRequest(new { message = "Os dados informados são inválidos." });
             }
@@ -203,10 +192,10 @@ namespace _01_Presentation.Controllers
                 ProfileUpdateResult.Success => Ok(),
                 ProfileUpdateResult.NotFound => NotFound(),
                 ProfileUpdateResult.EmailInUse => Conflict(new { message = "O e-mail informado já está em uso por outra conta." }),
+                ProfileUpdateResult.DocumentInUse => Conflict(new { message = "O documento informado (CPF/CNPJ) já está em uso por outra conta." }),
                 _ => BadRequest(new { message = "Os dados informados são inválidos." })
             };
         }
-
 
         // Exclusão
         /// <summary>Deleta a conta do usuário logado - Freelancer e Empresa/Confecção</summary>
@@ -217,7 +206,7 @@ namespace _01_Presentation.Controllers
         [ProducesResponseType(404)]
         [ProducesResponseType(204)]
         [HttpDelete("deletarcadastro")]
-        [Authorize(Roles = $"{Roles.Freelancer}, {Roles.Company}")]
+        [Authorize(Roles = $"{nameof(Roles.Freelancer)}, {nameof(Roles.Company)}")]
         public async Task<IActionResult> DeleteCurrentUserAsync()
         {
             int? userId = GetLoggedUserId();

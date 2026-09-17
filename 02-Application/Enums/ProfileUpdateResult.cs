@@ -1,10 +1,11 @@
-﻿namespace _02_Application.DTOs
+﻿namespace _02_Application.Enums
 {
     public enum ProfileUpdateResult
     {
         Success,
         NotFound,
         InvalidData,
-        EmailInUse
+        EmailInUse,
+        DocumentInUse
     }
 }

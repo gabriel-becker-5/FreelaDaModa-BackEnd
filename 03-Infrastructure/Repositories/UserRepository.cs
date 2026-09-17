@@ -1,7 +1,7 @@
 ﻿using _03_Infrastructure.Data;
-using _04_Domain.Entities.ObjectsFields;
-using _04_Domain.Entities.Profiles;
 using _04_Domain.Entities.Identity;
+using _04_Domain.Entities.Profiles;
+using _04_Domain.Enums;
 using _04_Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,7 +16,6 @@ namespace _03_Infrastructure.Repositories
         }
 
         // Crud Usuários
-
         public async Task<User> CreateUserAsync(User user)
         {
             _context.Users.Add(user);
@@ -24,69 +23,52 @@ namespace _03_Infrastructure.Repositories
             return user;
         }
 
-        // Crud Profile/Perfil
-
-        public async Task<FreelancerProfile> CreateFreelancerProfileAsync(FreelancerProfile profile)
+        public async Task<int?> CreateFreelancerUserProfileAsync(User user, FreelancerProfile profile)
         {
-            _context.FreelancersProfiles.Add(profile);
-            await _context.SaveChangesAsync();
-            return profile;
-        }
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
-        public async Task<CompanyProfile> CreateCompanyProfileAsync(CompanyProfile profile)
-        {
-            _context.CompaniesProfiles.Add(profile);
-            await _context.SaveChangesAsync();
-            return profile;
-        }
-
-        public async Task CreateFreelancerSpecialties(ICollection<FreelancerSpecialties> freelancerSpecialties)
-        {
-            foreach (var specialty in freelancerSpecialties)
+            try
             {
-                _context.FreelancerSpecialties.Add(specialty);
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+
+                profile.UserId = user.Id;
+                _context.FreelancerProfiles.Add(profile);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                return user.Id;
             }
-
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task CreateFreelancerOwnMachines(ICollection<FreelancerOwnMachines> freelancerOwnMachines)
-        {
-            foreach (var ownMachine in freelancerOwnMachines)
+            catch (Exception ex)
             {
-                _context.FreelancerOwnMachines.Add(ownMachine);
+                await transaction.RollbackAsync(); 
+                return null;
             }
-
-            await _context.SaveChangesAsync();
         }
 
-
-
-        // Role do Usuário
-
-        public async Task<UserRole> CreateUserRoleAsync(UserRole userRole)
+        public async Task<int?> CreateCompanyUserProfileAsync(User user, CompanyProfile profile)
         {
-            _context.UserRoles.Add(userRole);
-            await _context.SaveChangesAsync();
-            return userRole;
-        }
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
-        // Especialidades do Freelancer
+            try
+            {
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
 
-        public async Task<FreelancerSpecialties> AddFreelancerSpecialtyAsync(FreelancerSpecialties freelancerSpecialties)
-        {
-            _context.FreelancerSpecialties.Add(freelancerSpecialties);
-            await _context.SaveChangesAsync();
-            return freelancerSpecialties;
-        }
+                profile.UserId = user.Id;
+                _context.CompanyProfiles.Add(profile);
+                await _context.SaveChangesAsync();
 
-        // Máquinas do Freelancer
+                await transaction.CommitAsync();
 
-        public async Task<FreelancerOwnMachines> AddFreelancerOwnMachineAsync(FreelancerOwnMachines freelancerOwnMachines)
-        {
-            _context.FreelancerOwnMachines.Add(freelancerOwnMachines);
-            await _context.SaveChangesAsync();
-            return freelancerOwnMachines;
+                return user.Id;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return null;
+            }
         }
 
         public async Task<ICollection<User>> GetAllUsersAsync(int skip, int take)
@@ -106,27 +88,19 @@ namespace _03_Infrastructure.Repositories
 
         public async Task<User?> GetUserByIdAsync(int id)
         {
-            // ATENÇÃO: sem AsNoTracking de propósito — entidade mutada pelos fluxos de update/delete do UserService.
-            return await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+            // ATENÇÃO: não alterar para '.AsNoTracking' — A entidade é mutada por update/delete do UserService
+            return await _context.Users.FindAsync(id);
         }
 
         public async Task<User?> GetUserByEmailAsync(string email)
         {
-            // ATENÇÃO: sem AsNoTracking de propósito — entidade mutada pelos fluxos de update/delete do UserService.
-            User? result = await _context.Users.Where(u => u.Email == email).FirstOrDefaultAsync();
-
-            if (result == null)
-            {
-                return null;
-            }
-
-            return result;
+            return await _context.Users.Where(u => u.Email.ToLower() == email.ToLower()).FirstOrDefaultAsync();
         }
 
         public async Task<FreelancerProfile?> GetFreelancerProfileAsync(int userId)
         {
-            // ATENÇÃO: sem AsNoTracking de propósito — entidade mutada pelos fluxos de update/delete do UserService.
-            FreelancerProfile? result = await _context.FreelancersProfiles.Where(fp => fp.UserId == userId).FirstOrDefaultAsync();
+            // ATENÇÃO: não alterar para '.AsNoTracking' — A entidade é mutada por update/delete do UserService
+            FreelancerProfile? result = await _context.FreelancerProfiles.Where(fp => fp.UserId == userId).FirstOrDefaultAsync();
 
             if (result == null)
             {
@@ -135,12 +109,11 @@ namespace _03_Infrastructure.Repositories
 
             return result;
         }
-
 
         public async Task<CompanyProfile?> GetCompanyProfileAsync(int userId)
         {
-            // ATENÇÃO: sem AsNoTracking de propósito — entidade mutada pelos fluxos de update/delete do UserService.
-            CompanyProfile? result = await _context.CompaniesProfiles.Where(cp => cp.UserId == userId).FirstOrDefaultAsync();
+            // ATENÇÃO: não alterar para '.AsNoTracking' — A entidade é mutada por update/delete do UserService
+            CompanyProfile? result = await _context.CompanyProfiles.Where(cp => cp.UserId == userId).FirstOrDefaultAsync();
 
             if (result == null)
             {
@@ -150,93 +123,65 @@ namespace _03_Infrastructure.Repositories
             return result;
         }
 
-        public async Task<ICollection<UserRole>> GetUserRolesAsync(int userId)
+        public async Task<ICollection<Roles>> GetUserRolesAsync(int userId)
         {
-            List<UserRole> allUserRoles = await _context.UserRoles.Where(ur => ur.UserId == userId).ToListAsync();
-            return allUserRoles;
+            User? result = await _context.Users.FindAsync(userId);
+
+            if (result == null)
+            {
+                return null;
+            }
+
+            return result.Roles;
         }
 
-
-        public async Task UpdateFreelancerAsync(int freelancerId,
-                                        ICollection<FreelancerSpecialties>? freelancerSpecialties,
-                                        ICollection<FreelancerOwnMachines>? freelancerOwnMachines)
+        public async Task UpdateFreelancerAsync(User user, FreelancerProfile profile)
         {
-            if (freelancerSpecialties?.Count > 0)
-            {
-                await RemoveAllFreelancerSpecialties(freelancerId);
-
-                foreach (FreelancerSpecialties specialty in freelancerSpecialties)
-                {
-                    await AddFreelancerSpecialtyAsync(specialty);
-                }
-
-            }
-
-            if (freelancerOwnMachines?.Count > 0)
-            {
-                await RemoveAllFreelancerOwnMachines(freelancerId);
-
-                foreach (FreelancerOwnMachines ownMachine in freelancerOwnMachines)
-                {
-                    await AddFreelancerOwnMachineAsync(ownMachine);
-                }
-            }
-
+            _context.FreelancerProfiles.Update(profile);
+            _context.Users.Update(user);
             await _context.SaveChangesAsync();
         }
 
-        public async Task UpdateCompanyAsync()
+        public async Task UpdateCompanyAsync(User user, CompanyProfile profile)
         {
+            _context.CompanyProfiles.Update(profile);
             await _context.SaveChangesAsync();
         }
 
-        public async Task RemoveAllFreelancerSpecialties(int freelancerId)
+        private bool IsUserRoleActive(User user, int roleId)
         {
-            List<FreelancerSpecialties> allSpecialties = await _context.FreelancerSpecialties.Where(fs => fs.FreelancerId == freelancerId).ToListAsync();
+            return user.Roles.Contains((Roles)roleId);
+        }
 
-            foreach (var specialty in allSpecialties)
+        public async Task AddRoleToUserAsync(User user, int roleId)
+        {
+            if (!IsUserRoleActive(user, roleId))
             {
-                _context.FreelancerSpecialties.Remove(specialty);
+                user.Roles.Add((Roles)roleId);
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync();
             }
-
-            await _context.SaveChangesAsync();
         }
 
-        public async Task RemoveAllFreelancerOwnMachines(int freelancerId)
+        public async Task RemoveRoleFromUserAsync(User user, int roleId)
         {
-            List<FreelancerOwnMachines> allOwnMachines = await _context.FreelancerOwnMachines.Where(fom => fom.FreelancerId == freelancerId).ToListAsync();
-
-            foreach (var ownMachine in allOwnMachines)
+            if (IsUserRoleActive(user, roleId))
             {
-                _context.FreelancerOwnMachines.Remove(ownMachine);
-            }
-
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task RemoveRoleFromUserAsync(int userId, int roleId)
-        {
-            UserRole? result = await _context.UserRoles.Where(ur => ur.UserId == userId &&
-                                                                 ur.RoleId == roleId).
-                                                                 FirstOrDefaultAsync();
-            if (result != null)
-            {
-                _context.UserRoles.Remove(result);
+                user.Roles.Remove((Roles)roleId);
+                _context.Users.Update(user);
                 await _context.SaveChangesAsync();
             }
         }
 
         public async Task RemoveAllRolesFromUserAsync(int userId)
         {
-            List<UserRole> allUserRoles = await _context.UserRoles.Where(ur => ur.UserId == userId)
-                                                          .ToListAsync();
+            User? result = await _context.Users.FindAsync(userId);
 
-            foreach (UserRole userRole in allUserRoles)
+            if (result != null)
             {
-                _context.UserRoles.Remove(userRole);
+                result.Roles.Clear();
+                await _context.SaveChangesAsync();
             }
-
-            await _context.SaveChangesAsync();
         }
 
         public async Task DeleteCurrentUserAsync(User user)
@@ -245,9 +190,9 @@ namespace _03_Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        public async Task<bool> IsUserEmailRegistered(string email)
+        public async Task<bool> IsEmailRegistered(string email)
         {
-            User? result = await _context.Users.Where(u => u.Email == email).FirstOrDefaultAsync();
+            User? result = await _context.Users.Where(u => u.Email.ToLower() == email.ToLower()).FirstOrDefaultAsync();
 
             if (result == null)
             {
@@ -257,18 +202,16 @@ namespace _03_Infrastructure.Repositories
             return true;
         }
 
-        public async Task<bool> UserRoleExists(int userId, int roleId)
+        public async Task<bool> IsCpfRegistered(string cpf)
         {
-            UserRole? result = await _context.UserRoles.Where(ur => ur.UserId == userId &&
-                                                                 ur.RoleId == roleId).
-                                                                 FirstOrDefaultAsync();
+            return await _context.Users
+                .AnyAsync(u => u.LegalResponsibleDocument.ToLower() == cpf.ToLower());
+        }
 
-            if (result == null)
-            {
-                return false;
-            }
-
-            return true;
+        public async Task<bool> IsCnpjRegistered(string cnpj)
+        {
+            return await _context.CompanyProfiles
+                .AnyAsync(c => c.CompanyRegistrationDocument.ToLower() == cnpj.ToLower());
         }
     }
 }

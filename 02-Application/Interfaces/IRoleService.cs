@@ -1,22 +1,13 @@
-﻿using _02_Application.DTOs.User;
-using _04_Domain.Entities.Identity;
+﻿using _02_Application.DTOs.Freelancer;
 
 namespace _02_Application.Interfaces
 {
     public interface IRoleService
     {
-        Task<UserRoleDto?> CreateRoleAsync(string roleName);
-
-        Task<ICollection<UserRoleDto>> GetAllRolesAsync();
-
-        Task<int?> GetRoleIdByNameAsync(string roleName);
-
-        Task<UserRoleDto?> GetRoleByIdAsync(int id);
-
-        Task<ICollection<string>> GetRoleNameByIdAsync(ICollection<int> RolesIds);
-
-        Task<bool?> UpdateRoleAsync(int id, string newRoleName);
-
-        Task<bool?> DeleteRoleAsync(int id);
+        Task<ICollection<IdLabelDto>> GetAllRolesAsync();
+        Task<ICollection<IdLabelDto>> GetUserRolesAsync(int userId);
+        Task<bool> AddRoleToUserAsync(int userId, int roleId);
+        Task<bool> RemoveRoleFromUserAsync(int userId, int roleId);
+        Task<bool> RemoveAllRolesFromUserAsync(int userId);
     }
 }

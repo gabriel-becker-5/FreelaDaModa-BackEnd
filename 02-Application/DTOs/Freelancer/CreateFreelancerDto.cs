@@ -4,19 +4,21 @@ namespace _02_Application.DTOs.Freelancer
 {
     public class CreateFreelancerDto
     {
-        [Required(ErrorMessage = "O Nome do responsável legal é obrigatório.")]
+        [Required(ErrorMessage = "O Nome do responsável legal é obrigatório."), MaxLength(100)]
         public string LegalResponsibleFullName { get; set; }
 
         [Required(ErrorMessage = "O CPF do responsável legal é obrigatório.")]
         [RegularExpression(@"^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$", ErrorMessage = "Formato do CPF incorreto.")]
         public string LegalResponsibleDocument { get; set; }
 
-        [Required(ErrorMessage = "O E-mail é obrigatório.")]
+        [Required(ErrorMessage = "O E-mail é obrigatório."), MaxLength(100)]
         [EmailAddress(ErrorMessage = "Informe um E-mail válido.")]
         public string Email { get; set; }
 
-        [Required(ErrorMessage = "A senha é obrigatória.")]
-        [MinLength(8, ErrorMessage = "A senha deve ter no mínimo 8 caracteres.")]
+        [Required(ErrorMessage = "A senha é obrigatória."), MaxLength(50)]
+        [RegularExpression(
+    @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z\s]).{10,}$",
+    ErrorMessage = "A senha deve ter no mínimo 10 caracteres, incluindo maiúscula, minúscula, número e caractere especial.")]
         public string Password { get; set; }
 
         [Required(ErrorMessage = "O telefone/celular é obrigatório.")]
@@ -24,28 +26,29 @@ namespace _02_Application.DTOs.Freelancer
         public string ContactNumber { get; set; }
 
         [Required(ErrorMessage = "O CEP é obrigatório.")]
-        [RegularExpression(@"^\d{8}$", ErrorMessage = "O CEP deve conter 8 dígitos.")]
+        [RegularExpression(@"^\d{5}-?\d{3}$", ErrorMessage = "O CEP deve conter 8 dígitos.")]
         public string PostalCode { get; set; }
 
-        [Required(ErrorMessage = "O Endereço é obrigatório.")]
+        [Required(ErrorMessage = "O Endereço é obrigatório."), MaxLength(150)]
         public string Address { get; set; }
 
         [Required(ErrorMessage = "O número do endereço é obrigatório.")]
         public int AddressNumber { get; set; }
 
-        [Required(ErrorMessage = "O bairro é obrigatório.")]
-        public string Quarter { get; set; }
+        [Required(ErrorMessage = "O bairro é obrigatório."), MaxLength(100)]
+        public string Neighborhood { get; set; }
 
         [MaxLength(150, ErrorMessage = "O complemento de endereço aceita no máximo 150 caracteres.")]
         public string? AdditionalAddressInfo { get; set; }
 
-        [Required(ErrorMessage = "A cidade é obrigatória.")]
+        [Required(ErrorMessage = "A cidade é obrigatória."), MaxLength(150)]
         public string City { get; set; }
 
-        [Required(ErrorMessage = "O estado é obrigatório.")]
+        [Required(ErrorMessage = "O estado é obrigatório."), MaxLength(150)]
         public string State { get; set; }
 
-        [MaxLength(300, ErrorMessage = "A descrição aceita no máximo 300 caracteres.")]
+        [Required(ErrorMessage = "A descrição pública do perfil é obrigatória."),
+         MaxLength(500, ErrorMessage = "A descrição aceita no máximo 500 caracteres.")]
         public string PublicProfileDescription { get; set; }
 
 
@@ -64,11 +67,11 @@ namespace _02_Application.DTOs.Freelancer
 
         [Required(ErrorMessage = "Selecione ao menos uma especialidade.")]
         [MinLength(1, ErrorMessage = "Selecione ao menos uma especialidade.")]
-        public ICollection<int> SpecialtyIds { get; set; }
+        public List<int> SpecialtyIds { get; set; }
 
         [Required(ErrorMessage = "Selecione ao menos uma máquina.")]
         [MinLength(1, ErrorMessage = "Selecione ao menos uma máquina.")]
-        public ICollection<int> OwnMachineIds { get; set; }
+        public List<int> OwnMachineIds { get; set; }
 
         [Required(ErrorMessage = "Informe como costuma fechar serviços.")]
         public int HowUsuallyArrangeServicesId { get; set; }

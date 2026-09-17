@@ -1,7 +1,8 @@
-﻿using _02_Application.Authorization;
-using _02_Application.DTOs;
+﻿using _02_Application.DTOs;
+using _02_Application.DTOs.Freelancer;
 using _02_Application.DTOs.User;
 using _02_Application.Interfaces;
+using _04_Domain.Enums;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,7 +12,7 @@ namespace _01_Presentation.Controllers
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/[controller]")]
-    [Authorize(Roles = Roles.Admin)]
+    [Authorize(Roles = nameof(Roles.Admin))]
     public class AdminController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -26,17 +27,14 @@ namespace _01_Presentation.Controllers
 
         // Gestão de Usuários
         /// <summary>Painel de Admin - Lista todos os usuários cadastrados</summary>
-        /// <returns>Retorna a lista de usuários ou lista vazia.</returns>
-        /// <response code="200">Ok, lista de usuários.</response>
+        /// <param name="page">Número da página (mínimo 1, máximo 1000).</param>
+        /// <param name="pageSize">Quantidade de registros por página (mínimo 1, máximo 50).</param>
+        /// <returns>Retorna a lista paginada de usuários ou lista vazia.</returns>
+        /// <response code="200">Ok, lista paginada de usuários.</response>
         [ProducesResponseType(200)]
         [HttpGet("listaUsuarios")]
         public async Task<IActionResult> GetAllUsersAsync(int page = 1, int pageSize = 10)
         {
-            if (page < 1) { page = 1; }
-            if (page > 1000) { page = 1000; } // teto para evitar requests gigantes
-            if (pageSize < 1) { pageSize = 10; }
-            if (pageSize > 50) { pageSize = 50; }   // teto para evitar requests gigantes
-
             PagedResult<UserDto> result = await _userService.GetAllUsersAsync(page, pageSize);
 
             return Ok(result);
@@ -49,7 +47,6 @@ namespace _01_Presentation.Controllers
         /// <response code="404">Usuário não encontrado.</response>
         [ProducesResponseType(200)]
         [ProducesResponseType(404)]
-        [ActionName(nameof(GetUserByIdAsync))]
         [HttpGet("pesquisaUsuarioPorId")]
         public async Task<IActionResult> GetUserByIdAsync(int id)
         {
@@ -63,37 +60,22 @@ namespace _01_Presentation.Controllers
             return Ok(result);
         }
 
-        /// <summary>Painel de Admin - Deleta qualquer usuário a partir do e-mail</summary>
-        /// <param name="userEmail">E-mail do usuário.</param>
+        /// <summary>Painel de Admin - Deleta qualquer usuário a partir do ID</summary>
+        /// <param name="id">Id do Usuário.</param>
         /// <response code="204">Ok, usuário deletado.</response>
-        /// <response code="400">A informação inserida é inválida.</response>
         /// <response code="404">Usuário não encontrado.</response>
         [ProducesResponseType(204)]
         [ProducesResponseType(404)]
-        [ProducesResponseType(400)]
         [HttpDelete("deletaUsuario")]
-        public async Task<IActionResult> AdminDeleteUserAsync(string userEmail)
+        public async Task<IActionResult> AdminDeleteUserAsync(int id)
         {
-            if (string.IsNullOrEmpty(userEmail))
-            {
-                return BadRequest();
-            }
-
-            int? userToDelete = await _userService.GetUserIdByEmailAsync(userEmail);
-
-            if (userToDelete == null)
-            {
-                return NotFound();
-            }
-
-            if (!await _userService.DeleteUserByIdAsync((int)userToDelete))
+            if (!await _userService.DeleteUserByIdAsync((int)id))
             {
                 return NotFound();
             }
 
             return NoContent();
         }
-
 
         // Gestão de Roles/Acessos
         /// <summary>Painel de Admin - Lista todas as Roles existentes</summary>
@@ -105,107 +87,56 @@ namespace _01_Presentation.Controllers
             return Ok(await _roleService.GetAllRolesAsync());
         }
 
-        /// <summary>Painel de Admin - Pesquisa a Role pelo ID único</summary>
-        /// <param name="roleId">ID única da role.</param>
-        /// <returns>A role, se encontrada.</returns>
-        /// <response code="200">Ok, retorna a role.</response>
-        /// <response code="404">Role não encontrada.</response>
-        [ProducesResponseType(200)]
-        [ProducesResponseType(404)]
-        [HttpGet("pesquisaRolePorId")]
-        public async Task<IActionResult> GetRoleByIdAsync(int roleId)
-        {
-            UserRoleDto? result = await _roleService.GetRoleByIdAsync(roleId);
-
-            if (result == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(result);
-        }
-
         // Vínculo entre Usuário e Role
         /// <summary>Painel de Admin - Concede acesso à role definida para o usuário</summary>
-        /// <param name="userEmail">E-mail do usuário.</param>
-        /// <param name="roleName">Posição em que será concedido acesso.</param>
+        /// <param name="userId">ID único do usuário.</param>
+        /// <param name="roleId">ID único da role em que será concedido acesso.</param>
         /// <response code="200">Ok, permissão concedida.</response>
-        /// <response code="404">Usuário ou Role não encontrados.</response>
-        [ProducesResponseType(404)]
-        [ProducesResponseType(409)]
+        /// <response code="400">Usuário ou Role não encontrados.</response>
+        [ProducesResponseType(400)]
         [ProducesResponseType(200)]
         [HttpPost("concederAcesso")]
-        public async Task<IActionResult> AddRoleToUserAsync(string userEmail, string roleName)
+        public async Task<IActionResult> AddRoleToUserAsync(int userId, int roleId)
         {
-            int? id = await _userService.GetUserIdByEmailAsync(userEmail);
-            
-            if (id == null)
+            if (!await _roleService.AddRoleToUserAsync(userId, roleId))
             {
-                return NotFound();
-            }
-
-            int? roleId = await _roleService.GetRoleIdByNameAsync(roleName);
-
-            if (roleId == null)
-            {
-                return NotFound();
-            }
-
-            bool created = await _userService.CreateUserRoleAsync((int)id, (int)roleId);
-
-            if (!created)
-            {
-                return Conflict(new { message = "O usuário já possui esse acesso." });
+                return BadRequest(new { message = "Usuário ou Role não encontrados." });
             }
 
             return Ok();
         }
 
         /// <summary>Painel de Admin - Revoga acesso à role definida para o usuário</summary>
-        /// <param name="userEmail">E-mail do usuário.</param>
+        /// <param name="userId">Id único do usuário.</param>
         /// <param name="roleId">ID único da role em que será removido o acesso.</param>
         /// <response code="200">Ok, acesso revogado.</response>
-        /// <response code="404">Usuário ou Role não encontrados.</response>
+        /// <response code="400">Usuário ou Role não encontrados.</response>
         [ProducesResponseType(200)]
-        [ProducesResponseType(404)]
+        [ProducesResponseType(400)]
         [HttpDelete("revogarAcesso")]
-        public async Task<IActionResult> RemoveRoleFromUserAsync(string userEmail, int roleId)
+        public async Task<IActionResult> RemoveRoleFromUserAsync(int userId, int roleId)
         {
-            int? id = await _userService.GetUserIdByEmailAsync(userEmail);
-
-            if (id == null)
+            if (!await _roleService.RemoveRoleFromUserAsync(userId, roleId))
             {
-                return NotFound();
+                return BadRequest(new { message = "Usuário ou Role não encontrados." });
             }
 
-            UserRoleDto roleDto = await _roleService.GetRoleByIdAsync(roleId);
-
-            if (roleDto == null)
-            {
-                return NotFound();
-            }
-
-            await _userService.RemoveRoleFromUserAsync((int)id, roleDto.RoleId);
             return Ok();
         }
 
         /// <summary>Painel de Admin - Revoga o acesso à todas as roles do usuário</summary>
-        /// <param name="userEmail">E-mail do usuário.</param>
+        /// <param name="userId">Id único do usuário.</param>
         /// <response code="200">Ok, acessos removidos.</response>
-        /// <response code="404">Usuário ou Role não encontrados.</response>
-        [ProducesResponseType(404)]
+        /// <response code="400">Usuário ou Role não encontrados.</response>
+        [ProducesResponseType(400)]
         [ProducesResponseType(200)]
         [HttpDelete("revogarTodosAcessos")]
-        public async Task<IActionResult> RemoveAllRolesFromUserAsync(string userEmail)
+        public async Task<IActionResult> RemoveAllRolesFromUserAsync(int userId)
         {
-            int? id = await _userService.GetUserIdByEmailAsync(userEmail);
-
-            if (id == null)
+            if (!await _roleService.RemoveAllRolesFromUserAsync((int)userId))
             {
-                return NotFound();
+                return BadRequest(new { message = "Usuário ou Role não encontrados." });
             }
-
-            await _userService.RemoveAllRolesFromUserAsync((int)id);
 
             return Ok();
         }
@@ -214,9 +145,7 @@ namespace _01_Presentation.Controllers
         /// <param name="userEmail">E-mail do usuário.</param>
         /// <returns>Lista de todas as roles do usuário.</returns>
         /// <response code="200">Ok, retorna lista com todas as roles do usuário.</response>
-        /// <response code="400">Não foi possível executar a solicitação.</response>
-        /// <response code="404">Usuário ou Role não encontrados.</response>
-        [ProducesResponseType(404)]
+        /// <response code="400">Usuário ou Role não encontrados.</response>
         [ProducesResponseType(400)]
         [ProducesResponseType(200)]
         [HttpGet("exibirAcessosUsuario")]
@@ -226,85 +155,17 @@ namespace _01_Presentation.Controllers
 
             if (id == null)
             {
-                return NotFound();
+                return BadRequest(new { message = "Usuário ou Role não encontrados." });
             }
 
-            List<int> allUserRolesInteger = (await _userService.GetUserRolesAsync((int)id)).ToList();
-            List<string> allUserRolesString = (await _roleService.GetRoleNameByIdAsync(allUserRolesInteger)).ToList();
-            List<UserRoleDto> allUserRoles = [];
-
-            if (allUserRolesInteger.Count == allUserRolesString.Count)
+            ICollection<IdLabelDto> userRoles = await _roleService.GetUserRolesAsync((int)id);
+            
+            if (userRoles.Count < 1)
             {
-                for (int i = 0; i < allUserRolesInteger.Count; i++)
-                {
-                    UserRoleDto newUserRoleDto = new()
-                    {
-                        RoleId = allUserRolesInteger[i],
-                        RoleName = allUserRolesString[i]
-                    };
-
-                    allUserRoles.Add(newUserRoleDto);
-                }
-
-                return Ok(allUserRoles);
+                return BadRequest(new { message = "Usuário ou Role não encontrados." });
             }
-
-            return BadRequest(new { message = "Não foi possível executar sua solicitação." });
-        }
-
-        /// <summary>Painel de Admin - Atualiza o nome da role</summary>
-        /// <param name="id">ID único da role.</param>
-        /// <param name="dto">Novo nome da role.</param>
-        /// <returns>A role atualizada.</returns>
-        /// <response code="200">Ok, role atualizada.</response>
-        /// <response code="400">Não é possível atualizar a Role informada.</response>
-        /// <response code="404">Role não encontrada.</response>
-        [ProducesResponseType(200)]
-        [ProducesResponseType(400)]
-        [ProducesResponseType(404)]
-        [HttpPut("atualizar/role")]
-        public async Task<IActionResult> UpdateRoleAsync(int id, UserRoleDto dto)
-        {
-            bool? result = await _roleService.UpdateRoleAsync(id, dto.RoleName);
-
-            if (result == null)
-            {
-                return NotFound();
-            }
-
-            if (result == false)
-            {
-                return BadRequest("Não é possível atualizar a Role informada.");
-            }
-
-            return Ok();
-        }
-
-        /// <summary>Painel de Admin - Exclui a role</summary>
-        /// <param name="id">ID único da role.</param>
-        /// <returns>A role excluída.</returns>
-        /// <response code="204">Ok, role excluída.</response>
-        /// <response code="404">A role informada não existe.</response>
-        /// <response code="409">Exclusão bloqueada, a role informada está em uso.</response>
-        [ProducesResponseType(204)]
-        [ProducesResponseType(404)]
-        [ProducesResponseType(409)]
-        [HttpDelete("deletar/role")]
-        public async Task<IActionResult> DeleteRoleAsync(int id)
-        {
-            bool? result = await _roleService.DeleteRoleAsync(id);
-
-            if (result == null)
-            {
-                return NotFound();
-            }
-
-            if (result == false)
-            {
-                return Conflict("Não é possível excluir Role em uso.");
-            }
-
-            return NoContent();
+            
+            return Ok(userRoles);
         }
     }
 }

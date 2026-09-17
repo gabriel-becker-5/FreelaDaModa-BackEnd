@@ -34,11 +34,10 @@ builder.Services.AddCors(options =>
 
 // Interfaces
 builder.Services.AddSingleton<ITokenService, TokenService>();
-builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IFreelancerFieldsRepository, FreelancerFieldsRepository>();
 builder.Services.AddScoped<IFreelancerFieldsService, FreelancerFieldsService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -109,8 +108,8 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 
-    string? xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    string? xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    string xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
     options.IncludeXmlComments(xmlPath);
 });
@@ -140,10 +139,9 @@ app.MapControllers();
 
 using (IServiceScope scope = app.Services.CreateScope())
 {
-    IRoleService roleservice = scope.ServiceProvider.GetRequiredService<IRoleService>();
-    IUserService usuarioservice = scope.ServiceProvider.GetRequiredService<IUserService>();
-    IFreelancerFieldsService freelancerfieldsservice = scope.ServiceProvider.GetRequiredService<IFreelancerFieldsService>();
-    await SeedData.Initializer(roleservice, usuarioservice, freelancerfieldsservice);
+    IUserRepository userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+    IPasswordHasher passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+    await SeedData.Initializer(userRepository, passwordHasher);
 }
 
 app.Run();
