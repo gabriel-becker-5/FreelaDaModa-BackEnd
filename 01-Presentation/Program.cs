@@ -39,6 +39,9 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IOrdemServicoRepository, OrdemServicoRepository>();
 builder.Services.AddScoped<IOrdemServicoService, OrdemServicoService>();
 
+builder.Services.AddScoped<IMensagemRepository, MensagemRepository>();
+builder.Services.AddScoped<IMensagemService, MensagemService>();
+
 builder.Services.AddScoped<IAvaliacaoRepository, AvaliacaoRepository>();
 builder.Services.AddScoped<IAvaliacaoService, AvaliacaoService>();
 

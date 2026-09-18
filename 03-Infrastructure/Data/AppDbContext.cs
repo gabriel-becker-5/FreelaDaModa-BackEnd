@@ -12,5 +12,6 @@ namespace _03_Infrastructure.Data
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<OrdemServico> OrdensServico { get; set; }
         public DbSet<Avaliacao> Avaliacoes { get; set; }
+        public DbSet<Mensagem> Mensagens { get; set; }
     }
 }
