@@ -1,12 +1,9 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using _02_Application.DTOs.Vaga;
 
-namespace _02_Application.Interfaces
+namespace _02_Application.Interfaces;
+
+public interface IVagaService
 {
-    public interface IVagaService
-    {
-        Task<object> RegistrarAsync(RequisicaoRegistrarVagaJson requisicao, string emailUsuario);
-        Task<IEnumerable<object>> ObterTodasAsync();
-    }
+    Task<object> RegistrarAsync(RequisicaoRegistrarVagaJson requisicao, string emailUsuario);
+    Task<IEnumerable<object>> ObterTodasAsync();
 }

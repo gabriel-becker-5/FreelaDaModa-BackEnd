@@ -5,6 +5,7 @@ using _02_Application.Interfaces;
 using _02_Application.Services;
 using _03_Infrastructure.Data;
 using _03_Infrastructure.Repositories;
+using _03_Infrastructure.Repositories.Vaga;
 using _03_Infrastructure.Seed;
 using _03_Infrastructure.Services;
 using _04_Domain.Interfaces;
@@ -36,10 +37,12 @@ builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IVagaRepository, VagaRepository>();
+builder.Services.AddScoped<IVagaService, VagaService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-options.UseMySQL(
-    builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseMySQL(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
