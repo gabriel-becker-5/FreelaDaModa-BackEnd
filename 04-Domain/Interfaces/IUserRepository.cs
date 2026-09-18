@@ -13,8 +13,8 @@ namespace _04_Domain.Interfaces
         Task<ICollection<User>> GetAllUsersAsync(int skip, int take);
         Task<User?> GetUserByIdAsync(int id);
         Task<User?> GetUserByEmailAsync(string email);
-        Task<FreelancerProfile?> GetFreelancerProfileAsync(int userId);
-        Task<CompanyProfile?> GetCompanyProfileAsync(int userId);
+        Task<User?> GetFreelancerProfileAsync(int userId);
+        Task<User?> GetCompanyProfileAsync(int userId);
         Task<ICollection<Roles>> GetUserRolesAsync(int userId);
         Task UpdateFreelancerAsync(User user, FreelancerProfile profile);
         Task UpdateCompanyAsync(User user, CompanyProfile profile);

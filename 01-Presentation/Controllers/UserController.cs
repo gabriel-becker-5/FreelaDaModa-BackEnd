@@ -1,8 +1,9 @@
-﻿using _02_Application.DTOs.Company;
+﻿using _02_Application.DTOs;
+using _02_Application.DTOs.Company;
 using _02_Application.DTOs.Freelancer;
-using _04_Domain.Enums;
 using _02_Application.Enums;
 using _02_Application.Interfaces;
+using _04_Domain.Enums;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -36,20 +37,26 @@ namespace _01_Presentation.Controllers
         /// <returns>Conta/perfil do usuário criada.</returns>
         /// <response code="201">Conta/perfil criada com sucesso.</response>
         /// <response code="400">Informações inseridas inválidas.</response>
+        /// <response code="409">E-mail ou CPF já associado à outra conta.</response>
+        /// <response code="500">Falha ao criar a conta.</response>
         [ProducesResponseType(201)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(409)]
+        [ProducesResponseType(500)]
         [HttpPost("cadastrar/freelancer")]
         [AllowAnonymous]
         public async Task<IActionResult> CreateFreelancerAsync(CreateFreelancerDto dto)
         {
-            int? newUser = await _userService.CreateFreelancerAsync(dto);
+            CreateUserResult result = await _userService.CreateFreelancerAsync(dto);
 
-            if (newUser == null)
+            return result.Status switch
             {
-                return BadRequest();
-            }
-
-            return CreatedAtAction(null, null);
+                CreateUserStatus.Success => CreatedAtAction(null, null),
+                CreateUserStatus.EmailInUse => Conflict(new { message = "O e-mail informado já está em uso por outra conta." }),
+                CreateUserStatus.CpfInUse => Conflict(new { message = "O CPF informado já está em uso por outra conta." }),
+                CreateUserStatus.InvalidData => BadRequest(new { message = "Os dados informados são inválidos.", errors = result.Errors }),
+                _ => StatusCode(500, new { message = "Não foi possível criar a conta. Tente novamente." })
+            };
         }
 
         /// <summary>Cria um novo usuário do tipo Empresa/Confecção</summary>
@@ -57,20 +64,27 @@ namespace _01_Presentation.Controllers
         /// <returns>Conta/perfil do usuário criada.</returns>
         /// <response code="201">Conta/perfil criada com sucesso.</response>
         /// <response code="400">Informações inseridas inválidas.</response>
+        /// <response code="409">E-mail, CPF ou CNPJ já associado à outra conta.</response>
+        /// <response code="500">Falha ao criar a conta.</response>
         [ProducesResponseType(201)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(409)]
+        [ProducesResponseType(500)]
         [HttpPost("cadastrar/empresa")]
         [AllowAnonymous]
         public async Task<IActionResult> CreateCompanyAsync(CreateCompanyDto dto)
         {
-            int? newUser = await _userService.CreateCompanyAsync(dto);
+            CreateUserResult result = await _userService.CreateCompanyAsync(dto);
 
-            if (newUser == null)
+            return result.Status switch
             {
-                return BadRequest();
-            }
-
-            return CreatedAtAction(null, null);
+                CreateUserStatus.Success => CreatedAtAction(null, null),
+                CreateUserStatus.EmailInUse => Conflict(new { message = "O e-mail informado já está em uso por outra conta." }),
+                CreateUserStatus.CpfInUse => Conflict(new { message = "O CPF informado já está em uso por outra conta." }),
+                CreateUserStatus.CnpjInUse => Conflict(new { message = "O CNPJ informado já está em uso por outra conta." }),
+                CreateUserStatus.InvalidData => BadRequest(new { message = "Os dados informados são inválidos.", errors = result.Errors }),
+                _ => StatusCode(500, new { message = "Não foi possível criar a conta. Tente novamente." })
+            };
         }
 
         // Leitura
@@ -141,7 +155,7 @@ namespace _01_Presentation.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(409)]
         [ProducesResponseType(404)]
-        [HttpPut("atualizarcadastro/freelancer")]
+        [HttpPatch("atualizarcadastro/freelancer")]
         [Authorize(Roles = nameof(Roles.Freelancer))]
         public async Task<IActionResult> UpdateUserFreelancerAsync(UpdateFreelancerDto dto)
         {
@@ -174,7 +188,7 @@ namespace _01_Presentation.Controllers
         [ProducesResponseType(400)]
         [ProducesResponseType(409)]
         [ProducesResponseType(404)]
-        [HttpPut("atualizarcadastro/empresa")]
+        [HttpPatch("atualizarcadastro/empresa")]
         [Authorize(Roles = nameof(Roles.Company))]
         public async Task<IActionResult> UpdateUserCompanyAsync(UpdateCompanyDto dto)
         {

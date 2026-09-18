@@ -1,10 +1,10 @@
 ﻿using _04_Domain.Entities;
-using _04_Domain.Entities.Profiles;
 using _04_Domain.Entities.Identity;
+using _04_Domain.Entities.Profiles;
+using _04_Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Text.Json;
-using _04_Domain.Enums;
 
 namespace _03_Infrastructure.Data
 {
@@ -50,7 +50,6 @@ namespace _03_Infrastructure.Data
             modelBuilder.Entity<User>(u =>
             {
                 u.HasQueryFilter(x => !x.IsDeleted);
-
                 u.Property(x => x.LegalResponsibleFullName).HasMaxLength(100);
                 u.Property(x => x.LegalResponsibleDocument).HasMaxLength(14);
                 u.Property(x => x.Email).HasMaxLength(100);
@@ -71,26 +70,25 @@ namespace _03_Infrastructure.Data
                         v => JsonSerializer.Deserialize<List<Roles>>(v, (JsonSerializerOptions?)null)
                     );
 
-                u.HasIndex(x => x.Email)
-                    .IsUnique();
+                u.HasIndex(x => x.Email);
 
-                u.HasIndex(x => x.LegalResponsibleDocument)
-                    .IsUnique();
+                u.HasIndex(x => x.LegalResponsibleDocument);
             });
 
             modelBuilder.Entity<CompanyProfile>(c =>
             {
+                c.HasQueryFilter(x => !x.IsDeleted);
                 c.Property(x => x.LegalName).HasMaxLength(150);
                 c.Property(x => x.CompanyName).HasMaxLength(150);
                 c.Property(x => x.CompanyRegistrationDocument).HasMaxLength(14);
                 c.Property(x => x.CoreBusiness).HasMaxLength(150);
 
-                c.HasIndex(x => x.CompanyRegistrationDocument)
-                    .IsUnique();
+                c.HasIndex(x => x.CompanyRegistrationDocument);
             });
 
             modelBuilder.Entity<FreelancerProfile>(f =>
             {
+                f.HasQueryFilter(x => !x.IsDeleted);
                 f.Property(x => x.SpecialtiesIds)
                     .HasColumnType("json")
                     .HasConversion(

@@ -1,5 +1,4 @@
 ﻿using _02_Application.DTOs;
-using _02_Application.DTOs.Freelancer;
 using _02_Application.DTOs.User;
 using _02_Application.Interfaces;
 using _04_Domain.Enums;
@@ -18,10 +17,10 @@ namespace _01_Presentation.Controllers
         private readonly IUserService _userService;
         private readonly IRoleService _roleService;
 
-        public AdminController(IUserService userservice,
+        public AdminController(IUserService userService,
                                         IRoleService roleService)
         {
-            _userService = userservice;
+            _userService = userService;
             _roleService = roleService;
         }
 
@@ -159,12 +158,12 @@ namespace _01_Presentation.Controllers
             }
 
             ICollection<IdLabelDto> userRoles = await _roleService.GetUserRolesAsync((int)id);
-            
+
             if (userRoles.Count < 1)
             {
                 return BadRequest(new { message = "Usuário ou Role não encontrados." });
             }
-            
+
             return Ok(userRoles);
         }
     }

@@ -8,8 +8,8 @@ namespace _02_Application.Interfaces
 {
     public interface IUserService
     {
-        Task<int?> CreateFreelancerAsync(CreateFreelancerDto dto);
-        Task<int?> CreateCompanyAsync(CreateCompanyDto dto);
+        Task<CreateUserResult> CreateFreelancerAsync(CreateFreelancerDto dto);
+        Task<CreateUserResult> CreateCompanyAsync(CreateCompanyDto dto);
         Task<UserDto?> GetUserByIdAsync(int id);
         Task<int?> GetUserIdByEmailAsync(string email);
         Task<PagedResult<UserDto>> GetAllUsersAsync(int page, int pageSize);

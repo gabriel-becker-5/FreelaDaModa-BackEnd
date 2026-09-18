@@ -1,4 +1,4 @@
-﻿namespace _02_Application.DTOs.Freelancer
+﻿namespace _02_Application.DTOs
 {
     public class IdLabelDto
     {

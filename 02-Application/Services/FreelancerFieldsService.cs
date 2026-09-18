@@ -1,4 +1,4 @@
-﻿using _02_Application.DTOs.Freelancer;
+﻿using _02_Application.DTOs;
 using _02_Application.Interfaces;
 
 namespace _02_Application.Services

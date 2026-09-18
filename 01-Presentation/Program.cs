@@ -1,5 +1,12 @@
+// Migrations
 // dotnet ef migrations add InitialCreate --project 03-Infrastructure --startup-project 01-Presentation
 // dotnet ef database update --project 03-Infrastructure --startup-project 01-Presentation
+
+// Configurar UserSecrets
+// "ConnectionStrings:DefaultConnection": "Server=xxx;Database=freeladamoda;User=xxx;Password=xxx",
+// "Jwt:Secret": "JWT_SECRET_KEY"
+// "AdminSeed:Email": "EMAIL_ADMIN"
+// "AdminSeed:Password": "PASSWORD_ADMIN"
 
 using _02_Application.Interfaces;
 using _02_Application.Services;
@@ -40,9 +47,14 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFreelancerFieldsService, FreelancerFieldsService>();
 
+string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("ConnectionString não configurada.");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-options.UseMySQL(
-    builder.Configuration.GetConnectionString("DefaultConnection")));
+options.UseMySQL(connectionString));
+
+string jwtSecret = builder.Configuration["Jwt:Secret"]
+    ?? throw new InvalidOperationException("Jwt:Secret não configurado.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -52,7 +64,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         {
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"])),
+                Encoding.UTF8.GetBytes(jwtSecret)),
             ValidateIssuer = false,
             ValidateAudience = false,
             ValidateLifetime = true,
@@ -65,7 +77,7 @@ builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.AddFixedWindowLimiter("login", limiter =>
-    {       
+    {
         limiter.PermitLimit = 25; // Observação: o limite é por IP público. Valor não pode ser muito baixo.
         limiter.Window = TimeSpan.FromMinutes(1);
     });
@@ -141,7 +153,7 @@ using (IServiceScope scope = app.Services.CreateScope())
 {
     IUserRepository userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
     IPasswordHasher passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
-    await SeedData.Initializer(userRepository, passwordHasher);
+    await SeedData.Initializer(userRepository, passwordHasher, builder.Configuration);
 }
 
 app.Run();

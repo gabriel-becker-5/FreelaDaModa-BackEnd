@@ -1,7 +1,7 @@
-﻿using _04_Domain.Enums;
+﻿using _02_Application.DTOs;
 using _02_Application.Interfaces;
-using _02_Application.DTOs.Freelancer;
 using _04_Domain.Entities.Identity;
+using _04_Domain.Enums;
 using _04_Domain.Interfaces;
 
 namespace _02_Application.Services
@@ -23,7 +23,7 @@ namespace _02_Application.Services
             {
                 var dto = new IdLabelDto
                 {
-                    Id = (int)role,       
+                    Id = (int)role,
                     Label = role.ToString().Replace("_", " ")
                 };
 

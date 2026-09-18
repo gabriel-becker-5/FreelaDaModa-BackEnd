@@ -42,7 +42,7 @@ namespace _03_Infrastructure.Repositories
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync(); 
+                await transaction.RollbackAsync();
                 return null;
             }
         }
@@ -97,30 +97,20 @@ namespace _03_Infrastructure.Repositories
             return await _context.Users.Where(u => u.Email.ToLower() == email.ToLower()).FirstOrDefaultAsync();
         }
 
-        public async Task<FreelancerProfile?> GetFreelancerProfileAsync(int userId)
+        public async Task<User?> GetFreelancerProfileAsync(int id)
         {
             // ATENÇÃO: não alterar para '.AsNoTracking' — A entidade é mutada por update/delete do UserService
-            FreelancerProfile? result = await _context.FreelancerProfiles.Where(fp => fp.UserId == userId).FirstOrDefaultAsync();
-
-            if (result == null)
-            {
-                return null;
-            }
-
-            return result;
+            return await _context.Users
+                .Include(x => x.FreelancerProfile)
+                .FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<CompanyProfile?> GetCompanyProfileAsync(int userId)
+        public async Task<User?> GetCompanyProfileAsync(int id)
         {
             // ATENÇÃO: não alterar para '.AsNoTracking' — A entidade é mutada por update/delete do UserService
-            CompanyProfile? result = await _context.CompanyProfiles.Where(cp => cp.UserId == userId).FirstOrDefaultAsync();
-
-            if (result == null)
-            {
-                return null;
-            }
-
-            return result;
+            return await _context.Users
+                .Include(x => x.CompanyProfile)
+                .FirstOrDefaultAsync(x => x.Id == id);
         }
 
         public async Task<ICollection<Roles>> GetUserRolesAsync(int userId)
@@ -129,7 +119,7 @@ namespace _03_Infrastructure.Repositories
 
             if (result == null)
             {
-                return null;
+                return [];
             }
 
             return result.Roles;
@@ -145,6 +135,7 @@ namespace _03_Infrastructure.Repositories
         public async Task UpdateCompanyAsync(User user, CompanyProfile profile)
         {
             _context.CompanyProfiles.Update(profile);
+            _context.Users.Update(user);
             await _context.SaveChangesAsync();
         }
 
@@ -186,7 +177,16 @@ namespace _03_Infrastructure.Repositories
 
         public async Task DeleteCurrentUserAsync(User user)
         {
-            user.IsDeleted = true; // entidade já trackeada: change tracker gera UPDATE apenas do IsDeleted
+            user.IsDeleted = true;
+
+            CompanyProfile? company = await _context.CompanyProfiles
+                .FirstOrDefaultAsync(cp => cp.UserId == user.Id);
+            if (company != null) company.IsDeleted = true;
+
+            FreelancerProfile? freelancer = await _context.FreelancerProfiles
+                .FirstOrDefaultAsync(fp => fp.UserId == user.Id);
+            if (freelancer != null) freelancer.IsDeleted = true;
+
             await _context.SaveChangesAsync();
         }
 
