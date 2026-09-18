@@ -221,6 +221,38 @@ namespace _03_Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("_04_Domain.Entities.Profiles.CompanyProfile", b =>
+            modelBuilder.Entity("_04_Domain.Entities.Vaga", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Ativa")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("DataPublicacao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("Orcamento")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Vagas");
+                });
+
+            modelBuilder.Entity("_04_Domain.Entities.UserInfo.UserRole", b =>
                 {
                     b.HasOne("_04_Domain.Entities.Identity.User", "User")
                         .WithOne("CompanyProfile")
