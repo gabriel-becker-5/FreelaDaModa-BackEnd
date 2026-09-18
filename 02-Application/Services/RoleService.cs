@@ -1,67 +1,98 @@
-﻿using _02_Application.Interfaces;
-using _04_Domain.Entities.UserInfo;
+﻿using _02_Application.DTOs;
+using _02_Application.Interfaces;
+using _04_Domain.Entities.Identity;
+using _04_Domain.Enums;
 using _04_Domain.Interfaces;
 
 namespace _02_Application.Services
 {
     public class RoleService : IRoleService
     {
-        private readonly IRoleRepository _roleRepository;
+        private readonly IUserRepository _userRepository;
 
-        public RoleService(IRoleRepository rolerepository)
+        public RoleService(IUserRepository userRepository)
         {
-            _roleRepository = rolerepository;
+            _userRepository = userRepository;
         }
 
-        public async Task<Role?> CreateRoleAsync(string roleName)
+        public async Task<ICollection<IdLabelDto>> GetAllRolesAsync()
         {
-            bool result = await _roleRepository.RoleExists(roleName);
+            List<IdLabelDto> rolesDto = [];
 
-            if (result)
+            foreach (Roles role in Enum.GetValues<Roles>())
             {
-                return null;
+                var dto = new IdLabelDto
+                {
+                    Id = (int)role,
+                    Label = role.ToString().Replace("_", " ")
+                };
+
+                rolesDto.Add(dto);
             }
 
-            Role newRole = new Role
+            return rolesDto;
+        }
+
+        public async Task<ICollection<IdLabelDto>> GetUserRolesAsync(int userId)
+        {
+            ICollection<Roles> userRoles = await _userRepository.GetUserRolesAsync(userId);
+
+            return userRoles
+                .Select(role => new IdLabelDto
+                {
+                    Id = (int)role,
+                    Label = role.ToString().Replace("_", " ")
+                })
+                .ToList();
+        }
+
+        public async Task<bool> AddRoleToUserAsync(int userId, int roleId)
+        {
+            if (!Enum.IsDefined(typeof(Roles), roleId))
             {
-                RoleName = roleName
-            };
-
-            return await _roleRepository.CreateRoleAsync(newRole);
-        }
-
-        public async Task<List<Role?>> GetAllRolesAsync()
-        {
-            return await _roleRepository.GetAllRolesAsync();
-        }
-
-        public async Task<Role?> GetRoleAsync(string roleName)
-        {
-            Role? role = await _roleRepository.GetRoleAsync(roleName);
-
-            if (role == null)
-            {
-                return null;
-            }
-            return role;
-        }
-
-        public async Task<Role?> GetRoleIdAsync(int id)
-        {
-            return await _roleRepository.GetRoleByIdAsync(id);
-        }
-
-        public async Task<List<string?>> GetRoleNameByIdAsync(List<int> RolesIds)
-        {
-            List<string> allUserRoles = [];
-
-            foreach (int roleId in RolesIds)
-            {
-                string result = await _roleRepository.GetRoleNameByIdAsync(roleId);
-                allUserRoles.Add(result);
+                return false;
             }
 
-            return allUserRoles;
+            User? user = await _userRepository.GetUserByIdAsync(userId);
+
+            if (user == null)
+            {
+                return false;
+            }
+
+            await _userRepository.AddRoleToUserAsync(user, roleId);
+            return true;
+        }
+
+        public async Task<bool> RemoveRoleFromUserAsync(int userId, int roleId)
+        {
+            if (!Enum.IsDefined(typeof(Roles), roleId))
+            {
+                return false;
+            }
+
+            User? user = await _userRepository.GetUserByIdAsync(userId);
+
+            if (user == null)
+            {
+                return false;
+            }
+
+            await _userRepository.RemoveRoleFromUserAsync(user, roleId);
+            return true;
+        }
+
+        public async Task<bool> RemoveAllRolesFromUserAsync(int userId)
+        {
+            User? user = await _userRepository.GetUserByIdAsync(userId);
+
+            if (user == null)
+            {
+                return false;
+            }
+
+            await _userRepository.RemoveAllRolesFromUserAsync(userId);
+            return true;
         }
     }
 }

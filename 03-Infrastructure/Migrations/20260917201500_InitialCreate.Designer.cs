@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using _03_Infrastructure.Data;
 
@@ -10,9 +11,11 @@ using _03_Infrastructure.Data;
 namespace _03_Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260917201500_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -101,9 +104,11 @@ namespace _03_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email");
+                    b.HasIndex("Email")
+                        .IsUnique();
 
-                    b.HasIndex("LegalResponsibleDocument");
+                    b.HasIndex("LegalResponsibleDocument")
+                        .IsUnique();
 
                     b.ToTable("Users");
                 });
@@ -132,9 +137,6 @@ namespace _03_Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<string>("LegalName")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -148,7 +150,8 @@ namespace _03_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CompanyRegistrationDocument");
+                    b.HasIndex("CompanyRegistrationDocument")
+                        .IsUnique();
 
                     b.HasIndex("UserId")
                         .IsUnique();
@@ -192,9 +195,6 @@ namespace _03_Infrastructure.Migrations
                     b.Property<int>("HowUsuallyArrangeServicesId")
                         .HasColumnType("int");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<string>("OwnMachinesIds")
                         .IsRequired()
                         .HasColumnType("json");
@@ -221,38 +221,6 @@ namespace _03_Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("_04_Domain.Entities.Profiles.CompanyProfile", b =>
-            modelBuilder.Entity("_04_Domain.Entities.Vaga", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<bool>("Ativa")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<DateTime>("DataPublicacao")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("Descricao")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<decimal>("Orcamento")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("Titulo")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("UsuarioId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Vagas");
-                });
-
-            modelBuilder.Entity("_04_Domain.Entities.UserInfo.UserRole", b =>
                 {
                     b.HasOne("_04_Domain.Entities.Identity.User", "User")
                         .WithOne("CompanyProfile")

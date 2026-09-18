@@ -1,38 +1,45 @@
-﻿using _02_Application.Authorization;
-using _02_Application.DTOs;
-using _02_Application.Interfaces;
-using _04_Domain.Entities.UserInfo;
+﻿using _04_Domain.Entities.Identity;
+using _04_Domain.Enums;
+using _04_Domain.Interfaces;
+using Microsoft.Extensions.Configuration;
 
 namespace _03_Infrastructure.Seed
 {
     public class SeedData
     {
-        public static async Task Initializer(IRoleService roleService,
-                                     IUserService userService)
+        public async static Task Initializer(IUserRepository userRepository,
+                                             IPasswordHasher passwordHasher,
+                                             IConfiguration configuration)
         {
-            // Create all roles if they don't exist
-            for (int i = 0; i < Roles.roles.Length; i++)
-            {
-                await roleService.CreateRoleAsync(Roles.roles[i]);
-            }
+            string adminEmail = configuration["AdminSeed:Email"]
+                ?? throw new InvalidOperationException("AdminSeed:Email não configurado.");
 
-            // Create Initial User
-            UserRegisterDto dto = new UserRegisterDto
+            string adminPassword = configuration["AdminSeed:Password"]
+                ?? throw new InvalidOperationException("AdminSeed:Password não configurado.");
+
+            // Cria o usuário inicial de Admin
+            User admin = new()
             {
-                Email = "admin@admin.com",
-                Name = "Admin",
-                Password = "123",
-                BirthDate = DateTime.Today
+                LegalResponsibleFullName = "Administrador do Sistema",
+                LegalResponsibleDocument = "00000000000",
+                Email = adminEmail,
+                ContactNumber = "0000000000",
+                PostalCode = "00000000",
+                Address = "N/A",
+                AddressNumber = 0,
+                Neighborhood = "N/A",
+                City = "N/A",
+                State = "N/A",
+                Roles = new List<Roles> { Roles.Admin },
+                PasswordHash = passwordHasher.HashPassword(adminPassword),
+                PublicProfileDescription = "N/A"
             };
 
-            User? user = await userService.CreateUserAsync(dto);
+            User? existing = await userRepository.GetUserByEmailAsync(adminEmail);
 
-            // Assign the “Admin” role to the Initial User
-            Role? roleAdmin = await roleService.GetRoleAsync(Roles.Admin);
-
-            if (user != null && roleAdmin != null)
+            if (existing == null)
             {
-                await userService.CreateUserRoleAsync(user, roleAdmin);
+                await userRepository.CreateUserAsync(admin);
             }
         }
     }
