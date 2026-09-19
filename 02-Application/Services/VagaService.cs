@@ -1,6 +1,7 @@
 ﻿using _02_Application.DTOs.Vaga;
 using _02_Application.Interfaces;
-using _04_Domain.Interfaces; // Ajusta o namespace caso o IVagaRepository esteja noutro sítio (ex: _02_Application.Interfaces)
+using _04_Domain.Interfaces;
+using DominioVaga = _04_Domain.Entities.Vaga;
 
 namespace _02_Application.Services;
 
@@ -15,13 +16,22 @@ public class VagaService : IVagaService
 
     public async Task<object> RegistrarAsync(RequisicaoRegistrarVagaJson requisicao, string emailUsuario)
     {
-        // TODO: Mapear DTO para entidade de domínio e invocar _vagaRepository.AdicionarAsync(...)
-        return new { mensagem = "Vaga criada com sucesso!", usuario = emailUsuario };
+        var entidade = new DominioVaga
+        {
+            Titulo = requisicao.Titulo,
+            Descricao = requisicao.Descricao,
+            Orcamento = (decimal)requisicao.Salario,
+            DataPublicacao = DateTime.Now,
+            Ativa = true,
+            UsuarioId = 1 // TODO: converter/buscar o Id do utilizador com base em emailUsuario, se necessário
+        };
+
+        await _vagaRepository.AdicionarAsync(entidade);
+        return entidade;
     }
 
     public async Task<IEnumerable<object>> ObterTodasAsync()
     {
-        // TODO: Obter dados do repositório
-        return new List<object>();
+        return await _vagaRepository.ObterTodasAsync();
     }
 }
