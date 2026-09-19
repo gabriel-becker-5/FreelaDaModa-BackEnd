@@ -1,5 +1,12 @@
+// Migrations
 // dotnet ef migrations add InitialCreate --project 03-Infrastructure --startup-project 01-Presentation
 // dotnet ef database update --project 03-Infrastructure --startup-project 01-Presentation
+
+// Configurar UserSecrets
+// "ConnectionStrings:DefaultConnection": "Server=xxx;Database=freeladamoda;User=xxx;Password=xxx",
+// "Jwt:Secret": "JWT_SECRET_KEY"
+// "AdminSeed:Email": "EMAIL_ADMIN"
+// "AdminSeed:Password": "PASSWORD_ADMIN"
 
 using _02_Application.Interfaces;
 using _02_Application.Services;
@@ -11,9 +18,11 @@ using _03_Infrastructure.Services;
 using _04_Domain.Interfaces;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.IdentityModel.Tokens.Jwt;
 using System.Reflection;
 using System.Text;
 
@@ -33,29 +42,51 @@ builder.Services.AddCors(options =>
 
 // Interfaces
 builder.Services.AddSingleton<ITokenService, TokenService>();
-builder.Services.AddScoped<IRoleRepository, RoleRepository>();
+builder.Services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IFreelancerFieldsService, FreelancerFieldsService>();
 builder.Services.AddScoped<IVagaRepository, VagaRepository>();
 builder.Services.AddScoped<IVagaService, VagaService>();
 
+string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("ConnectionString não configurada.");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
+options.UseMySQL(connectionString));
     options.UseMySQL(
         builder.Configuration.GetConnectionString("DefaultConnection")));
+
+string jwtSecret = builder.Configuration["Jwt:Secret"]
+    ?? throw new InvalidOperationException("Jwt:Secret não configurado.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        options.MapInboundClaims = false;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"])),
+                Encoding.UTF8.GetBytes(jwtSecret)),
             ValidateIssuer = false,
-            ValidateAudience = false
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            NameClaimType = JwtRegisteredClaimNames.Name,
+            RoleClaimType = "roles"
         };
     });
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddFixedWindowLimiter("login", limiter =>
+    {
+        limiter.PermitLimit = 25; // Observação: o limite é por IP público. Valor não pode ser muito baixo.
+        limiter.Window = TimeSpan.FromMinutes(1);
+    });
+});
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -94,8 +125,8 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 
-    string? xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    string? xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    string xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    string xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 
     options.IncludeXmlComments(xmlPath);
 });
@@ -109,7 +140,7 @@ builder.Services.AddApiVersioning(options =>
 
 var app = builder.Build();
 
-// Aplica migra��es autom�ticas no arranque
+// Aplica migrações automáticas no arranque
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -140,9 +171,9 @@ app.MapControllers();
 
 using (IServiceScope scope = app.Services.CreateScope())
 {
-    IRoleService roleservice = scope.ServiceProvider.GetRequiredService<IRoleService>();
-    IUserService usuarioservice = scope.ServiceProvider.GetRequiredService<IUserService>();
-    await SeedData.Initializer(roleservice, usuarioservice);
+    IUserRepository userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+    IPasswordHasher passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+    await SeedData.Initializer(userRepository, passwordHasher, builder.Configuration);
 }
 
 app.Run();
