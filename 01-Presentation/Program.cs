@@ -12,6 +12,7 @@ using _02_Application.Interfaces;
 using _02_Application.Services;
 using _03_Infrastructure.Data;
 using _03_Infrastructure.Repositories;
+using _03_Infrastructure.Repositories.Vaga;
 using _03_Infrastructure.Seed;
 using _03_Infrastructure.Services;
 using _04_Domain.Interfaces;
@@ -46,12 +47,16 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFreelancerFieldsService, FreelancerFieldsService>();
+builder.Services.AddScoped<IVagaRepository, VagaRepository>();
+builder.Services.AddScoped<IVagaService, VagaService>();
 
 string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("ConnectionString não configurada.");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 options.UseMySQL(connectionString));
+    options.UseMySQL(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
 
 string jwtSecret = builder.Configuration["Jwt:Secret"]
     ?? throw new InvalidOperationException("Jwt:Secret não configurado.");
@@ -135,6 +140,22 @@ builder.Services.AddApiVersioning(options =>
 
 var app = builder.Build();
 
+// Aplica migrações automáticas no arranque
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        context.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Erro ao aplicar migrations na base de dados.");
+    }
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -143,9 +164,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseAuthentication();
-app.UseRateLimiter();
 app.UseCors("AllowFrontend");
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
