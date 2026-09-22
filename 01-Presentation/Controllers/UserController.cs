@@ -3,10 +3,12 @@ using _02_Application.DTOs.Company;
 using _02_Application.DTOs.Freelancer;
 using _02_Application.Enums;
 using _02_Application.Interfaces;
+using _03_Infrastructure.Data;
 using _04_Domain.Enums;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -19,10 +21,12 @@ namespace _01_Presentation.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
+        private readonly AppDbContext _context;
 
-        public UserController(IUserService userservice)
+        public UserController(IUserService userservice, AppDbContext context)
         {
             _userService = userservice;
+            _context = context;
         }
 
         private int? GetLoggedUserId()
@@ -238,6 +242,44 @@ namespace _01_Presentation.Controllers
             }
 
             return NoContent();
+        }
+
+        // Candidaturas
+        /// <summary>Obtém as candidaturas do utilizador logado</summary>
+        /// <response code="200">Retorna a lista de candidaturas.</response>
+        /// <response code="400">Utilizador inválido.</response>
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [HttpGet("candidaturas/minhas")]
+        public async Task<IActionResult> GetMinhasCandidaturasAsync()
+        {
+            int? userId = GetLoggedUserId();
+
+            if (userId == null)
+            {
+                return BadRequest(new { message = "Utilizador inválido." });
+            }
+
+            var candidaturas = await _context.Candidaturas
+                .Include(c => c.Vaga)
+                .Where(c => c.UsuarioId == userId.Value)
+                .Select(c => new
+                {
+                    id = c.Id,
+                    vagaId = c.VagaId,
+                    tituloVaga = c.Vaga != null ? c.Vaga.Titulo : "Vaga",
+                    dataCandidatura = c.DataCandidatura,
+                    status = c.Status
+                })
+                .ToListAsync();
+
+            return Ok(new
+            {
+                sucesso = true,
+                mensagem = "Candidaturas obtidas com sucesso.",
+                total = candidaturas.Count,
+                dados = candidaturas
+            });
         }
     }
 }

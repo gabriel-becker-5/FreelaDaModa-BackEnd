@@ -28,7 +28,7 @@ namespace _03_Infrastructure.Migrations
                     ContactNumber = table.Column<string>(type: "varchar(11)", maxLength: 11, nullable: false),
                     IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     Roles = table.Column<string>(type: "json", nullable: false),
-                    PublicProfileDescription = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: true),
+                    PublicProfileDescription = table.Column<string>(type: "varchar(500)", maxLength: 500, nullable: false),
                     PostalCode = table.Column<string>(type: "varchar(9)", maxLength: 9, nullable: false),
                     Address = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false),
                     AddressNumber = table.Column<int>(type: "int", nullable: false),
@@ -46,12 +46,32 @@ namespace _03_Infrastructure.Migrations
                 .Annotation("MySQL:Charset", "utf8mb4");
 
             migrationBuilder.CreateTable(
+                name: "Vagas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
+                    Titulo = table.Column<string>(type: "longtext", nullable: false),
+                    Descricao = table.Column<string>(type: "longtext", nullable: false),
+                    Orcamento = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    DataPublicacao = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    Ativa = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    UsuarioId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Vagas", x => x.Id);
+                })
+                .Annotation("MySQL:Charset", "utf8mb4");
+
+            migrationBuilder.CreateTable(
                 name: "CompanyProfiles",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
                     UserId = table.Column<int>(type: "int", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     LegalName = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false),
                     CompanyName = table.Column<string>(type: "varchar(150)", maxLength: 150, nullable: false),
                     CompanyRegistrationDocument = table.Column<string>(type: "varchar(14)", maxLength: 14, nullable: false),
@@ -78,6 +98,7 @@ namespace _03_Infrastructure.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
                     UserId = table.Column<int>(type: "int", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
                     BirthDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     BusinessTypeId = table.Column<int>(type: "int", nullable: false),
                     ExperienceYearsId = table.Column<int>(type: "int", nullable: false),
@@ -105,11 +126,38 @@ namespace _03_Infrastructure.Migrations
                 })
                 .Annotation("MySQL:Charset", "utf8mb4");
 
+            migrationBuilder.CreateTable(
+                name: "Candidaturas",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
+                    VagaId = table.Column<int>(type: "int", nullable: false),
+                    UsuarioId = table.Column<int>(type: "int", nullable: false),
+                    DataCandidatura = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    Status = table.Column<string>(type: "longtext", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Candidaturas", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Candidaturas_Vagas_VagaId",
+                        column: x => x.VagaId,
+                        principalTable: "Vagas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                })
+                .Annotation("MySQL:Charset", "utf8mb4");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Candidaturas_VagaId",
+                table: "Candidaturas",
+                column: "VagaId");
+
             migrationBuilder.CreateIndex(
                 name: "IX_CompanyProfiles_CompanyRegistrationDocument",
                 table: "CompanyProfiles",
-                column: "CompanyRegistrationDocument",
-                unique: true);
+                column: "CompanyRegistrationDocument");
 
             migrationBuilder.CreateIndex(
                 name: "IX_CompanyProfiles_UserId",
@@ -126,24 +174,28 @@ namespace _03_Infrastructure.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Email",
                 table: "Users",
-                column: "Email",
-                unique: true);
+                column: "Email");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_LegalResponsibleDocument",
                 table: "Users",
-                column: "LegalResponsibleDocument",
-                unique: true);
+                column: "LegalResponsibleDocument");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "Candidaturas");
+
+            migrationBuilder.DropTable(
                 name: "CompanyProfiles");
 
             migrationBuilder.DropTable(
                 name: "FreelancerProfiles");
+
+            migrationBuilder.DropTable(
+                name: "Vagas");
 
             migrationBuilder.DropTable(
                 name: "Users");

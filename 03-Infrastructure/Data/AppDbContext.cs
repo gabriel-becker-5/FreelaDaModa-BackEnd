@@ -1,11 +1,10 @@
 ﻿using _04_Domain.Entities;
-using _04_Domain.Entities.UserInfo;
-using _04_Domain.Entities;
 using _04_Domain.Entities.Identity;
 using _04_Domain.Entities.Profiles;
 using _04_Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Data;
 using System.Text.Json;
 
 namespace _03_Infrastructure.Data
@@ -14,9 +13,8 @@ namespace _03_Infrastructure.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
         public DbSet<User> Users { get; set; }
-        public DbSet<Role> Roles { get; set; }
-        public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<Vaga> Vagas { get; set; }
+        public DbSet<Candidatura> Candidaturas { get; set; }
         public DbSet<CompanyProfile> CompanyProfiles { get; set; }
         public DbSet<FreelancerProfile> FreelancerProfiles { get; set; }
 
@@ -76,7 +74,6 @@ namespace _03_Infrastructure.Data
                     );
 
                 u.HasIndex(x => x.Email);
-
                 u.HasIndex(x => x.LegalResponsibleDocument);
             });
 
@@ -107,6 +104,14 @@ namespace _03_Infrastructure.Data
                         v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                         v => JsonSerializer.Deserialize<List<OwnMachine>>(v, (JsonSerializerOptions?)null)
                     );
+            });
+
+            modelBuilder.Entity<Candidatura>(c =>
+            {
+                c.HasOne(x => x.Vaga)
+                  .WithMany()
+                  .HasForeignKey(x => x.VagaId)
+                  .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

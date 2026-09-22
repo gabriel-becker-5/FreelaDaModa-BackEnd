@@ -97,6 +97,11 @@ namespace _03_Infrastructure.Repositories
             return await _context.Users.Where(u => u.Email.ToLower() == email.ToLower()).FirstOrDefaultAsync();
         }
 
+        public async Task<User?> GetByEmailAsync(string email)
+        {
+            return await GetUserByEmailAsync(email);
+        }
+
         public async Task<User?> GetFreelancerProfileAsync(int id)
         {
             // ATENÇÃO: não alterar para '.AsNoTracking' — A entidade é mutada por update/delete do UserService

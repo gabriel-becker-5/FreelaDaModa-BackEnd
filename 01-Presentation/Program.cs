@@ -1,7 +1,6 @@
 // Migrations
 // dotnet ef migrations add InitialCreate --project 03-Infrastructure --startup-project 01-Presentation
 // dotnet ef database update --project 03-Infrastructure --startup-project 01-Presentation
-
 // Configurar UserSecrets
 // "ConnectionStrings:DefaultConnection": "Server=xxx;Database=freeladamoda;User=xxx;Password=xxx",
 // "Jwt:Secret": "JWT_SECRET_KEY"
@@ -50,15 +49,13 @@ builder.Services.AddScoped<IFreelancerFieldsService, FreelancerFieldsService>();
 builder.Services.AddScoped<IVagaRepository, VagaRepository>();
 builder.Services.AddScoped<IVagaService, VagaService>();
 
-string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("ConnectionString não configurada.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' não encontrada.");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-options.UseMySQL(connectionString));
-    options.UseMySQL(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseMySQL(connectionString));
 
-string jwtSecret = builder.Configuration["Jwt:Secret"]
+var jwtSecret = builder.Configuration["Jwt:Secret"]
     ?? throw new InvalidOperationException("Jwt:Secret não configurado.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -83,7 +80,7 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.AddFixedWindowLimiter("login", limiter =>
     {
-        limiter.PermitLimit = 25; // Observação: o limite é por IP público. Valor não pode ser muito baixo.
+        limiter.PermitLimit = 25;
         limiter.Window = TimeSpan.FromMinutes(1);
     });
 });
@@ -121,7 +118,7 @@ builder.Services.AddSwaggerGen(options =>
                     Id = "Bearer"
                 }
             },
-            new string[] {}
+            Array.Empty<string>()
         }
     });
 

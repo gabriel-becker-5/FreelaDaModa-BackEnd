@@ -19,6 +19,32 @@ namespace _03_Infrastructure.Migrations
                 .HasAnnotation("ProductVersion", "8.0.30")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+            modelBuilder.Entity("_04_Domain.Entities.Candidatura", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DataCandidatura")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("VagaId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VagaId");
+
+                    b.ToTable("Candidaturas");
+                });
+
             modelBuilder.Entity("_04_Domain.Entities.Identity.User", b =>
                 {
                     b.Property<int>("Id")
@@ -84,6 +110,7 @@ namespace _03_Infrastructure.Migrations
                         .HasColumnType("varchar(9)");
 
                     b.Property<string>("PublicProfileDescription")
+                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
@@ -220,7 +247,6 @@ namespace _03_Infrastructure.Migrations
                     b.ToTable("FreelancerProfiles");
                 });
 
-            modelBuilder.Entity("_04_Domain.Entities.Profiles.CompanyProfile", b =>
             modelBuilder.Entity("_04_Domain.Entities.Vaga", b =>
                 {
                     b.Property<int>("Id")
@@ -252,7 +278,18 @@ namespace _03_Infrastructure.Migrations
                     b.ToTable("Vagas");
                 });
 
-            modelBuilder.Entity("_04_Domain.Entities.UserInfo.UserRole", b =>
+            modelBuilder.Entity("_04_Domain.Entities.Candidatura", b =>
+                {
+                    b.HasOne("_04_Domain.Entities.Vaga", "Vaga")
+                        .WithMany()
+                        .HasForeignKey("VagaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Vaga");
+                });
+
+            modelBuilder.Entity("_04_Domain.Entities.Profiles.CompanyProfile", b =>
                 {
                     b.HasOne("_04_Domain.Entities.Identity.User", "User")
                         .WithOne("CompanyProfile")
