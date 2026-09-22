@@ -86,6 +86,26 @@ namespace _03_Infrastructure.Repositories
             return await _context.Users.AsNoTracking().CountAsync();
         }
 
+
+        public async Task<ICollection<User>> GetAllFreelancersAsync(int skip, int take)
+        {
+            return await _context.Users
+                .AsNoTracking()
+                .Where(u => u.FreelancerProfile != null)
+                .Include(u => u.FreelancerProfile)
+                .OrderBy(u => u.Id)
+                .Skip(skip).Take(take)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountFreelancersAsync()
+        {
+            return await _context.Users.AsNoTracking().CountAsync(u => u.FreelancerProfile != null);
+        }
+
+
+
+
         public async Task<User?> GetUserByIdAsync(int id)
         {
             // ATENÇÃO: não alterar para '.AsNoTracking' — A entidade é mutada por update/delete do UserService

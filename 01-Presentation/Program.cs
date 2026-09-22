@@ -55,8 +55,6 @@ string connectionString = builder.Configuration.GetConnectionString("DefaultConn
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 options.UseMySQL(connectionString));
-    options.UseMySQL(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
 
 string jwtSecret = builder.Configuration["Jwt:Secret"]
     ?? throw new InvalidOperationException("Jwt:Secret não configurado.");

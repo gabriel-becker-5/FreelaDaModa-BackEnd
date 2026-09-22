@@ -1,6 +1,4 @@
 ﻿using _04_Domain.Entities;
-using _04_Domain.Entities.UserInfo;
-using _04_Domain.Entities;
 using _04_Domain.Entities.Identity;
 using _04_Domain.Entities.Profiles;
 using _04_Domain.Enums;
@@ -14,8 +12,6 @@ namespace _03_Infrastructure.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
         public DbSet<User> Users { get; set; }
-        public DbSet<Role> Roles { get; set; }
-        public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<Vaga> Vagas { get; set; }
         public DbSet<CompanyProfile> CompanyProfiles { get; set; }
         public DbSet<FreelancerProfile> FreelancerProfiles { get; set; }
