@@ -1,4 +1,6 @@
-﻿using _02_Application.DTOs;
+﻿using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using _02_Application.DTOs;
 using _02_Application.Interfaces;
 using _04_Domain.Entities.UserInfo;
 using _04_Domain.Interfaces;
@@ -10,9 +12,14 @@ namespace _02_Application.Services
     {
         private readonly IUserRepository _userRepository;
 
-        public UserService(IUserRepository userRepository)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+
+        public UserService(
+     IUserRepository userRepository,
+     IHttpContextAccessor httpContextAccessor)
         {
             _userRepository = userRepository;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         PasswordHasher<User> passwordHasher = new();
@@ -67,6 +74,14 @@ namespace _02_Application.Services
         public async Task RemoveAllRolesFromUserAsync(User user)
         {
             await _userRepository.RemoveAllRolesFromUserAsync(user.Id);
+        }
+
+        public string GetLoggedUserEmailAddress()
+        {
+            return _httpContextAccessor.HttpContext?
+                .User?
+                .FindFirst(ClaimTypes.Name)?
+                .Value;
         }
 
         public async Task<User?> GetUserByEmailAsync(string email)

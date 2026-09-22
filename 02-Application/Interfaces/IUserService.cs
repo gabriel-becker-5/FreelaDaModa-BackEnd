@@ -13,6 +13,7 @@ namespace _02_Application.Interfaces
         public Task RemoveAllRolesFromUserAsync(User user);
         public Task<User?> GetUserByEmailAsync(string email);
         public Task<User?> GetUserByIdAsync(int id);
+        public string GetLoggedUserEmailAddress();
         public PasswordVerificationResult VerifyPassword(User user, string passwordDto);
         public Task<List<int>> GetUserRolesAsync(User user);
         public Task<List<User>> GetAllUsersAsync();
