@@ -13,10 +13,14 @@ namespace _02_Application.Services
     public class OrdemServicoService : IOrdemServicoService
     {
         private readonly IOrdemServicoRepository _ordemServicoRepository;
+        private readonly IUserService _userService;
 
-        public OrdemServicoService(IOrdemServicoRepository ordemServicoRepository)
+        public OrdemServicoService(
+        IOrdemServicoRepository ordemServicoRepository,
+        IUserService userService)
         {
             _ordemServicoRepository = ordemServicoRepository;
+            _userService = userService;
         }
 
         public async Task<List<OrdemServico>> ListAllAsync()

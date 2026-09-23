@@ -31,6 +31,7 @@ builder.Services.AddCors(options =>
 });
 
 // Interfaces
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ITokenService, TokenService>();
 builder.Services.AddScoped<IRoleRepository, RoleRepository>();
 builder.Services.AddScoped<IRoleService, RoleService>();

@@ -1,10 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.ComponentModel.DataAnnotations;
-
 
 namespace _04_Domain.Entities
 {
@@ -12,21 +6,17 @@ namespace _04_Domain.Entities
     {
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "O título é obrigatório.")]
-        [MaxLength(200)]
-        public string Titulo { get; set; }
+        public int UserId { get; set; }
 
-        [MaxLength(1000)]
+        public string Titulo { get; set; } = string.Empty;
+
         public string? Descricao { get; set; }
 
-        [Required(ErrorMessage = "A categoria é obrigatória.")]
-        public string Categoria { get; set; }
+        public string Categoria { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "A modalidade é obrigatória.")]
-        public string Modalidade { get; set; }
+        public string Modalidade { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "A cidade é obrigatória.")]
-        public string Cidade { get; set; }
+        public string Cidade { get; set; } = string.Empty;
 
         public decimal Valor { get; set; }
 
