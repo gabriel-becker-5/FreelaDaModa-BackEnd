@@ -1,25 +1,26 @@
-﻿using _04_Domain.Entities;
+﻿using System.Data;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using _04_Domain.Entities;
 using _04_Domain.Entities.Identity;
 using _04_Domain.Entities.Profiles;
 using _04_Domain.Enums;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using System.Data;
-using System.Text.Json;
 
 namespace _03_Infrastructure.Data
 {
     public class AppDbContext : DbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+
         public DbSet<User> Users { get; set; }
         public DbSet<Vaga> Vagas { get; set; }
         public DbSet<Candidatura> Candidaturas { get; set; }
         public DbSet<CompanyProfile> CompanyProfiles { get; set; }
         public DbSet<FreelancerProfile> FreelancerProfiles { get; set; }
+        public DbSet<Notificacao> Notificacoes { get; set; }
 
-        public override async Task<int> SaveChangesAsync(
-            CancellationToken cancellationToken = default)
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             SetAuditProperties();
             return await base.SaveChangesAsync(cancellationToken);
@@ -27,8 +28,7 @@ namespace _03_Infrastructure.Data
 
         private void SetAuditProperties()
         {
-            IEnumerable<EntityEntry<BaseEntity>> entries = ChangeTracker
-                .Entries<BaseEntity>();
+            IEnumerable<EntityEntry<BaseEntity>> entries = ChangeTracker.Entries<BaseEntity>();
 
             foreach (var entry in entries)
             {
