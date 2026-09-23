@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using _02_Application.DTOs.Vaga;
-using _02_Application.Interfaces;
-using _04_Domain.Entities;
+﻿using _02_Application.Interfaces;
 using _04_Domain.Interfaces;
 
 namespace _02_Application.Services.Vaga
@@ -21,7 +16,7 @@ namespace _02_Application.Services.Vaga
 
         public async Task<object> RegistrarAsync(RequisicaoRegistrarVagaJson requisicao, string emailUsuario)
         {
-            var usuario = await _userRepository.GetByEmailAsync(emailUsuario);
+            var usuario = await _userRepository.GetUserByEmailAsync(emailUsuario);
             if (usuario == null)
                 throw new Exception("Usuário não encontrado.");
 

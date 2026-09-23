@@ -77,8 +77,8 @@ namespace _02_Application.Services
 
         public async Task<PagedResult<UserDto>> GetAllUsersAsync(int page, int pageSize)
         {
-            page = Math.Clamp(page, 1, 1000);
-            pageSize = Math.Clamp(pageSize, 1, 50);
+            page = PageGuard(page);
+            pageSize = PageSizeGuard(pageSize);
 
             int skip = (page - 1) * pageSize;
 
@@ -101,6 +101,48 @@ namespace _02_Application.Services
                 TotalPages = (int)Math.Ceiling(total / (double)pageSize)
             };
         }
+
+
+        private static int PageGuard(int page)
+        {
+            return Math.Clamp(page, 1, 1000);
+        }
+
+        private static int PageSizeGuard(int pageSize)
+        {
+            return Math.Clamp(pageSize, 1, 50);
+        }
+
+
+        public async Task<PagedResult<GetFreelancerDto>> GetAllFreelancersAsync(int page, int pageSize)
+        {
+            page = PageGuard(page);
+            pageSize = PageSizeGuard(pageSize);
+            int skip = (page - 1) * pageSize;
+
+            ICollection<User> users = await _userRepository.GetAllFreelancersAsync(skip, pageSize);
+            int total = await _userRepository.CountFreelancersAsync();
+
+            List<GetFreelancerDto> items = [];
+
+            foreach (User user in users)
+            {
+                if (user.FreelancerProfile != null)
+                {
+                    items.Add(MapToFreelancerDto(user));
+                }
+            }
+
+            return new PagedResult<GetFreelancerDto>
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = total,
+                TotalPages = (int)Math.Ceiling(total / (double)pageSize)
+            };
+        }
+
 
         // Leitura de perfil
         public async Task<GetFreelancerDto?> GetFreelancerProfileByIdAsync(int userId)

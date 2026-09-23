@@ -1,16 +1,14 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using _02_Application.Interfaces;
+using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
-using _02_Application.Services.Vaga;
-using _02_Application.DTOs.Vaga;
-using _02_Application.Interfaces;
-
-
+using System.Security.Claims;
 
 namespace _01_Presentation.Controllers
 {
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     [Authorize]
     public class VagasController : ControllerBase
