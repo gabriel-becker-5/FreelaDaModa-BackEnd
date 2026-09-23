@@ -9,6 +9,7 @@
 
 using _02_Application.Interfaces;
 using _02_Application.Services;
+using _02_Application.Services.Vaga;
 using _03_Infrastructure.Data;
 using _03_Infrastructure.Repositories;
 using _03_Infrastructure.Repositories.Vaga;
@@ -39,7 +40,7 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
-// Interfaces
+// Interfaces / Services
 builder.Services.AddSingleton<ITokenService, TokenService>();
 builder.Services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
 builder.Services.AddScoped<IRoleService, RoleService>();
@@ -48,9 +49,13 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFreelancerFieldsService, FreelancerFieldsService>();
 builder.Services.AddScoped<IVagaRepository, VagaRepository>();
 builder.Services.AddScoped<IVagaService, VagaService>();
+builder.Services.AddScoped<RegistrarVagaUseCase>(); // <--- Registado para resolver a pendência DI
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' não encontrada.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException("Connection string 'DefaultConnection' não encontrada ou está vazia.");
+}
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySQL(connectionString));
@@ -80,6 +85,7 @@ builder.Services.AddRateLimiter(options =>
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.AddFixedWindowLimiter("login", limiter =>
     {
+        
         limiter.PermitLimit = 25;
         limiter.Window = TimeSpan.FromMinutes(1);
     });

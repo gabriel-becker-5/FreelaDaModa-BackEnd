@@ -6,8 +6,6 @@ using _02_Application.Services.Vaga;
 using _02_Application.DTOs.Vaga;
 using _02_Application.Interfaces;
 
-
-
 namespace _01_Presentation.Controllers
 {
     [Route("api/[controller]")]
@@ -38,13 +36,15 @@ namespace _01_Presentation.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ObterTodas()
+        [AllowAnonymous]
+        public async Task<IActionResult> ObterComFiltros([FromQuery] int? usuarioId, [FromQuery] string? status)
         {
-            var vagas = await _vagaService.ObterTodasAsync();
+            var vagas = await _vagaService.ObterComFiltrosAsync(usuarioId, status);
             return Ok(vagas);
         }
 
         [HttpGet("mural")]
+        [AllowAnonymous]
         public async Task<IActionResult> ListarMuralDeVagas()
         {
             var vagas = await _vagaService.ObterTodasAsync();
@@ -55,6 +55,49 @@ namespace _01_Presentation.Controllers
                 total = vagas?.Count() ?? 0,
                 dados = vagas
             });
+        }
+
+        [HttpGet("{id:int}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ObterPorId(int id)
+        {
+            var vaga = await _vagaService.ObterPorIdAsync(id);
+            if (vaga == null)
+                return NotFound(new { mensagem = "Vaga não encontrada." });
+            return Ok(vaga);
+        }
+
+        [HttpPatch("{id:int}")]
+        public async Task<IActionResult> Atualizar(int id, [FromBody] RequisicaoAtualizarVagaJson requisicao)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var atualizada = await _vagaService.AtualizarAsync(id, requisicao);
+            if (atualizada == null)
+                return NotFound(new { mensagem = "Vaga não encontrada para atualização." });
+            return Ok(atualizada);
+        }
+
+        [HttpPatch("{id:int}/status")]
+        public async Task<IActionResult> AtualizarStatus(int id, [FromBody] RequisicaoAtualizarStatusVagaJson requisicao)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var sucesso = await _vagaService.AtualizarStatusAsync(id, requisicao.Status);
+            if (!sucesso)
+                return NotFound(new { mensagem = "Vaga não encontrada para alteração de status." });
+            return NoContent();
+        }
+
+        [HttpDelete("{id:int}")]
+        public async Task<IActionResult> Deletar(int id)
+        {
+            var sucesso = await _vagaService.DeletarAsync(id);
+            if (!sucesso)
+                return NotFound(new { mensagem = "Vaga não encontrada para remoção." });
+            return NoContent();
         }
 
         private string? GetLoggedUserEmailAddress()

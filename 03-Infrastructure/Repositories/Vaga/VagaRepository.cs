@@ -10,7 +10,7 @@ namespace _03_Infrastructure.Repositories.Vaga
 {
     public class VagaRepository : IVagaRepository
     {
-        private readonly AppDbContext _context; // Ajustado para o DbContext padrão do projeto
+        private readonly AppDbContext _context;
 
         public VagaRepository(AppDbContext context)
         {
@@ -42,6 +42,62 @@ namespace _03_Infrastructure.Repositories.Vaga
         public async Task<IEnumerable<_04_Domain.Entities.Vaga>> ObterTodasAsync()
         {
             return await _context.Vagas.ToListAsync();
+        }
+
+        public async Task<IEnumerable<_04_Domain.Entities.Vaga>> ListarComFiltrosAsync(int? usuarioId, string? status)
+        {
+            var query = _context.Vagas.AsQueryable();
+
+            if (usuarioId.HasValue)
+                query = query.Where(v => v.UsuarioId == usuarioId.Value);
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                if (bool.TryParse(status, out var bVal))
+                {
+                    query = query.Where(v => v.Ativa == bVal);
+                }
+                else
+                {
+                    var lower = status.ToLower();
+                    if (lower == "aberta" || lower == "true")
+                        query = query.Where(v => v.Ativa);
+                    else if (lower == "pausada" || lower == "false")
+                        query = query.Where(v => !v.Ativa);
+                }
+            }
+
+            return await query.ToListAsync();
+        }
+
+        public async Task<bool> AtualizarStatusAsync(int id, string status)
+        {
+            var vaga = await ObterPorIdAsync(id);
+            if (vaga == null) return false;
+
+            if (bool.TryParse(status, out var ativaVal))
+            {
+                vaga.Ativa = ativaVal;
+            }
+            else
+            {
+                var lower = status.ToLower();
+                vaga.Ativa = (lower == "aberta" || lower == "true" || lower == "1");
+            }
+
+            _context.Vagas.Update(vaga);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeletarAsync(int id)
+        {
+            var vaga = await ObterPorIdAsync(id);
+            if (vaga == null) return false;
+
+            _context.Vagas.Remove(vaga);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

@@ -1,47 +1,33 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using _02_Application.DTOs.Vaga;
-using _02_Application.Interfaces;
-using _04_Domain.Entities;
+﻿using _02_Application.DTOs.Vaga;
+using _02_Application.Mappings;
+using _03_Infrastructure.Repositories.Vaga;
 using _04_Domain.Interfaces;
+using DominioVaga = _04_Domain.Entities.Vaga;
 
-namespace _02_Application.Services.Vaga
+namespace _02_Application.Services.Vaga;
+
+public class RegistrarVagaUseCase
 {
-    public class RegistrarVagaUseCase : IVagaService
+    private readonly IVagaRepository _vagaRepository;
+
+    public RegistrarVagaUseCase(IVagaRepository vagaRepository)
     {
-        private readonly IVagaRepository _vagaRepository;
-        private readonly IUserRepository _userRepository;
+        _vagaRepository = vagaRepository;
+    }
 
-        public RegistrarVagaUseCase(IVagaRepository vagaRepository, IUserRepository userRepository)
+    public async Task<RespostavagaJson> ExecutarAsync(RequisicaoRegistrarVagaJson requisicao, string emailUsuario)
+    {
+        var entidade = new DominioVaga
         {
-            _vagaRepository = vagaRepository;
-            _userRepository = userRepository;
-        }
+            Titulo = requisicao.Titulo,
+            Descricao = requisicao.Descricao,
+            Orcamento = Convert.ToDecimal(requisicao.Salario),
+            DataPublicacao = DateTime.Now,
+            Ativa = true,
+            UsuarioId = 1
+        };
 
-        public async Task<object> RegistrarAsync(RequisicaoRegistrarVagaJson requisicao, string emailUsuario)
-        {
-            var usuario = await _userRepository.GetByEmailAsync(emailUsuario);
-            if (usuario == null)
-                throw new Exception("Usuário não encontrado.");
-
-            var vaga = new _04_Domain.Entities.Vaga
-            {
-                Titulo = requisicao.Titulo,
-                Descricao = requisicao.Descricao,
-                Orcamento = requisicao.Salario, // Ajustado para o campo correto da entidade
-                UsuarioId = usuario.Id          // Ajustado para o campo correto da entidade
-            };
-
-            await _vagaRepository.AdicionarAsync(vaga);
-
-            return new { Mensagem = "Vaga cadastrada com sucesso!" };
-        }
-
-        public async Task<IEnumerable<object>> ObterTodasAsync()
-        {
-            var vagas = await _vagaRepository.ObterTodasAsync();
-            return vagas;
-        }
+        await _vagaRepository.AdicionarAsync(entidade);
+        return entidade.ParaRespostaJson();
     }
 }
