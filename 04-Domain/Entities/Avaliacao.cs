@@ -13,11 +13,13 @@ namespace _04_Domain.Entities
 
         public int OrdemServicoId { get; set; }
 
-        [Range(1, 5, ErrorMessage = "A nota deve estar entre 1 e 5.")]
+        public int UserId { get; set; }
+
+        public bool IsDeleted { get; set; } = false;
+
         public int Nota { get; set; }
 
-        [Required(ErrorMessage = "O comentário é obrigatório.")]
-        public string Comentario { get; set; }
+        public string Comentario { get; set; } = string.Empty;
     }
 }
 

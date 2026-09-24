@@ -17,7 +17,7 @@ namespace _03_Infrastructure.Services
         {
             List<Claim> claims = [];
 
-            Claim? claimName = new Claim(JwtRegisteredClaimNames.Name, user);
+            Claim? claimName = new Claim(ClaimTypes.Name, user);
             claims.Add(claimName);
 
             for (int i = 0; i < allUserRoles.Count; i++)

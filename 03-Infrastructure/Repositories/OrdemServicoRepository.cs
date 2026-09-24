@@ -21,12 +21,15 @@ namespace _03_Infrastructure.Repositories
 
         public async Task<List<OrdemServico>> ListAllAsync()
         {
-            return await _context.OrdensServico.ToListAsync();
+            return await _context.OrdensServico
+                .Where(o => !o.IsDeleted)
+                .ToListAsync();
         }
 
         public async Task<OrdemServico?> GetByIdAsync(int id)
         {
-            return await _context.OrdensServico.FindAsync(id);
+            return await _context.OrdensServico
+                .FirstOrDefaultAsync(o => o.Id == id && !o.IsDeleted);
         }
 
         public async Task<OrdemServico> CreateAsync(OrdemServico ordemServico)
@@ -42,6 +45,15 @@ namespace _03_Infrastructure.Repositories
         {
             await _context.SaveChangesAsync();
         }
+
+        public async Task DeleteAsync(OrdemServico ordemServico)
+        {
+            ordemServico.IsDeleted = true;
+
+            _context.OrdensServico.Update(ordemServico);
+            await _context.SaveChangesAsync();
+        }
+
     }
 }
 

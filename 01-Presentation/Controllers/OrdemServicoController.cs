@@ -25,7 +25,25 @@ namespace _01_Presentation.Controllers
             List<OrdemServico> ordens =
                 await _ordemServicoService.ListAllAsync();
 
-            return Ok(ordens);
+            List<OrdemServicoResponseDto> response = ordens
+                .Select(ordem => new OrdemServicoResponseDto
+                {
+                    Id = ordem.Id,
+                    UserId = ordem.UserId,
+                    Titulo = ordem.Titulo,
+                    Descricao = ordem.Descricao,
+                    Categoria = ordem.Categoria,
+                    Modalidade = ordem.Modalidade,
+                    Cidade = ordem.Cidade,
+                    Valor = ordem.Valor,
+                    Prazo = ordem.Prazo,
+                    Status = ordem.Status,
+                    Observacoes = ordem.Observacoes,
+                    FreelancerId = ordem.FreelancerId
+                })
+                .ToList();
+
+            return Ok(response);
         }
 
         [HttpGet("detalhe/{id}")]
@@ -39,7 +57,23 @@ namespace _01_Presentation.Controllers
                 return NotFound("Ordem de serviço não encontrada.");
             }
 
-            return Ok(ordem);
+            OrdemServicoResponseDto response = new()
+            {
+                Id = ordem.Id,
+                UserId = ordem.UserId,
+                Titulo = ordem.Titulo,
+                Descricao = ordem.Descricao,
+                Categoria = ordem.Categoria,
+                Modalidade = ordem.Modalidade,
+                Cidade = ordem.Cidade,
+                Valor = ordem.Valor,
+                Prazo = ordem.Prazo,
+                Status = ordem.Status,
+                Observacoes = ordem.Observacoes,
+                FreelancerId = ordem.FreelancerId
+            };
+
+            return Ok(response);
         }
 
         [HttpPost("cadastrar")]
@@ -48,21 +82,58 @@ namespace _01_Presentation.Controllers
             OrdemServico ordem =
                 await _ordemServicoService.CreateAsync(dto);
 
-            return Ok(ordem);
+            OrdemServicoResponseDto response = new()
+            {
+                Id = ordem.Id,
+                UserId = ordem.UserId,
+                Titulo = ordem.Titulo,
+                Descricao = ordem.Descricao,
+                Categoria = ordem.Categoria,
+                Modalidade = ordem.Modalidade,
+                Cidade = ordem.Cidade,
+                Valor = ordem.Valor,
+                Prazo = ordem.Prazo,
+                Status = ordem.Status,
+                Observacoes = ordem.Observacoes,
+                FreelancerId = ordem.FreelancerId
+            };
+
+            return Ok(response);
         }
 
         [HttpPut("editar")]
         public async Task<IActionResult> Editar(OrdemServicoDto dto)
         {
-            bool resultado =
-                await _ordemServicoService.UpdateAsync(dto);
-
-            if (!resultado)
+            try
             {
-                return NotFound("Ordem de serviço não encontrada.");
+                bool resultado =
+                    await _ordemServicoService.UpdateAsync(dto);
+
+                if (!resultado)
+                {
+                    return NotFound("Ordem de serviço não encontrada.");
+                }
+
+                return Ok("Ordem de serviço atualizada com sucesso.");
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpDelete("excluir/{id}")]
+        public async Task<IActionResult> Excluir(int id)
+        {
+            bool excluido =
+                await _ordemServicoService.DeleteAsync(id);
+
+            if (!excluido)
+            {
+                return NotFound("Ordem de serviço não encontrada ou não pertence ao usuário.");
             }
 
-            return Ok("Ordem de serviço atualizada com sucesso.");
+            return Ok("Ordem de serviço excluída com sucesso.");
         }
     }
 }

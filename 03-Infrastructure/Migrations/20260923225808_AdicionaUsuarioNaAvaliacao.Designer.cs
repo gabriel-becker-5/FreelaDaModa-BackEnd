@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using _03_Infrastructure.Data;
 
@@ -10,9 +11,11 @@ using _03_Infrastructure.Data;
 namespace _03_Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260923225808_AdicionaUsuarioNaAvaliacao")]
+    partial class AdicionaUsuarioNaAvaliacao
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -28,9 +31,6 @@ namespace _03_Infrastructure.Migrations
                     b.Property<string>("Comentario")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("tinyint(1)");
 
                     b.Property<int>("Nota")
                         .HasColumnType("int");
@@ -89,9 +89,6 @@ namespace _03_Infrastructure.Migrations
 
                     b.Property<int?>("FreelancerId")
                         .HasColumnType("int");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Modalidade")
                         .IsRequired()

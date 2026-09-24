@@ -17,5 +17,7 @@ namespace _02_Application.Interfaces
         Task<OrdemServico> CreateAsync(OrdemServicoDto dto);
 
         Task<bool> UpdateAsync(OrdemServicoDto dto);
+
+        Task<bool> DeleteAsync(int id);
     }
 }

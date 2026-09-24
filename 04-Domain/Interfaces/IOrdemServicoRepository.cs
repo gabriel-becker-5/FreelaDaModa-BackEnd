@@ -16,5 +16,7 @@ namespace _04_Domain.Interfaces
         Task<OrdemServico> CreateAsync(OrdemServico ordemServico);
 
         Task UpdateAsync(OrdemServico ordemServico);
+
+        Task DeleteAsync(OrdemServico ordemServico);
     }
 }

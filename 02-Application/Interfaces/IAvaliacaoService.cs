@@ -13,5 +13,9 @@ namespace _02_Application.Interfaces
         Task<Avaliacao> CreateAsync(AvaliacaoDto dto);
 
         Task<List<Avaliacao>> ListByOrdemServicoAsync(int ordemServicoId);
+
+        Task<bool> UpdateAsync(int id, AvaliacaoDto dto);
+
+        Task<bool> DeleteAsync(int id);
     }
 }
