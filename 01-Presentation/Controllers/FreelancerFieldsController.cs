@@ -20,7 +20,7 @@ namespace _01_Presentation.Controllers
 
         /// <summary>Endpoint Público para o Frontend popular menus dropdowns.</summary>
         /// <returns>Retorna todos os registros disponíveis no campo informado.</returns>
-        /// <param name="fieldName">Nome do campo. Opções disponíveis: AvailableTime, AverageRevenue, BusinessType, ExperienceYears, FreelancerPreferences, HowUsuallyArrangeServices, OwnMachine, Specialty, WorkshopSize.</param>
+        /// <param name="fieldName">Nome do campo. Opções disponíveis: AvailableTime, ExperienceYears, OwnMachine, Specialty</param>
         /// <response code="200">Ok, retorna os registros do campo informado, se houver.</response>
         /// <response code="400">O campo informado não existe.</response>
         [ProducesResponseType(200)]
@@ -33,27 +33,15 @@ namespace _01_Presentation.Controllers
                 return BadRequest("O parâmetro 'fieldName' é obrigatório.");
             }
 
-            ICollection<IdLabelDto> result = [];
+            ICollection<IdLabelDto> result;
 
             switch (fieldName.ToUpper())
             {
                 case "AVAILABLETIME":
                     result = await _freelancerFieldsService.GetAll<AvailableTime>();
                     break;
-                case "AVERAGEREVENUE":
-                    result = await _freelancerFieldsService.GetAll<AverageRevenue>();
-                    break;
-                case "BUSINESSTYPE":
-                    result = await _freelancerFieldsService.GetAll<BusinessType>();
-                    break;
                 case "EXPERIENCEYEARS":
                     result = await _freelancerFieldsService.GetAll<ExperienceYears>();
-                    break;
-                case "FREELANCERPREFERENCES":
-                    result = await _freelancerFieldsService.GetAll<FreelancerPreferences>();
-                    break;
-                case "HOWUSUALLYARRANGESERVICES":
-                    result = await _freelancerFieldsService.GetAll<HowUsuallyArrangeServices>();
                     break;
                 case "OWNMACHINE":
                     result = await _freelancerFieldsService.GetAll<OwnMachine>();
@@ -61,13 +49,9 @@ namespace _01_Presentation.Controllers
                 case "SPECIALTY":
                     result = await _freelancerFieldsService.GetAll<Specialty>();
                     break;
-                case "WORKSHOPSIZE":
-                    result = await _freelancerFieldsService.GetAll<WorkshopSize>();
-                    break;
                 default:
                     return BadRequest($"Campo '{fieldName}' não reconhecido.");
             }
-
             return Ok(result);
         }
     }

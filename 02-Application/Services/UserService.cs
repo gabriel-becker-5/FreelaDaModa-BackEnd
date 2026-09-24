@@ -149,7 +149,7 @@ namespace _02_Application.Services
         {
             User? user = await _userRepository.GetFreelancerProfileAsync(userId);
 
-            if (user == null)
+            if (user.FreelancerProfile == null)
             {
                 return null;
             }
@@ -157,15 +157,40 @@ namespace _02_Application.Services
             return MapToFreelancerDto(user);
         }
 
+        public async Task<FreelancerPublicProfileDto?> GetFreelancerPublicProfileByIdAsync(int userId)
+        {
+            User? user = await _userRepository.GetFreelancerProfileAsync(userId);
+
+            if (user.FreelancerProfile == null)
+            {
+                return null;
+            }
+
+            return MapToFreelancerPublicProfileDto(user);
+        }
+
+
         public async Task<GetCompanyDto?> GetCompanyProfileByIdAsync(int userId)
         {
             User? user = await _userRepository.GetCompanyProfileAsync(userId);
-            if (user == null)
+            if (user.CompanyProfile == null)
             {
                 return null;
             }
 
             return MapToCompanyDto(user);
+        }
+
+        public async Task<CompanyPublicProfileDto?> GetCompanyPublicProfileByIdAsync(int userId)
+        {
+            User? user = await _userRepository.GetCompanyProfileAsync(userId);
+
+            if (user.CompanyProfile == null)
+            {
+                return null;
+            }
+
+            return MapToCompanyPublicProfileDto(user);
         }
 
         // Atualização de perfil
@@ -178,14 +203,14 @@ namespace _02_Application.Services
             }
 
             if (!string.IsNullOrEmpty(dto.Email)
-                && dto.Email.ToLower() != user.Email.ToLower()
+                && string.Equals(dto.Email, user.Email, StringComparison.OrdinalIgnoreCase)
                 && await _userRepository.IsEmailRegistered(dto.Email))
             {
                 return ProfileUpdateResult.EmailInUse;
             }
 
             if (!string.IsNullOrEmpty(dto.LegalResponsibleDocument)
-                && dto.LegalResponsibleDocument.ToLower() != user.LegalResponsibleDocument.ToLower()
+                && string.Equals(dto.LegalResponsibleDocument, user.LegalResponsibleDocument, StringComparison.OrdinalIgnoreCase)
                 && await _userRepository.IsCpfRegistered(dto.LegalResponsibleDocument))
             {
                 return ProfileUpdateResult.DocumentInUse;
@@ -194,26 +219,12 @@ namespace _02_Application.Services
             ApplyUserChanges(user, dto);
 
             if (dto.BirthDate.HasValue
-                    && dto.BirthDate != user.FreelancerProfile.BirthDate) // se tem valor e é diferente do atual, segue.
+                    && dto.BirthDate != user.BirthDate) // se tem valor e é diferente do atual, segue.
             {
                 if (dto.BirthDate.Value != default(DateTime)
                         && dto.BirthDate.Value < DateTime.UtcNow) // se dto não é padrão e dto é menor igual agora
                 {
-                    user.FreelancerProfile.BirthDate = (DateTime)dto.BirthDate;
-                }
-                else
-                {
-                    return ProfileUpdateResult.InvalidData;
-                }
-            }
-
-            if (dto.BusinessTypeId.HasValue
-                    && (BusinessType)dto.BusinessTypeId != user.FreelancerProfile.BusinessTypeId
-                    && dto.BusinessTypeId != 0)
-            {
-                if (FreelancerFieldValidator.IsIdValid<BusinessType>((int)dto.BusinessTypeId))
-                {
-                    user.FreelancerProfile.BusinessTypeId = (BusinessType)dto.BusinessTypeId;
+                    user.BirthDate = (DateTime)dto.BirthDate;
                 }
                 else
                 {
@@ -235,33 +246,6 @@ namespace _02_Application.Services
                 }
             }
 
-            if (dto.WorkshopSizeId.HasValue
-                    && (WorkshopSize)dto.WorkshopSizeId != user.FreelancerProfile.WorkshopSizeId
-                    && dto.WorkshopSizeId != 0)
-            {
-                if (FreelancerFieldValidator.IsIdValid<WorkshopSize>((int)dto.WorkshopSizeId))
-                {
-                    user.FreelancerProfile.WorkshopSizeId = (WorkshopSize)dto.WorkshopSizeId;
-                }
-                else
-                {
-                    return ProfileUpdateResult.InvalidData;
-                }
-            }
-
-            if (dto.HowUsuallyArrangeServicesId.HasValue
-                    && (HowUsuallyArrangeServices)dto.HowUsuallyArrangeServicesId != user.FreelancerProfile.HowUsuallyArrangeServicesId
-                    && dto.HowUsuallyArrangeServicesId != 0)
-            {
-                if (FreelancerFieldValidator.IsIdValid<HowUsuallyArrangeServices>((int)dto.HowUsuallyArrangeServicesId))
-                {
-                    user.FreelancerProfile.HowUsuallyArrangeServicesId = (HowUsuallyArrangeServices)dto.HowUsuallyArrangeServicesId;
-                }
-                else
-                {
-                    return ProfileUpdateResult.InvalidData;
-                }
-            }
 
             if (dto.AvailableTimeId.HasValue
                     && (AvailableTime)dto.AvailableTimeId != user.FreelancerProfile.AvailableTimeId
@@ -275,44 +259,6 @@ namespace _02_Application.Services
                 {
                     return ProfileUpdateResult.InvalidData;
                 }
-            }
-
-            if (dto.FreelancerPreferencesId.HasValue
-                    && (FreelancerPreferences)dto.FreelancerPreferencesId != user.FreelancerProfile.FreelancerPreferencesId
-                    && dto.FreelancerPreferencesId != 0)
-            {
-                if (FreelancerFieldValidator.IsIdValid<FreelancerPreferences>((int)dto.FreelancerPreferencesId))
-                {
-                    user.FreelancerProfile.FreelancerPreferencesId = (FreelancerPreferences)dto.FreelancerPreferencesId;
-                }
-                else
-                {
-                    return ProfileUpdateResult.InvalidData;
-                }
-            }
-
-            if (dto.AverageRevenueId.HasValue
-                    && (AverageRevenue)dto.AverageRevenueId != user.FreelancerProfile.AverageRevenueId
-                    && dto.AverageRevenueId != 0)
-            {
-                if (FreelancerFieldValidator.IsIdValid<AverageRevenue>((int)dto.AverageRevenueId))
-                {
-                    user.FreelancerProfile.AverageRevenueId = (AverageRevenue)dto.AverageRevenueId;
-                }
-                else
-                {
-                    return ProfileUpdateResult.InvalidData;
-                }
-            }
-
-            if (dto.HasFixedProducer.HasValue && dto.HasFixedProducer != user.FreelancerProfile.HasFixedProducer)
-            {
-                user.FreelancerProfile.HasFixedProducer = (bool)dto.HasFixedProducer;
-            }
-
-            if (dto.HasOwnCar.HasValue && dto.HasOwnCar != user.FreelancerProfile.HasOwnCar)
-            {
-                user.FreelancerProfile.HasOwnCar = (bool)dto.HasOwnCar;
             }
 
             // SpecialtyIds
@@ -364,21 +310,21 @@ namespace _02_Application.Services
             }
 
             if (!string.IsNullOrEmpty(dto.Email)
-                && dto.Email.ToLower() != user.Email.ToLower()
+                && string.Equals(dto.Email, user.Email, StringComparison.OrdinalIgnoreCase)
                 && await _userRepository.IsEmailRegistered(dto.Email))
             {
                 return ProfileUpdateResult.EmailInUse;
             }
 
             if (!string.IsNullOrEmpty(dto.CompanyRegistrationDocument)
-                && dto.CompanyRegistrationDocument.ToLower() != user.CompanyProfile.CompanyRegistrationDocument.ToLower()
+                && string.Equals(dto.CompanyRegistrationDocument, user.CompanyProfile.CompanyRegistrationDocument, StringComparison.OrdinalIgnoreCase)
                 && await _userRepository.IsCnpjRegistered(dto.CompanyRegistrationDocument))
             {
                 return ProfileUpdateResult.DocumentInUse;
             }
 
             if (!string.IsNullOrEmpty(dto.CompanyRegistrationDocument)
-                    && dto.CompanyRegistrationDocument.ToLower() != user.CompanyProfile.CompanyRegistrationDocument.ToLower())
+                    && string.Equals(dto.CompanyRegistrationDocument, user.CompanyProfile.CompanyRegistrationDocument, StringComparison.OrdinalIgnoreCase))
             {
                 user.CompanyProfile.CompanyRegistrationDocument = dto.CompanyRegistrationDocument;
             }
@@ -386,19 +332,19 @@ namespace _02_Application.Services
             ApplyUserChanges(user, dto);
 
             if (!string.IsNullOrEmpty(dto.LegalName)
-                && dto.LegalName.ToLower() != user.CompanyProfile.LegalName.ToLower())
+                && string.Equals(dto.LegalName, user.CompanyProfile.LegalName, StringComparison.OrdinalIgnoreCase))
             {
                 user.CompanyProfile.LegalName = dto.LegalName;
             }
 
             if (!string.IsNullOrEmpty(dto.CompanyName)
-                && dto.CompanyName.ToLower() != user.CompanyProfile.CompanyName.ToLower())
+                && string.Equals(dto.CompanyName, user.CompanyProfile.CompanyName, StringComparison.OrdinalIgnoreCase))
             {
                 user.CompanyProfile.CompanyName = dto.CompanyName;
             }
 
             if (!string.IsNullOrEmpty(dto.CoreBusiness)
-                && dto.CoreBusiness.ToLower() != user.CompanyProfile.CoreBusiness.ToLower())
+                && string.Equals(dto.CoreBusiness, user.CompanyProfile.CoreBusiness, StringComparison.OrdinalIgnoreCase))
             {
                 user.CompanyProfile.CoreBusiness = dto.CoreBusiness;
             }
@@ -425,36 +371,37 @@ namespace _02_Application.Services
         private static void ApplyUserChanges(User user, UpdateUserDto dto)
         {
             if (!string.IsNullOrEmpty(dto.LegalResponsibleFullName)
-                && dto.LegalResponsibleFullName.ToLower() != user.LegalResponsibleFullName.ToLower())
+                && string.Equals(dto.LegalResponsibleFullName, user.LegalResponsibleFullName, StringComparison.OrdinalIgnoreCase))
             {
                 user.LegalResponsibleFullName = dto.LegalResponsibleFullName;
             }
 
             if (!string.IsNullOrEmpty(dto.LegalResponsibleDocument)
-                && dto.LegalResponsibleDocument.ToLower() != user.LegalResponsibleDocument.ToLower())
+                && string.Equals(dto.LegalResponsibleDocument, user.LegalResponsibleDocument, StringComparison.OrdinalIgnoreCase))
             {
                 user.LegalResponsibleDocument = dto.LegalResponsibleDocument;
             }
 
-            if (!string.IsNullOrEmpty(dto.Email) && dto.Email.ToLower() != user.Email.ToLower())
+            if (!string.IsNullOrEmpty(dto.Email)
+                && string.Equals(dto.Email, user.Email, StringComparison.OrdinalIgnoreCase))
             {
                 user.Email = dto.Email;
             }
 
             if (!string.IsNullOrEmpty(dto.ContactNumber)
-                && dto.ContactNumber.ToLower() != user.ContactNumber.ToLower())
+                && string.Equals(dto.ContactNumber, user.ContactNumber, StringComparison.OrdinalIgnoreCase))
             {
                 user.ContactNumber = dto.ContactNumber;
             }
 
             if (!string.IsNullOrEmpty(dto.PostalCode)
-                && dto.PostalCode.ToLower() != user.PostalCode.ToLower())
+                && string.Equals(dto.PostalCode, user.PostalCode, StringComparison.OrdinalIgnoreCase))
             {
                 user.PostalCode = dto.PostalCode;
             }
 
             if (!string.IsNullOrEmpty(dto.Address)
-                && dto.Address.ToLower() != user.Address.ToLower())
+                && string.Equals(dto.Address, user.Address, StringComparison.OrdinalIgnoreCase))
             {
                 user.Address = dto.Address;
             }
@@ -467,7 +414,7 @@ namespace _02_Application.Services
             }
 
             if (!string.IsNullOrEmpty(dto.Neighborhood)
-                && dto.Neighborhood.ToLower() != user.Neighborhood.ToLower())
+                && string.Equals(dto.Neighborhood, user.Neighborhood, StringComparison.OrdinalIgnoreCase))
             {
                 user.Neighborhood = dto.Neighborhood;
             }
@@ -478,26 +425,26 @@ namespace _02_Application.Services
             }
             else if (dto.AdditionalAddressInfo != null
                 && (user.AdditionalAddressInfo == null
-                    || dto.AdditionalAddressInfo.ToLower() != user.AdditionalAddressInfo.ToLower()))
+                    || string.Equals(dto.AdditionalAddressInfo, user.AdditionalAddressInfo, StringComparison.OrdinalIgnoreCase)))
             {
                 user.AdditionalAddressInfo = dto.AdditionalAddressInfo;
             }
 
             if (!string.IsNullOrEmpty(dto.City)
-                && dto.City.ToLower() != user.City.ToLower())
+                && string.Equals(dto.City, user.City, StringComparison.OrdinalIgnoreCase))
             {
                 user.City = dto.City;
             }
 
             if (!string.IsNullOrEmpty(dto.State)
-                && dto.State.ToLower() != user.State.ToLower())
+                && string.Equals(dto.State, user.State, StringComparison.OrdinalIgnoreCase))
             {
                 user.State = dto.State;
             }
 
             if (!string.IsNullOrEmpty(dto.PublicProfileDescription)
                 && (dto.PublicProfileDescription == null
-                    || dto.PublicProfileDescription.ToLower() != user.PublicProfileDescription.ToLower()))
+                    || string.Equals(dto.PublicProfileDescription, user.PublicProfileDescription, StringComparison.OrdinalIgnoreCase)))
             {
                 user.PublicProfileDescription = dto.PublicProfileDescription;
             }
@@ -536,16 +483,34 @@ namespace _02_Application.Services
                 State = user.State,
                 AdditionalAddressInfo = user.AdditionalAddressInfo,
                 PostalCode = user.PostalCode,
-                HasFixedProducer = user.FreelancerProfile.HasFixedProducer,
-                HasOwnCar = user.FreelancerProfile.HasOwnCar,
-                BirthDate = user.FreelancerProfile.BirthDate,
+                BirthDate = user.BirthDate,
                 AvailableTimeName = user.FreelancerProfile.AvailableTimeId.ToString().Replace("_", " "),
-                AverageRevenueName = user.FreelancerProfile.AverageRevenueId.ToString().Replace("_", " "),
-                HowUsuallyArrangeServicesName = user.FreelancerProfile.HowUsuallyArrangeServicesId.ToString().Replace("_", " "),
-                BusinessTypeName = user.FreelancerProfile.BusinessTypeId.ToString().Replace("_", " "),
                 ExperienceYearsName = user.FreelancerProfile.ExperienceYearsId.ToString().Replace("_", " "),
-                FreelancerPreferencesName = user.FreelancerProfile.FreelancerPreferencesId.ToString().Replace("_", " "),
-                WorkshopSizeName = user.FreelancerProfile.WorkshopSizeId.ToString().Replace("_", " "),
+                OwnMachineNames = user.FreelancerProfile.OwnMachinesIds
+                                    .Select(id => id
+                                    .ToString()
+                                    .Replace("_", " "))
+                                    .ToList(),
+                SpecialtyNames = user.FreelancerProfile.SpecialtiesIds
+                                    .Select(id => id
+                                    .ToString()
+                                    .Replace("_", " "))
+                                    .ToList()
+            };
+        }
+
+
+        private static FreelancerPublicProfileDto MapToFreelancerPublicProfileDto(User user)
+        {
+            return new FreelancerPublicProfileDto
+            {
+                LegalResponsibleFullName = user.LegalResponsibleFullName,
+                City = user.City,
+                State = user.State,
+                IsVerified = user.IsVerified,
+                PublicProfileDescription = user.PublicProfileDescription,
+                AvailableTimeName = user.FreelancerProfile.AvailableTimeId.ToString().Replace("_", " "),
+                ExperienceYearsName = user.FreelancerProfile.ExperienceYearsId.ToString().Replace("_", " "),
                 OwnMachineNames = user.FreelancerProfile.OwnMachinesIds
                                     .Select(id => id
                                     .ToString()
@@ -576,6 +541,19 @@ namespace _02_Application.Services
                 PostalCode = user.PostalCode,
                 LegalName = user.CompanyProfile.LegalName,
                 CompanyName = user.CompanyProfile.CompanyName,
+                CoreBusiness = user.CompanyProfile.CoreBusiness
+            };
+        }
+
+        private static CompanyPublicProfileDto MapToCompanyPublicProfileDto(User user)
+        {
+            return new CompanyPublicProfileDto
+            {
+                CompanyName = user.CompanyProfile.CompanyName,
+                City = user.City,
+                State = user.State,
+                IsVerified = user.IsVerified,
+                PublicProfileDescription = user.PublicProfileDescription,
                 CoreBusiness = user.CompanyProfile.CoreBusiness
             };
         }
@@ -614,23 +592,14 @@ namespace _02_Application.Services
                 State = dto.State,
                 PostalCode = dto.PostalCode,
                 AdditionalAddressInfo = dto.AdditionalAddressInfo,
-                Roles = new List<Roles> { Roles.Freelancer }
+                Roles = new List<Roles> { Roles.Freelancer },
+                PasswordHash = _passwordHasher.HashPassword(dto.Password)
             };
-
-            newUser.PasswordHash = _passwordHasher.HashPassword(dto.Password);
 
             FreelancerProfile newFreelancer = new()
             {
-                BirthDate = dto.BirthDate,
-                HasFixedProducer = dto.HasFixedProducer,
-                HasOwnCar = dto.HasOwnCar,
                 AvailableTimeId = (AvailableTime)dto.AvailableTimeId,
-                AverageRevenueId = (AverageRevenue)dto.AverageRevenueId,
-                BusinessTypeId = (BusinessType)dto.BusinessTypeId,
                 ExperienceYearsId = (ExperienceYears)dto.ExperienceYearsId,
-                FreelancerPreferencesId = (FreelancerPreferences)dto.FreelancerPreferencesId,
-                HowUsuallyArrangeServicesId = (HowUsuallyArrangeServices)dto.HowUsuallyArrangeServicesId,
-                WorkshopSizeId = (WorkshopSize)dto.WorkshopSizeId,
                 SpecialtiesIds = dto.SpecialtyIds.Select(id => (Specialty)id).ToList(),
                 OwnMachinesIds = dto.OwnMachineIds.Select(id => (OwnMachine)id).ToList()
             };
@@ -676,10 +645,9 @@ namespace _02_Application.Services
                 State = dto.State,
                 PostalCode = dto.PostalCode,
                 AdditionalAddressInfo = dto.AdditionalAddressInfo,
-                Roles = new List<Roles> { Roles.Company }
+                Roles = new List<Roles> { Roles.Company },
+                PasswordHash = _passwordHasher.HashPassword(dto.Password)
             };
-
-            newUser.PasswordHash = _passwordHasher.HashPassword(dto.Password);
 
             CompanyProfile newCompany = new()
             {

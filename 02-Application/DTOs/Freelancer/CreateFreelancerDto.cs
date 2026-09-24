@@ -56,14 +56,8 @@ namespace _02_Application.DTOs.Freelancer
         [Required(ErrorMessage = "A data de nascimento é obrigatória.")]
         public DateTime BirthDate { get; set; }
 
-        [Required(ErrorMessage = "O tipo de negócio é obrigatório.")]
-        public int BusinessTypeId { get; set; }
-
         [Required(ErrorMessage = "O tempo de experiência é obrigatório.")]
         public int ExperienceYearsId { get; set; }
-
-        [Required(ErrorMessage = "O tamanho da oficina é obrigatório.")]
-        public int WorkshopSizeId { get; set; }
 
         [Required(ErrorMessage = "Selecione ao menos uma especialidade.")]
         [MinLength(1, ErrorMessage = "Selecione ao menos uma especialidade.")]
@@ -73,22 +67,7 @@ namespace _02_Application.DTOs.Freelancer
         [MinLength(1, ErrorMessage = "Selecione ao menos uma máquina.")]
         public List<int> OwnMachineIds { get; set; }
 
-        [Required(ErrorMessage = "Informe como costuma fechar serviços.")]
-        public int HowUsuallyArrangeServicesId { get; set; }
-
         [Required(ErrorMessage = "A disponibilidade de tempo é obrigatória.")]
         public int AvailableTimeId { get; set; }
-
-        [Required(ErrorMessage = "A preferência de Freelancer é obrigatória.")]
-        public int FreelancerPreferencesId { get; set; }
-
-        [Required(ErrorMessage = "O faturamento médio é obrigatório.")]
-        public int AverageRevenueId { get; set; }
-
-        [Required(ErrorMessage = "Informe se já tem um produtor fixo.")]
-        public bool HasFixedProducer { get; set; }
-
-        [Required(ErrorMessage = "Informe se possuí veículo próprio para levar/buscar peças.")]
-        public bool HasOwnCar { get; set; }
     }
 }
