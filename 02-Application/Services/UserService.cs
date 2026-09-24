@@ -9,6 +9,7 @@ using _04_Domain.Entities.Identity;
 using _04_Domain.Entities.Profiles;
 using _04_Domain.Enums;
 using _04_Domain.Interfaces;
+using Elekto.BrazilianDocuments;
 
 namespace _02_Application.Services
 {
@@ -21,6 +22,132 @@ namespace _02_Application.Services
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
+        }
+
+        // Criar usuários
+        public async Task<CreateUserResult> CreateFreelancerAsync(CreateFreelancerDto dto)
+        {
+            if (await _userRepository.IsEmailRegistered(dto.Email))
+            {
+                return new CreateUserResult { Status = CreateUserStatus.EmailInUse };
+            }
+
+            if (await _userRepository.IsCpfRegistered(dto.LegalResponsibleDocument))
+            {
+                return new CreateUserResult { Status = CreateUserStatus.CpfInUse };
+            }
+
+            if (!Cpf.IsValid(dto.LegalResponsibleDocument))
+            {
+                return new CreateUserResult { Status = CreateUserStatus.InvalidCPF };
+            }
+
+            ICollection<EnumValidationError> errors =
+                FreelancerFieldValidator.IsFreelancerFieldsValid(dto);
+
+            if (errors.Count > 0)
+            {
+                return new CreateUserResult { Status = CreateUserStatus.InvalidData, Errors = errors };
+            }
+
+            User newUser = new()
+            {
+                LegalResponsibleFullName = dto.LegalResponsibleFullName,
+                LegalResponsibleDocument = dto.LegalResponsibleDocument,
+                Email = dto.Email,
+                ContactNumber = dto.ContactNumber,
+                PublicProfileDescription = dto.PublicProfileDescription,
+                Address = dto.Address,
+                AddressNumber = dto.AddressNumber,
+                Neighborhood = dto.Neighborhood,
+                City = dto.City,
+                State = dto.State,
+                PostalCode = dto.PostalCode,
+                AdditionalAddressInfo = dto.AdditionalAddressInfo,
+                Roles = new List<Roles> { Roles.Freelancer },
+                PasswordHash = _passwordHasher.HashPassword(dto.Password),
+                BirthDate = dto.BirthDate
+            };
+
+            FreelancerProfile newFreelancer = new()
+            {
+                AvailableTimeId = (AvailableTime)dto.AvailableTimeId,
+                ExperienceYearsId = (ExperienceYears)dto.ExperienceYearsId,
+                SpecialtiesIds = dto.SpecialtyIds.Select(id => (Specialty)id).ToList(),
+                OwnMachinesIds = dto.OwnMachineIds.Select(id => (OwnMachine)id).ToList()
+            };
+
+            int? userId = await _userRepository.CreateFreelancerUserProfileAsync(newUser, newFreelancer);
+
+            if (userId == null)
+            {
+                return new CreateUserResult { Status = CreateUserStatus.DatabaseError };
+            }
+
+            return new CreateUserResult { Status = CreateUserStatus.Success, UserId = userId };
+        }
+
+        public async Task<CreateUserResult> CreateCompanyAsync(CreateCompanyDto dto)
+        {
+            if (await _userRepository.IsEmailRegistered(dto.Email))
+            {
+                return new CreateUserResult { Status = CreateUserStatus.EmailInUse };
+            }
+
+            if (await _userRepository.IsCpfRegistered(dto.LegalResponsibleDocument))
+            {
+                return new CreateUserResult { Status = CreateUserStatus.CpfInUse };
+            }
+
+            if (!Cpf.IsValid(dto.LegalResponsibleDocument))
+            {
+                return new CreateUserResult { Status = CreateUserStatus.InvalidCPF };
+            }
+
+            if (await _userRepository.IsCnpjRegistered(dto.CompanyRegistrationDocument))
+            {
+                return new CreateUserResult { Status = CreateUserStatus.CnpjInUse };
+            }
+
+            if (!Cnpj.IsValid(dto.CompanyRegistrationDocument))
+            {
+                return new CreateUserResult { Status = CreateUserStatus.InvalidCNPJ };
+            }
+
+            User newUser = new()
+            {
+                LegalResponsibleFullName = dto.LegalResponsibleFullName,
+                LegalResponsibleDocument = dto.LegalResponsibleDocument,
+                Email = dto.Email,
+                ContactNumber = dto.ContactNumber,
+                PublicProfileDescription = dto.PublicProfileDescription,
+                Address = dto.Address,
+                AddressNumber = dto.AddressNumber,
+                Neighborhood = dto.Neighborhood,
+                City = dto.City,
+                State = dto.State,
+                PostalCode = dto.PostalCode,
+                AdditionalAddressInfo = dto.AdditionalAddressInfo,
+                Roles = new List<Roles> { Roles.Company },
+                PasswordHash = _passwordHasher.HashPassword(dto.Password)
+            };
+
+            CompanyProfile newCompany = new()
+            {
+                CompanyName = dto.CompanyName,
+                CoreBusiness = dto.CoreBusiness,
+                CompanyRegistrationDocument = dto.CompanyRegistrationDocument,
+                LegalName = dto.LegalName
+            };
+
+            int? userId = await _userRepository.CreateCompanyUserProfileAsync(newUser, newCompany);
+
+            if (userId == null)
+            {
+                return new CreateUserResult { Status = CreateUserStatus.DatabaseError };
+            }
+
+            return new CreateUserResult { Status = CreateUserStatus.Success, UserId = userId };
         }
 
         // Leitura de usuário
@@ -102,18 +229,6 @@ namespace _02_Application.Services
             };
         }
 
-
-        private static int PageGuard(int page)
-        {
-            return Math.Clamp(page, 1, 1000);
-        }
-
-        private static int PageSizeGuard(int pageSize)
-        {
-            return Math.Clamp(pageSize, 1, 50);
-        }
-
-
         public async Task<PagedResult<GetFreelancerDto>> GetAllFreelancersAsync(int page, int pageSize)
         {
             page = PageGuard(page);
@@ -143,11 +258,15 @@ namespace _02_Application.Services
             };
         }
 
-
         // Leitura de perfil
         public async Task<GetFreelancerDto?> GetFreelancerProfileByIdAsync(int userId)
         {
             User? user = await _userRepository.GetFreelancerProfileAsync(userId);
+
+            if (user == null)
+            {
+                return null;
+            }
 
             if (user.FreelancerProfile == null)
             {
@@ -161,6 +280,11 @@ namespace _02_Application.Services
         {
             User? user = await _userRepository.GetFreelancerProfileAsync(userId);
 
+            if (user == null)
+            {
+                return null;
+            }
+
             if (user.FreelancerProfile == null)
             {
                 return null;
@@ -169,10 +293,15 @@ namespace _02_Application.Services
             return MapToFreelancerPublicProfileDto(user);
         }
 
-
         public async Task<GetCompanyDto?> GetCompanyProfileByIdAsync(int userId)
         {
             User? user = await _userRepository.GetCompanyProfileAsync(userId);
+
+            if (user == null)
+            {
+                return null;
+            }
+
             if (user.CompanyProfile == null)
             {
                 return null;
@@ -184,6 +313,11 @@ namespace _02_Application.Services
         public async Task<CompanyPublicProfileDto?> GetCompanyPublicProfileByIdAsync(int userId)
         {
             User? user = await _userRepository.GetCompanyProfileAsync(userId);
+
+            if (user == null)
+            {
+                return null;
+            }
 
             if (user.CompanyProfile == null)
             {
@@ -202,18 +336,24 @@ namespace _02_Application.Services
                 return ProfileUpdateResult.NotFound;
             }
 
-            if (!string.IsNullOrEmpty(dto.Email)
-                && string.Equals(dto.Email, user.Email, StringComparison.OrdinalIgnoreCase)
-                && await _userRepository.IsEmailRegistered(dto.Email))
+            ProfileUpdateResult emailValidation = await ValidateEmail(dto.Email, user.Email);
+            if (emailValidation == ProfileUpdateResult.Success)
             {
-                return ProfileUpdateResult.EmailInUse;
+                user.Email = dto.Email;
+            }
+            else
+            {
+                return emailValidation;
             }
 
-            if (!string.IsNullOrEmpty(dto.LegalResponsibleDocument)
-                && string.Equals(dto.LegalResponsibleDocument, user.LegalResponsibleDocument, StringComparison.OrdinalIgnoreCase)
-                && await _userRepository.IsCpfRegistered(dto.LegalResponsibleDocument))
+            ProfileUpdateResult cpfValidation = await ValidarCpf(dto.LegalResponsibleDocument, user.LegalResponsibleDocument);
+            if (cpfValidation == ProfileUpdateResult.Success)
             {
-                return ProfileUpdateResult.DocumentInUse;
+                user.LegalResponsibleDocument = dto.LegalResponsibleDocument;
+            }
+            else
+            {
+                return cpfValidation;
             }
 
             ApplyUserChanges(user, dto);
@@ -245,7 +385,6 @@ namespace _02_Application.Services
                     return ProfileUpdateResult.InvalidData;
                 }
             }
-
 
             if (dto.AvailableTimeId.HasValue
                     && (AvailableTime)dto.AvailableTimeId != user.FreelancerProfile.AvailableTimeId
@@ -309,42 +448,52 @@ namespace _02_Application.Services
                 return ProfileUpdateResult.NotFound;
             }
 
-            if (!string.IsNullOrEmpty(dto.Email)
-                && string.Equals(dto.Email, user.Email, StringComparison.OrdinalIgnoreCase)
-                && await _userRepository.IsEmailRegistered(dto.Email))
+            ProfileUpdateResult emailValidation = await ValidateEmail(dto.Email, user.Email);
+            if (emailValidation == ProfileUpdateResult.Success)
             {
-                return ProfileUpdateResult.EmailInUse;
+                user.Email = dto.Email;
+            }
+            else
+            {
+                return emailValidation;
             }
 
-            if (!string.IsNullOrEmpty(dto.CompanyRegistrationDocument)
-                && string.Equals(dto.CompanyRegistrationDocument, user.CompanyProfile.CompanyRegistrationDocument, StringComparison.OrdinalIgnoreCase)
-                && await _userRepository.IsCnpjRegistered(dto.CompanyRegistrationDocument))
+            ProfileUpdateResult cpfValidation = await ValidarCpf(dto.LegalResponsibleDocument, user.LegalResponsibleDocument);
+            if (cpfValidation == ProfileUpdateResult.Success)
             {
-                return ProfileUpdateResult.DocumentInUse;
+                user.LegalResponsibleDocument = dto.LegalResponsibleDocument;
+            }
+            else
+            {
+                return cpfValidation;
             }
 
-            if (!string.IsNullOrEmpty(dto.CompanyRegistrationDocument)
-                    && string.Equals(dto.CompanyRegistrationDocument, user.CompanyProfile.CompanyRegistrationDocument, StringComparison.OrdinalIgnoreCase))
+            ProfileUpdateResult cnpjValidation = await ValidarCNPJ(dto.CompanyRegistrationDocument, user.CompanyProfile.CompanyRegistrationDocument);
+            if (cnpjValidation == ProfileUpdateResult.Success)
             {
                 user.CompanyProfile.CompanyRegistrationDocument = dto.CompanyRegistrationDocument;
+            }
+            else
+            {
+                return cnpjValidation;
             }
 
             ApplyUserChanges(user, dto);
 
             if (!string.IsNullOrEmpty(dto.LegalName)
-                && string.Equals(dto.LegalName, user.CompanyProfile.LegalName, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(dto.LegalName, user.CompanyProfile.LegalName, StringComparison.OrdinalIgnoreCase))
             {
                 user.CompanyProfile.LegalName = dto.LegalName;
             }
 
             if (!string.IsNullOrEmpty(dto.CompanyName)
-                && string.Equals(dto.CompanyName, user.CompanyProfile.CompanyName, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(dto.CompanyName, user.CompanyProfile.CompanyName, StringComparison.OrdinalIgnoreCase))
             {
                 user.CompanyProfile.CompanyName = dto.CompanyName;
             }
 
             if (!string.IsNullOrEmpty(dto.CoreBusiness)
-                && string.Equals(dto.CoreBusiness, user.CompanyProfile.CoreBusiness, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(dto.CoreBusiness, user.CompanyProfile.CoreBusiness, StringComparison.OrdinalIgnoreCase))
             {
                 user.CompanyProfile.CoreBusiness = dto.CoreBusiness;
             }
@@ -368,40 +517,74 @@ namespace _02_Application.Services
         }
 
         // Helpers de Enums e Validações
+        public async Task<ProfileUpdateResult> ValidarCpf(string dtoDocument, string userDocument)
+        {
+            if (string.IsNullOrEmpty(dtoDocument)
+                || string.Equals(dtoDocument, userDocument, StringComparison.OrdinalIgnoreCase)
+                || !Cpf.IsValid(dtoDocument))
+            {
+                return ProfileUpdateResult.InvalidCPF;
+            }
+
+            if (await _userRepository.IsCpfRegistered(dtoDocument))
+            {
+                return ProfileUpdateResult.DocumentInUse;
+            }
+
+            return ProfileUpdateResult.Success;
+        }
+
+        public async Task<ProfileUpdateResult> ValidarCNPJ(string dtoDocument, string userDocument)
+        {
+            if (string.IsNullOrEmpty(dtoDocument)
+                || string.Equals(dtoDocument, userDocument, StringComparison.OrdinalIgnoreCase)
+                || !Cnpj.IsValid(dtoDocument))
+            {
+                return ProfileUpdateResult.InvalidCNPJ;
+            }
+
+            if (await _userRepository.IsCnpjRegistered(dtoDocument))
+            {
+                return ProfileUpdateResult.DocumentInUse;
+            }
+
+            return ProfileUpdateResult.Success;
+        }
+
         private static void ApplyUserChanges(User user, UpdateUserDto dto)
         {
             if (!string.IsNullOrEmpty(dto.LegalResponsibleFullName)
-                && string.Equals(dto.LegalResponsibleFullName, user.LegalResponsibleFullName, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(dto.LegalResponsibleFullName, user.LegalResponsibleFullName, StringComparison.OrdinalIgnoreCase))
             {
                 user.LegalResponsibleFullName = dto.LegalResponsibleFullName;
             }
 
             if (!string.IsNullOrEmpty(dto.LegalResponsibleDocument)
-                && string.Equals(dto.LegalResponsibleDocument, user.LegalResponsibleDocument, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(dto.LegalResponsibleDocument, user.LegalResponsibleDocument, StringComparison.OrdinalIgnoreCase))
             {
                 user.LegalResponsibleDocument = dto.LegalResponsibleDocument;
             }
 
             if (!string.IsNullOrEmpty(dto.Email)
-                && string.Equals(dto.Email, user.Email, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(dto.Email, user.Email, StringComparison.OrdinalIgnoreCase))
             {
                 user.Email = dto.Email;
             }
 
             if (!string.IsNullOrEmpty(dto.ContactNumber)
-                && string.Equals(dto.ContactNumber, user.ContactNumber, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(dto.ContactNumber, user.ContactNumber, StringComparison.OrdinalIgnoreCase))
             {
                 user.ContactNumber = dto.ContactNumber;
             }
 
             if (!string.IsNullOrEmpty(dto.PostalCode)
-                && string.Equals(dto.PostalCode, user.PostalCode, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(dto.PostalCode, user.PostalCode, StringComparison.OrdinalIgnoreCase))
             {
                 user.PostalCode = dto.PostalCode;
             }
 
             if (!string.IsNullOrEmpty(dto.Address)
-                && string.Equals(dto.Address, user.Address, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(dto.Address, user.Address, StringComparison.OrdinalIgnoreCase))
             {
                 user.Address = dto.Address;
             }
@@ -414,7 +597,7 @@ namespace _02_Application.Services
             }
 
             if (!string.IsNullOrEmpty(dto.Neighborhood)
-                && string.Equals(dto.Neighborhood, user.Neighborhood, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(dto.Neighborhood, user.Neighborhood, StringComparison.OrdinalIgnoreCase))
             {
                 user.Neighborhood = dto.Neighborhood;
             }
@@ -425,26 +608,26 @@ namespace _02_Application.Services
             }
             else if (dto.AdditionalAddressInfo != null
                 && (user.AdditionalAddressInfo == null
-                    || string.Equals(dto.AdditionalAddressInfo, user.AdditionalAddressInfo, StringComparison.OrdinalIgnoreCase)))
+                    || !string.Equals(dto.AdditionalAddressInfo, user.AdditionalAddressInfo, StringComparison.OrdinalIgnoreCase)))
             {
                 user.AdditionalAddressInfo = dto.AdditionalAddressInfo;
             }
 
             if (!string.IsNullOrEmpty(dto.City)
-                && string.Equals(dto.City, user.City, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(dto.City, user.City, StringComparison.OrdinalIgnoreCase))
             {
                 user.City = dto.City;
             }
 
             if (!string.IsNullOrEmpty(dto.State)
-                && string.Equals(dto.State, user.State, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(dto.State, user.State, StringComparison.OrdinalIgnoreCase))
             {
                 user.State = dto.State;
             }
 
             if (!string.IsNullOrEmpty(dto.PublicProfileDescription)
                 && (dto.PublicProfileDescription == null
-                    || string.Equals(dto.PublicProfileDescription, user.PublicProfileDescription, StringComparison.OrdinalIgnoreCase)))
+                    || !string.Equals(dto.PublicProfileDescription, user.PublicProfileDescription, StringComparison.OrdinalIgnoreCase)))
             {
                 user.PublicProfileDescription = dto.PublicProfileDescription;
             }
@@ -498,7 +681,6 @@ namespace _02_Application.Services
                                     .ToList()
             };
         }
-
 
         private static FreelancerPublicProfileDto MapToFreelancerPublicProfileDto(User user)
         {
@@ -558,113 +740,30 @@ namespace _02_Application.Services
             };
         }
 
-        public async Task<CreateUserResult> CreateFreelancerAsync(CreateFreelancerDto dto)
+        public async Task<ProfileUpdateResult> ValidateEmail(string dtoEmail, string userEmail)
         {
-            if (await _userRepository.IsEmailRegistered(dto.Email))
+            if (string.IsNullOrEmpty(dtoEmail)
+                || string.Equals(dtoEmail, userEmail, StringComparison.OrdinalIgnoreCase))
             {
-                return new CreateUserResult { Status = CreateUserStatus.EmailInUse };
+                return ProfileUpdateResult.InvalidEmail;
             }
 
-            if (await _userRepository.IsCpfRegistered(dto.LegalResponsibleDocument))
+            if (await _userRepository.IsEmailRegistered(dtoEmail))
             {
-                return new CreateUserResult { Status = CreateUserStatus.CpfInUse };
+                return ProfileUpdateResult.EmailInUse;
             }
 
-            ICollection<EnumValidationError> errors =
-                FreelancerFieldValidator.IsFreelancerFieldsValid(dto);
-
-            if (errors.Count > 0)
-            {
-                return new CreateUserResult { Status = CreateUserStatus.InvalidData, Errors = errors };
-            }
-
-            User newUser = new()
-            {
-                LegalResponsibleFullName = dto.LegalResponsibleFullName,
-                LegalResponsibleDocument = dto.LegalResponsibleDocument,
-                Email = dto.Email,
-                ContactNumber = dto.ContactNumber,
-                PublicProfileDescription = dto.PublicProfileDescription,
-                Address = dto.Address,
-                AddressNumber = dto.AddressNumber,
-                Neighborhood = dto.Neighborhood,
-                City = dto.City,
-                State = dto.State,
-                PostalCode = dto.PostalCode,
-                AdditionalAddressInfo = dto.AdditionalAddressInfo,
-                Roles = new List<Roles> { Roles.Freelancer },
-                PasswordHash = _passwordHasher.HashPassword(dto.Password)
-            };
-
-            FreelancerProfile newFreelancer = new()
-            {
-                AvailableTimeId = (AvailableTime)dto.AvailableTimeId,
-                ExperienceYearsId = (ExperienceYears)dto.ExperienceYearsId,
-                SpecialtiesIds = dto.SpecialtyIds.Select(id => (Specialty)id).ToList(),
-                OwnMachinesIds = dto.OwnMachineIds.Select(id => (OwnMachine)id).ToList()
-            };
-
-            int? userId = await _userRepository.CreateFreelancerUserProfileAsync(newUser, newFreelancer);
-
-            if (userId == null)
-            {
-                return new CreateUserResult { Status = CreateUserStatus.DatabaseError };
-            }
-
-            return new CreateUserResult { Status = CreateUserStatus.Success, UserId = userId };
+            return ProfileUpdateResult.Success;
         }
 
-        public async Task<CreateUserResult> CreateCompanyAsync(CreateCompanyDto dto)
+        private static int PageGuard(int page)
         {
-            if (await _userRepository.IsEmailRegistered(dto.Email))
-            {
-                return new CreateUserResult { Status = CreateUserStatus.EmailInUse };
-            }
+            return Math.Clamp(page, 1, 1000);
+        }
 
-            if (await _userRepository.IsCpfRegistered(dto.LegalResponsibleDocument))
-            {
-                return new CreateUserResult { Status = CreateUserStatus.CpfInUse };
-            }
-
-            if (await _userRepository.IsCnpjRegistered(dto.CompanyRegistrationDocument))
-            {
-                return new CreateUserResult { Status = CreateUserStatus.CnpjInUse };
-            }
-
-            User newUser = new()
-            {
-                LegalResponsibleFullName = dto.LegalResponsibleFullName,
-                LegalResponsibleDocument = dto.LegalResponsibleDocument,
-                Email = dto.Email,
-                ContactNumber = dto.ContactNumber,
-                PublicProfileDescription = dto.PublicProfileDescription,
-                Address = dto.Address,
-                AddressNumber = dto.AddressNumber,
-                Neighborhood = dto.Neighborhood,
-                City = dto.City,
-                State = dto.State,
-                PostalCode = dto.PostalCode,
-                AdditionalAddressInfo = dto.AdditionalAddressInfo,
-                Roles = new List<Roles> { Roles.Company },
-                PasswordHash = _passwordHasher.HashPassword(dto.Password)
-            };
-
-            CompanyProfile newCompany = new()
-            {
-                CompanyName = dto.CompanyName,
-                CoreBusiness = dto.CoreBusiness,
-                CompanyRegistrationDocument = dto.CompanyRegistrationDocument,
-                LegalName = dto.LegalName
-            };
-
-            int? userId = await _userRepository.CreateCompanyUserProfileAsync(newUser, newCompany);
-
-            if (userId == null)
-            {
-                return new CreateUserResult { Status = CreateUserStatus.DatabaseError };
-            }
-
-            return new CreateUserResult { Status = CreateUserStatus.Success, UserId = userId };
+        private static int PageSizeGuard(int pageSize)
+        {
+            return Math.Clamp(pageSize, 1, 50);
         }
     }
 }

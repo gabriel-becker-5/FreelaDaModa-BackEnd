@@ -54,6 +54,7 @@ namespace _01_Presentation.Controllers
                 CreateUserStatus.Success => CreatedAtAction(null, null),
                 CreateUserStatus.EmailInUse => Conflict(new { message = "O e-mail informado já está em uso por outra conta." }),
                 CreateUserStatus.CpfInUse => Conflict(new { message = "O CPF informado já está em uso por outra conta." }),
+                CreateUserStatus.InvalidCPF => BadRequest(new { message = "O CPF informado é inválido." }),
                 CreateUserStatus.InvalidData => BadRequest(new { message = "Os dados informados são inválidos.", errors = result.Errors }),
                 _ => StatusCode(500, new { message = "Não foi possível criar a conta. Tente novamente." })
             };
@@ -82,6 +83,8 @@ namespace _01_Presentation.Controllers
                 CreateUserStatus.EmailInUse => Conflict(new { message = "O e-mail informado já está em uso por outra conta." }),
                 CreateUserStatus.CpfInUse => Conflict(new { message = "O CPF informado já está em uso por outra conta." }),
                 CreateUserStatus.CnpjInUse => Conflict(new { message = "O CNPJ informado já está em uso por outra conta." }),
+                CreateUserStatus.InvalidCPF => BadRequest(new { message = "O CPF informado é inválido." }),
+                CreateUserStatus.InvalidCNPJ => BadRequest(new { message = "O CNPJ informado é inválido." }),
                 CreateUserStatus.InvalidData => BadRequest(new { message = "Os dados informados são inválidos.", errors = result.Errors }),
                 _ => StatusCode(500, new { message = "Não foi possível criar a conta. Tente novamente." })
             };

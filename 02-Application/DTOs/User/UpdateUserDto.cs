@@ -7,7 +7,8 @@ namespace _02_Application.DTOs.User
         [MaxLength(100)]
         public string? LegalResponsibleFullName { get; set; }
 
-        [RegularExpression(@"^$|^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$", ErrorMessage = "Formato do CPF incorreto.")]
+        [MaxLength(11)]
+        [RegularExpression(@"\A[0-9]{11}\z", ErrorMessage = "O CPF deve conter exatamente 11 números. Não inclua espaços ou caracteres especiais.")]
         public string? LegalResponsibleDocument { get; set; } // CPF
 
         [RegularExpression(@"^$|[^@\s]+@[^@\s]+\.[^@\s]+$", ErrorMessage = "Formato de e-mail inválido."), MaxLength(100)]

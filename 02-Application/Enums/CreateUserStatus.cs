@@ -7,6 +7,8 @@ namespace _02_Application.Enums
         CpfInUse,
         CnpjInUse,
         InvalidData,
-        DatabaseError
+        DatabaseError,
+        InvalidCPF,
+        InvalidCNPJ
     }
 }
