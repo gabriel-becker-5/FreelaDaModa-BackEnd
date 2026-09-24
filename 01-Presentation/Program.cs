@@ -1,21 +1,27 @@
 using System.Text;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using _03_Infrastructure.Data;
+
+using _02_Application.Interfaces;
+using _02_Application.Services;
+using _03_Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Adicionar controllers
 builder.Services.AddControllers();
 
-// Configuração do DbContext
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Configuração da Infraestrutura (DbContext MySQL, Repositórios, PasswordHasher e TokenService)
+builder.Services.AddInfrastructure(builder.Configuration);
 
+// Serviços da camada de Aplicação
+builder.Services.AddScoped<IUserService, UserService>();
+
+// ============================================================
 // API Versioning
+// ============================================================
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -23,7 +29,9 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
 });
 
-// Autenticação JWT
+// ============================================================
+// AUTENTICAÇÃO JWT
+// ============================================================
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "sua-chave-secreta-jwt-muito-segura-e-longa-aqui";
 var key = Encoding.UTF8.GetBytes(jwtKey);
 
@@ -46,7 +54,9 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 
-// Swagger / OpenAPI
+// ============================================================
+// SWAGGER / OPENAPI
+// ============================================================
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {

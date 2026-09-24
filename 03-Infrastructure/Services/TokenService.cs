@@ -12,8 +12,8 @@ namespace _03_Infrastructure.Services
         private readonly string _JwtKey;
 
         public TokenService(IConfiguration config) =>
-            _JwtKey = config["Jwt:Secret"]
-                      ?? throw new InvalidOperationException("Jwt:Secret não configurado.");
+            _JwtKey = config["Jwt:Key"] // <-- Alterado de "Jwt:Secret" para "Jwt:Key"
+                      ?? throw new InvalidOperationException("Jwt:Key não configurado.");
 
         public string GenerateToken(int userId, string user, ICollection<string> allUserRoles)
         {
