@@ -1,6 +1,5 @@
 ﻿using _02_Application.DTOs;
 using _02_Application.Interfaces;
-using _04_Domain.Entities;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

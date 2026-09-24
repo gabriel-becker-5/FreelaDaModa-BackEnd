@@ -30,7 +30,7 @@ namespace _03_Infrastructure.Repositories
         public async Task<List<Avaliacao>> ListByOrdemServicoAsync(int ordemServicoId)
         {
             return await _context.Avaliacoes
-                .Where(a => a.OrdemServicoId == ordemServicoId)
+    .Where(a => a.OrdemServicoId == ordemServicoId && !a.IsDeleted)
                 .ToListAsync();
         }
     }

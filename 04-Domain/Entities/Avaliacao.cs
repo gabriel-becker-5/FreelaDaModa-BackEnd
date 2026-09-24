@@ -9,7 +9,6 @@ namespace _04_Domain.Entities
 {
     public class Avaliacao
     {
-        
         public int Id { get; set; }
 
         public int OrdemServicoId { get; set; }

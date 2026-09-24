@@ -15,4 +15,3 @@ namespace _02_Application.Interfaces
         Task<List<Avaliacao>> ListByOrdemServicoAsync(int ordemServicoId);
     }
 }
-
