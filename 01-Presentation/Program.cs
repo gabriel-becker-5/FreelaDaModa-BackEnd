@@ -3,15 +3,28 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-
 using _02_Application.Interfaces;
 using _02_Application.Services;
 using _03_Infrastructure;
+using _03_Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Adicionar controllers
 builder.Services.AddControllers();
+
+// Configuração do CORS para permitir a comunicação com o front-end
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("PermitirFrontend", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 
 // Configuração da Infraestrutura (DbContext MySQL, Repositórios, PasswordHasher e TokenService)
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -19,20 +32,23 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // Serviços da camada de Aplicação
 builder.Services.AddScoped<IUserService, UserService>();
 
-<<<<<<< HEAD
-// ============================================================
 // API Versioning
-// ============================================================
 builder.Services.AddApiVersioning(options =>
-=======
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+});
+
+// Configuração do Banco de Dados
 string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("ConnectionString não configurada.");
-
 builder.Services.AddDbContext<AppDbContext>(options =>
-options.UseMySQL(connectionString));
+    options.UseMySQL(connectionString));
 
-string jwtSecret = builder.Configuration["Jwt:Secret"]
-    ?? throw new InvalidOperationException("Jwt:Secret não configurado.");
+// AUTENTICAÇÃO JWT
+string jwtSecret = builder.Configuration["Jwt:Secret"] ?? builder.Configuration["Jwt:Key"]
+    ?? "sua-chave-secreta-jwt-muito-segura-e-longa-aqui";
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -41,52 +57,25 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtSecret)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
             ValidateIssuer = false,
             ValidateAudience = false,
             ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
             NameClaimType = JwtRegisteredClaimNames.Name,
             RoleClaimType = "roles"
         };
     });
 
-builder.Services.AddRateLimiter(options =>
->>>>>>> main
-{
-    options.DefaultApiVersion = new ApiVersion(1, 0);
-    options.AssumeDefaultVersionWhenUnspecified = true;
-    options.ReportApiVersions = true;
-});
-
-// ============================================================
-// AUTENTICAÇÃO JWT
-// ============================================================
-var jwtKey = builder.Configuration["Jwt:Key"] ?? "sua-chave-secreta-jwt-muito-segura-e-longa-aqui";
-var key = Encoding.UTF8.GetBytes(jwtKey);
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ClockSkew = TimeSpan.Zero
-    };
-});
-
 builder.Services.AddAuthorization();
 
-// ============================================================
+// Rate Limiter
+builder.Services.AddRateLimiter(options =>
+{
+    // Configurações do rate limiter se necessário
+});
+
 // SWAGGER / OPENAPI
-// ============================================================
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -135,7 +124,13 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Ativar a política de CORS antes da autenticação e mapeamento
+app.UseCors("PermitirFrontend");
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
+
 app.Run();

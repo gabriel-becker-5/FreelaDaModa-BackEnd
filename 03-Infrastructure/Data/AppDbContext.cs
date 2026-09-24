@@ -1,12 +1,8 @@
-<<<<<<< HEAD
 ﻿using System.Data;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using _04_Domain.Entities;
-=======
 ﻿using _04_Domain.Entities;
->>>>>>> main
 using _04_Domain.Entities.Identity;
 using _04_Domain.Entities.Profiles;
 using _04_Domain.Enums;
