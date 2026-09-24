@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ﻿using _02_Application.DTOs.Vaga;
 using _02_Application.Services.Vaga;
 using _03_Infrastructure.Data;
@@ -7,10 +8,22 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+=======
+﻿using _02_Application.Interfaces;
+using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+>>>>>>> main
 using System.Security.Claims;
 
 namespace _01_Presentation.Controllers
 {
+<<<<<<< HEAD
+=======
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
+>>>>>>> main
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/vagas")]

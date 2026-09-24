@@ -13,6 +13,7 @@ namespace _02_Application.Interfaces
         Task<UserDto?> GetUserByIdAsync(int id);
         Task<int?> GetUserIdByEmailAsync(string email);
         Task<PagedResult<UserDto>> GetAllUsersAsync(int page, int pageSize);
+        Task<PagedResult<GetFreelancerDto>> GetAllFreelancersAsync(int page, int pageSize);
         Task<GetFreelancerDto?> GetFreelancerProfileByIdAsync(int userId);
         Task<GetCompanyDto?> GetCompanyProfileByIdAsync(int userId);
         Task<ProfileUpdateResult> UpdateUserFreelancerAsync(UpdateFreelancerDto dto, int userId);

@@ -1,9 +1,14 @@
+<<<<<<< HEAD
 ﻿using _02_Application.DTOs.Vaga;
 using _02_Application.Mappings;
 using _03_Infrastructure.Repositories.Vaga;
 using _04_Domain.Entities;
 using _04_Domain.Entities.Identity;
 using DominioVaga = _04_Domain.Entities.Vaga;
+=======
+﻿using _02_Application.Interfaces;
+using _04_Domain.Interfaces;
+>>>>>>> main
 
 namespace _02_Application.Services.Vaga;
 
@@ -33,6 +38,7 @@ public class RegistrarVagaUseCase
 
         var entidade = new DominioVaga
         {
+<<<<<<< HEAD
             Titulo = requisicao.Titulo,
             Descricao = requisicao.Descricao,
             Orcamento = Convert.ToDecimal(requisicao.Salario),
@@ -40,6 +46,11 @@ public class RegistrarVagaUseCase
             Ativa = true,
             UsuarioId = user.Id
         };
+=======
+            var usuario = await _userRepository.GetUserByEmailAsync(emailUsuario);
+            if (usuario == null)
+                throw new Exception("Usuário não encontrado.");
+>>>>>>> main
 
         await _vagaRepository.AdicionarAsync(entidade);
         return entidade.ParaRespostaJson();

@@ -19,10 +19,40 @@ builder.Services.AddInfrastructure(builder.Configuration);
 // Serviços da camada de Aplicação
 builder.Services.AddScoped<IUserService, UserService>();
 
+<<<<<<< HEAD
 // ============================================================
 // API Versioning
 // ============================================================
 builder.Services.AddApiVersioning(options =>
+=======
+string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("ConnectionString não configurada.");
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+options.UseMySQL(connectionString));
+
+string jwtSecret = builder.Configuration["Jwt:Secret"]
+    ?? throw new InvalidOperationException("Jwt:Secret não configurado.");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtSecret)),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+            ValidateLifetime = true,
+            NameClaimType = JwtRegisteredClaimNames.Name,
+            RoleClaimType = "roles"
+        };
+    });
+
+builder.Services.AddRateLimiter(options =>
+>>>>>>> main
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
     options.AssumeDefaultVersionWhenUnspecified = true;

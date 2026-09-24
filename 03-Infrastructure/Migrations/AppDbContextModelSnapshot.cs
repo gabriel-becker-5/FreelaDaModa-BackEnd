@@ -276,7 +276,7 @@ namespace _03_Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Vagas");
-                });
+                }));
 
             modelBuilder.Entity("_04_Domain.Entities.Candidatura", b =>
                 {

@@ -11,6 +11,8 @@ namespace _04_Domain.Interfaces
         Task<int?> CreateCompanyUserProfileAsync(User user, CompanyProfile profile);
         Task<int> CountUsersAsync();
         Task<ICollection<User>> GetAllUsersAsync(int skip, int take);
+        Task<ICollection<User>> GetAllFreelancersAsync(int skip, int take);
+        Task<int> CountFreelancersAsync();
         Task<User?> GetUserByIdAsync(int id);
         Task<User?> GetUserByEmailAsync(string email);
         Task<User?> GetByEmailAsync(string email);
