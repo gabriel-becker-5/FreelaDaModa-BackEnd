@@ -22,7 +22,9 @@ namespace _02_Application.Interfaces
         Task<PagedResult<UserDto>> GetAllUsersAsync(int page, int pageSize);
         Task<PagedResult<GetFreelancerDto>> GetAllFreelancersAsync(int page, int pageSize);
         Task<GetFreelancerDto?> GetFreelancerProfileByIdAsync(int userId);
+        Task<FreelancerPublicProfileDto?> GetFreelancerPublicProfileByIdAsync(int userId);
         Task<GetCompanyDto?> GetCompanyProfileByIdAsync(int userId);
+        Task<CompanyPublicProfileDto?> GetCompanyPublicProfileByIdAsync(int userId);
         Task<ProfileUpdateResult> UpdateUserFreelancerAsync(UpdateFreelancerDto dto, int userId);
         Task<ProfileUpdateResult> UpdateUserCompanyAsync(UpdateCompanyDto dto, int userId);
         Task<bool> DeleteUserByIdAsync(int id);

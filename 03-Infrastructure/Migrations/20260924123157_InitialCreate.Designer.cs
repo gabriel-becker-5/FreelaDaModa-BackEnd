@@ -11,7 +11,7 @@ using _03_Infrastructure.Data;
 namespace _03_Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260917201500_InitialCreate")]
+    [Migration("20260924123157_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -40,6 +40,9 @@ namespace _03_Infrastructure.Migrations
                     b.Property<int>("AddressNumber")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("BirthDate")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("City")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -59,6 +62,9 @@ namespace _03_Infrastructure.Migrations
                         .HasColumnType("varchar(100)");
 
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsVerified")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("LegalResponsibleDocument")
@@ -87,6 +93,7 @@ namespace _03_Infrastructure.Migrations
                         .HasColumnType("varchar(9)");
 
                     b.Property<string>("PublicProfileDescription")
+                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
@@ -104,11 +111,9 @@ namespace _03_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email")
-                        .IsUnique();
+                    b.HasIndex("Email");
 
-                    b.HasIndex("LegalResponsibleDocument")
-                        .IsUnique();
+                    b.HasIndex("LegalResponsibleDocument");
 
                     b.ToTable("Users");
                 });
@@ -137,6 +142,9 @@ namespace _03_Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("LegalName")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -150,8 +158,7 @@ namespace _03_Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CompanyRegistrationDocument")
-                        .IsUnique();
+                    b.HasIndex("CompanyRegistrationDocument");
 
                     b.HasIndex("UserId")
                         .IsUnique();
@@ -168,32 +175,14 @@ namespace _03_Infrastructure.Migrations
                     b.Property<int>("AvailableTimeId")
                         .HasColumnType("int");
 
-                    b.Property<int>("AverageRevenueId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("BirthDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("BusinessTypeId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("ExperienceYearsId")
                         .HasColumnType("int");
 
-                    b.Property<int>("FreelancerPreferencesId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("HasFixedProducer")
+                    b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("HasOwnCar")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<int>("HowUsuallyArrangeServicesId")
-                        .HasColumnType("int");
 
                     b.Property<string>("OwnMachinesIds")
                         .IsRequired()
@@ -209,15 +198,43 @@ namespace _03_Infrastructure.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.Property<int>("WorkshopSizeId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("UserId")
                         .IsUnique();
 
                     b.ToTable("FreelancerProfiles");
+                });
+
+            modelBuilder.Entity("_04_Domain.Entities.Vaga", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Ativa")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("DataPublicacao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("Orcamento")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Vagas");
                 });
 
             modelBuilder.Entity("_04_Domain.Entities.Profiles.CompanyProfile", b =>

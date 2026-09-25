@@ -40,7 +40,7 @@ namespace _03_Infrastructure.Repositories
 
                 return user.Id;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 await transaction.RollbackAsync();
                 return null;
@@ -64,7 +64,7 @@ namespace _03_Infrastructure.Repositories
 
                 return user.Id;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 await transaction.RollbackAsync();
                 return null;
@@ -114,7 +114,10 @@ namespace _03_Infrastructure.Repositories
 
         public async Task<User?> GetUserByEmailAsync(string email)
         {
-            return await _context.Users.Where(u => u.Email.ToLower() == email.ToLower()).FirstOrDefaultAsync();
+            return await _context.Users
+                      .Where(u => string
+                      .Equals(u.Email, email, StringComparison.OrdinalIgnoreCase))
+                      .FirstOrDefaultAsync();
         }
 
         public async Task<User?> GetFreelancerProfileAsync(int id)
@@ -159,7 +162,7 @@ namespace _03_Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
-        private bool IsUserRoleActive(User user, int roleId)
+        private static bool IsUserRoleActive(User user, int roleId)
         {
             return user.Roles.Contains((Roles)roleId);
         }
@@ -190,7 +193,7 @@ namespace _03_Infrastructure.Repositories
 
             if (result != null)
             {
-                result.Roles.Clear();
+                result.Roles = [];
                 await _context.SaveChangesAsync();
             }
         }
@@ -212,7 +215,10 @@ namespace _03_Infrastructure.Repositories
 
         public async Task<bool> IsEmailRegistered(string email)
         {
-            User? result = await _context.Users.Where(u => u.Email.ToLower() == email.ToLower()).FirstOrDefaultAsync();
+            User? result = await _context.Users
+                                      .Where(u => string
+                                      .Equals(u.Email, email, StringComparison.OrdinalIgnoreCase))
+                                      .FirstOrDefaultAsync();
 
             if (result == null)
             {
@@ -225,13 +231,15 @@ namespace _03_Infrastructure.Repositories
         public async Task<bool> IsCpfRegistered(string cpf)
         {
             return await _context.Users
-                .AnyAsync(u => u.LegalResponsibleDocument.ToLower() == cpf.ToLower());
+                .AnyAsync(u => string
+                .Equals(u.LegalResponsibleDocument, cpf, StringComparison.OrdinalIgnoreCase));
         }
 
         public async Task<bool> IsCnpjRegistered(string cnpj)
         {
             return await _context.CompanyProfiles
-                .AnyAsync(c => c.CompanyRegistrationDocument.ToLower() == cnpj.ToLower());
+                .AnyAsync(c => string
+                .Equals(c.CompanyRegistrationDocument, cnpj, StringComparison.OrdinalIgnoreCase));
         }
     }
 }
