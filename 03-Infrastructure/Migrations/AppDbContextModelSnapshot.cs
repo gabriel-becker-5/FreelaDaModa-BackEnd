@@ -37,6 +37,9 @@ namespace _03_Infrastructure.Migrations
                     b.Property<int>("AddressNumber")
                         .HasColumnType("int");
 
+                    b.Property<DateTime>("BirthDate")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("City")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -56,6 +59,9 @@ namespace _03_Infrastructure.Migrations
                         .HasColumnType("varchar(100)");
 
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsVerified")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("LegalResponsibleDocument")
@@ -84,6 +90,7 @@ namespace _03_Infrastructure.Migrations
                         .HasColumnType("varchar(9)");
 
                     b.Property<string>("PublicProfileDescription")
+                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
@@ -165,31 +172,10 @@ namespace _03_Infrastructure.Migrations
                     b.Property<int>("AvailableTimeId")
                         .HasColumnType("int");
 
-                    b.Property<int>("AverageRevenueId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("BirthDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("BusinessTypeId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("ExperienceYearsId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("FreelancerPreferencesId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("HasFixedProducer")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("HasOwnCar")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<int>("HowUsuallyArrangeServicesId")
                         .HasColumnType("int");
 
                     b.Property<bool>("IsDeleted")
@@ -209,9 +195,6 @@ namespace _03_Infrastructure.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.Property<int>("WorkshopSizeId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("UserId")
@@ -220,7 +203,6 @@ namespace _03_Infrastructure.Migrations
                     b.ToTable("FreelancerProfiles");
                 });
 
-            modelBuilder.Entity("_04_Domain.Entities.Profiles.CompanyProfile", b =>
             modelBuilder.Entity("_04_Domain.Entities.Vaga", b =>
                 {
                     b.Property<int>("Id")
@@ -250,9 +232,9 @@ namespace _03_Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Vagas");
-                }));
+                });
 
-            modelBuilder.Entity("_04_Domain.Entities.UserInfo.UserRole", b =>
+            modelBuilder.Entity("_04_Domain.Entities.Profiles.CompanyProfile", b =>
                 {
                     b.HasOne("_04_Domain.Entities.Identity.User", "User")
                         .WithOne("CompanyProfile")

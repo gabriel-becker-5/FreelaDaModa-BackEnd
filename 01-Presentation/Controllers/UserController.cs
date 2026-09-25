@@ -33,7 +33,7 @@ namespace _01_Presentation.Controllers
 
         // Criação
         /// <summary>Cria um novo usuário do tipo Freelancer</summary>
-        /// <param name="dto">Campos: Nome completo do responsável legal, CPF do responsável legal, E-mail, Senha, Telefone, CEP, Endereço, Número, Bairro, Cidade, Estado, Complemento, Descrição Pública do Perfil, Data de nascimento, Tipo de negócio, Tempo de experiência, Tamanho da oficina, Especialidades, Máquinas que possui, Como costuma fecha serviços, Disponibilidade de tempo, Preferências do Freelancer, Faturamento médio, Já tem produtor fixo?, Possui veículo para buscar/entregar as peças?</param>
+        /// <param name="dto">Campos: Nome completo do responsável legal, CPF do responsável legal, E-mail, Senha, Telefone, CEP, Endereço, Número, Bairro, Cidade, Estado, Complemento, Descrição Pública do Perfil, Data de nascimento, Tempo de experiência, Especialidades, Máquinas que possui, Disponibilidade de tempo.</param>
         /// <returns>Conta/perfil do usuário criada.</returns>
         /// <response code="201">Conta/perfil criada com sucesso.</response>
         /// <response code="400">Informações inseridas inválidas.</response>
@@ -60,7 +60,7 @@ namespace _01_Presentation.Controllers
         }
 
         /// <summary>Cria um novo usuário do tipo Empresa/Confecção</summary>
-        /// <param name="dto">Campos: Nome completo do responsável legal, CPF do responsável legal, E-mail, Senha, Telefone, CEP, Endereço, Número, Bairro, Cidade, Estado, Complemento, Descrição Pública do Perfil, Razão Social, Nome Fantasia, CNPJ, Ramo de atuação.</param>
+        /// <param name="dto">Campos: Nome completo do responsável legal, Data de nascimento, CPF do responsável legal, E-mail, Senha, Telefone, CEP, Endereço, Número, Bairro, Cidade, Estado, Complemento, Descrição Pública do Perfil, Razão Social, Nome Fantasia, CNPJ, Ramo de atuação.</param>
         /// <returns>Conta/perfil do usuário criada.</returns>
         /// <response code="201">Conta/perfil criada com sucesso.</response>
         /// <response code="400">Informações inseridas inválidas.</response>
