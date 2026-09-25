@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace _04_Domain.Entities
+﻿namespace _04_Domain.Entities
 {
     public class OrdemServico
     {

@@ -1,5 +1,4 @@
-﻿using _02_Application.DTOs.Vaga;
-using _02_Application.Interfaces;
+﻿using _02_Application.Interfaces;
 using _04_Domain.Interfaces;
 using DominioVaga = _04_Domain.Entities.Vaga;
 

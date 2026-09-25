@@ -19,7 +19,6 @@ namespace _03_Infrastructure.Migrations
                 .HasAnnotation("ProductVersion", "8.0.30")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-<<<<<<< HEAD
             modelBuilder.Entity("_04_Domain.Entities.Avaliacao", b =>
                 {
                     b.Property<int>("Id")
@@ -123,10 +122,7 @@ namespace _03_Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("_04_Domain.Entities.UserInfo.Role", b =>
-=======
-            modelBuilder.Entity("_04_Domain.Entities.Identity.User", b =>
->>>>>>> origin/main
-                {
+            {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");

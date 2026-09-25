@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using _04_Domain.Entities;
+﻿using _04_Domain.Entities;
 
 namespace _04_Domain.Interfaces
 {

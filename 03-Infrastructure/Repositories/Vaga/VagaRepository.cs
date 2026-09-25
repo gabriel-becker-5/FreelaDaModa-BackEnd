@@ -1,10 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using _03_Infrastructure.Data;
-using _04_Domain.Entities;
+﻿using _03_Infrastructure.Data;
 using _04_Domain.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace _03_Infrastructure.Repositories.Vaga
 {

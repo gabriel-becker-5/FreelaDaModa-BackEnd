@@ -1,5 +1,3 @@
-using _02_Application.DTOs.Vaga;
-
 namespace _02_Application.Interfaces;
 
 public interface IVagaService

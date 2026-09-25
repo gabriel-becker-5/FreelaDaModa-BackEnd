@@ -2,11 +2,6 @@
 using _04_Domain.Entities;
 using _04_Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace _03_Infrastructure.Repositories
 {
@@ -56,4 +51,3 @@ namespace _03_Infrastructure.Repositories
 
     }
 }
-

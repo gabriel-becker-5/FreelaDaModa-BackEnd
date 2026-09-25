@@ -1,11 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace _04_Domain.Entities
+﻿namespace _04_Domain.Entities
 {
     public class Avaliacao
     {
@@ -22,4 +15,3 @@ namespace _04_Domain.Entities
         public string Comentario { get; set; } = string.Empty;
     }
 }
-

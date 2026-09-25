@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
 using _02_Application.DTOs;
 using _02_Application.DTOs.Company;
 using _02_Application.DTOs.Freelancer;
@@ -12,6 +10,8 @@ using _04_Domain.Entities.Profiles;
 using _04_Domain.Enums;
 using _04_Domain.Interfaces;
 using Elekto.BrazilianDocuments;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace _02_Application.Services
 {
@@ -29,6 +29,21 @@ namespace _02_Application.Services
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
             _httpContextAccessor = httpContextAccessor;
+        }
+
+        public string GetLoggedUserEmailAddress()
+        {
+            return _httpContextAccessor.HttpContext?
+                .User?
+                .FindFirst(ClaimTypes.Name)?
+                .Value;
+        }
+
+        public async Task<User?> GetUserByEmailAsync(string email)
+        {
+            User? result =
+            await _userRepository.GetUserByEmailAsync(email);
+            return result;
         }
 
         // Criar usuários
@@ -385,30 +400,13 @@ namespace _02_Application.Services
             ApplyUserChanges(user, dto);
 
             if (dto.BirthDate.HasValue
-                && dto.BirthDate != user.FreelancerProfile.BirthDate)
+                && dto.BirthDate != user.BirthDate)
             {
                 if (dto.BirthDate.Value != default(DateTime)
                     && dto.BirthDate.Value < DateTime.UtcNow)
                 {
-                    user.FreelancerProfile.BirthDate =
+                    user.BirthDate =
                         dto.BirthDate.Value;
-                }
-                else
-                {
-                    return ProfileUpdateResult.InvalidData;
-                }
-            }
-
-            if (dto.BusinessTypeId.HasValue
-                && (BusinessType)dto.BusinessTypeId
-                    != user.FreelancerProfile.BusinessTypeId
-                && dto.BusinessTypeId != 0)
-            {
-                if (FreelancerFieldValidator.IsIdValid<BusinessType>(
-                    (int)dto.BusinessTypeId))
-                {
-                    user.FreelancerProfile.BusinessTypeId =
-                        (BusinessType)dto.BusinessTypeId;
                 }
                 else
                 {
@@ -433,24 +431,6 @@ namespace _02_Application.Services
                 }
             }
 
-            if (dto.HowUsuallyArrangeServicesId.HasValue
-                && (HowUsuallyArrangeServices)dto.HowUsuallyArrangeServicesId
-                    != user.FreelancerProfile.HowUsuallyArrangeServicesId
-                && dto.HowUsuallyArrangeServicesId != 0)
-            {
-                if (FreelancerFieldValidator.IsIdValid<HowUsuallyArrangeServices>(
-                    (int)dto.HowUsuallyArrangeServicesId))
-                {
-                    user.FreelancerProfile.HowUsuallyArrangeServicesId =
-                        (HowUsuallyArrangeServices)
-                        dto.HowUsuallyArrangeServicesId;
-                }
-                else
-                {
-                    return ProfileUpdateResult.InvalidData;
-                }
-            }
-
             if (dto.AvailableTimeId.HasValue
                 && (AvailableTime)dto.AvailableTimeId
                     != user.FreelancerProfile.AvailableTimeId
@@ -466,57 +446,6 @@ namespace _02_Application.Services
                 {
                     return ProfileUpdateResult.InvalidData;
                 }
-            }
-
-            if (dto.FreelancerPreferencesId.HasValue
-                && (FreelancerPreferences)dto.FreelancerPreferencesId
-                    != user.FreelancerProfile.FreelancerPreferencesId
-                && dto.FreelancerPreferencesId != 0)
-            {
-                if (FreelancerFieldValidator.IsIdValid<FreelancerPreferences>(
-                    (int)dto.FreelancerPreferencesId))
-                {
-                    user.FreelancerProfile.FreelancerPreferencesId =
-                        (FreelancerPreferences)
-                        dto.FreelancerPreferencesId;
-                }
-                else
-                {
-                    return ProfileUpdateResult.InvalidData;
-                }
-            }
-
-            if (dto.AverageRevenueId.HasValue
-                && (AverageRevenue)dto.AverageRevenueId
-                    != user.FreelancerProfile.AverageRevenueId
-                && dto.AverageRevenueId != 0)
-            {
-                if (FreelancerFieldValidator.IsIdValid<AverageRevenue>(
-                    (int)dto.AverageRevenueId))
-                {
-                    user.FreelancerProfile.AverageRevenueId =
-                        (AverageRevenue)dto.AverageRevenueId;
-                }
-                else
-                {
-                    return ProfileUpdateResult.InvalidData;
-                }
-            }
-
-            if (dto.HasFixedProducer.HasValue
-                && dto.HasFixedProducer
-                    != user.FreelancerProfile.HasFixedProducer)
-            {
-                user.FreelancerProfile.HasFixedProducer =
-                    dto.HasFixedProducer.Value;
-            }
-
-            if (dto.HasOwnCar.HasValue
-                && dto.HasOwnCar
-                    != user.FreelancerProfile.HasOwnCar)
-            {
-                user.FreelancerProfile.HasOwnCar =
-                    dto.HasOwnCar.Value;
             }
 
             if (dto.SpecialtyIds != null
