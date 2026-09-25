@@ -12,7 +12,7 @@ namespace _03_Infrastructure.Services
         private readonly string _JwtKey;
 
         public TokenService(IConfiguration config) =>
-            _JwtKey = config["Jwt:Key"] // <-- Alterado de "Jwt:Secret" para "Jwt:Key"
+            _JwtKey = config["Jwt:Key"]
                       ?? throw new InvalidOperationException("Jwt:Key não configurado.");
 
         public string GenerateToken(int userId, string user, ICollection<string> allUserRoles)
@@ -21,6 +21,13 @@ namespace _03_Infrastructure.Services
 
             Claim claimName = new Claim(JwtRegisteredClaimNames.Name, user);
             claims.Add(claimName);
+
+            // Adicionado para que o Use Case encontre o e-mail no token sem erros (401)
+            Claim claimEmail = new Claim(ClaimTypes.Email, user);
+            claims.Add(claimEmail);
+
+            Claim claimJwtEmail = new Claim(JwtRegisteredClaimNames.Email, user);
+            claims.Add(claimJwtEmail);
 
             Claim claimId = new Claim(JwtRegisteredClaimNames.NameId, userId.ToString());
             claims.Add(claimId);

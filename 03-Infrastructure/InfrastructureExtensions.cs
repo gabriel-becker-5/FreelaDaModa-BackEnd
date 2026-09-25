@@ -3,9 +3,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using _03_Infrastructure.Data;
 using _03_Infrastructure.Repositories;
+using _03_Infrastructure.Repositories.Vaga; // <-- Namespace para os repositórios de Vaga
 using _03_Infrastructure.Services;
 using _04_Domain.Interfaces;
-using _02_Application.Interfaces; // Caso o ITokenService esteja aqui ou na Infra, ajusta o using se necessário
+using _02_Application.Interfaces;
 
 namespace _03_Infrastructure
 {
@@ -22,8 +23,9 @@ namespace _03_Infrastructure
 
             // Registo de Repositórios e Serviços de Infraestrutura
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IVagaRepository, VagaRepository>(); // <-- Adicionado para resolver a dependência da vaga
             services.AddScoped<IPasswordHasher, IdentityPasswordHasher>();
-            services.AddScoped<ITokenService, TokenService>(); // <-- Adicionado aqui para resolver o erro do AuthenticationController
+            services.AddScoped<ITokenService, TokenService>();
 
             return services;
         }

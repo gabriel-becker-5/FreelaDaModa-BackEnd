@@ -47,7 +47,7 @@ namespace _01_Presentation.Controllers
             try
             {
                 var resposta = await _registrarVagaUseCase.ExecutarAsync(dto, userEmail);
-                return CreatedAtAction(nameof(GetVagaByIdAsync), new { id = resposta.Id, version = "1.0" }, new { sucesso = true, dados = resposta });
+                return Ok(new { sucesso = true, dados = resposta });
             }
             catch (UnauthorizedAccessException ex)
             {
