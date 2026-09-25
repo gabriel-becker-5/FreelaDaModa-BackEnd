@@ -1,8 +1,7 @@
-﻿using System.Data;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-﻿using _04_Domain.Entities;
+using _04_Domain.Entities;
 using _04_Domain.Entities.Identity;
 using _04_Domain.Entities.Profiles;
 using _04_Domain.Enums;
@@ -19,6 +18,9 @@ namespace _03_Infrastructure.Data
         public DbSet<CompanyProfile> CompanyProfiles { get; set; }
         public DbSet<FreelancerProfile> FreelancerProfiles { get; set; }
         public DbSet<Notificacao> Notificacoes { get; set; }
+        public DbSet<OrdemServico> OrdensServico { get; set; }
+        public DbSet<Avaliacao> Avaliacoes { get; set; }
+        public DbSet<Mensagem> Mensagens { get; set; }
 
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
@@ -65,6 +67,7 @@ namespace _03_Infrastructure.Data
                 u.Property(x => x.AdditionalAddressInfo).HasMaxLength(150);
                 u.Property(x => x.City).HasMaxLength(150);
                 u.Property(x => x.State).HasMaxLength(150);
+                u.Property(x => x.ProfileImageKey).HasColumnType("varchar(255)").IsRequired(false);
 
                 u.Property(x => x.Roles)
                     .HasColumnType("json")
@@ -112,6 +115,16 @@ namespace _03_Infrastructure.Data
                   .WithMany()
                   .HasForeignKey(x => x.VagaId)
                   .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Vaga>(v =>
+            {
+                v.Property(x => x.Orcamento).HasColumnType("decimal(18,2)");
+            });
+
+            modelBuilder.Entity<OrdemServico>(o =>
+            {
+                o.Property(x => x.Valor).HasColumnType("decimal(18,2)");
             });
         }
     }

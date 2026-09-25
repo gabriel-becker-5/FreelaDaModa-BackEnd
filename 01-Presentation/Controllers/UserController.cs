@@ -1,6 +1,8 @@
-﻿using _02_Application.DTOs;
+using _01_Presentation.Requests;
+using _02_Application.DTOs;
 using _02_Application.DTOs.Company;
 using _02_Application.DTOs.Freelancer;
+using _02_Application.DTOs.ProfileImage;
 using _02_Application.Enums;
 using _02_Application.Interfaces;
 using _03_Infrastructure.Data;
@@ -23,13 +25,16 @@ namespace _01_Presentation.Controllers
     {
         private readonly IUserService _userService;
         private readonly AppDbContext _context;
+        private readonly IProfileImageService _profileImageService;
 
         public UserController(
             IUserService userService,
-            AppDbContext context)
+            AppDbContext context,
+            IProfileImageService profileImageService)
         {
             _userService = userService;
             _context = context;
+            _profileImageService = profileImageService;
         }
 
         private int? GetLoggedUserId()
@@ -53,6 +58,14 @@ namespace _01_Presentation.Controllers
             return null;
         }
 
+        // Criação
+        /// <summary>Cria um novo usuário do tipo Freelancer</summary>
+        /// <param name="dto">Campos: Nome completo do responsável legal, CPF do responsável legal, E-mail, Senha, Telefone, CEP, Endereço, Número, Bairro, Cidade, Estado, Complemento, Descrição Pública do Perfil, Data de nascimento, Tempo de experiência, Especialidades, Máquinas que possui, Disponibilidade de tempo.</param>
+        /// <returns>Conta/perfil do usuário criada.</returns>
+        /// <response code="201">Conta/perfil criada com sucesso.</response>
+        /// <response code="400">Informações inseridas inválidas.</response>
+        /// <response code="409">E-mail ou CPF já associado à outra conta.</response>
+        /// <response code="500">Falha ao criar a conta.</response>
         [ProducesResponseType(201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(409)]
@@ -91,6 +104,13 @@ namespace _01_Presentation.Controllers
                                 "O CPF informado já está em uso por outra conta."
                         }),
 
+                CreateUserStatus.InvalidCPF =>
+                    BadRequest(
+                        new
+                        {
+                            message = "O CPF informado é inválido."
+                        }),
+
                 CreateUserStatus.InvalidData =>
                     BadRequest(
                         new
@@ -111,6 +131,13 @@ namespace _01_Presentation.Controllers
             };
         }
 
+        /// <summary>Cria um novo usuário do tipo Empresa/Confecção</summary>
+        /// <param name="dto">Campos: Nome completo do responsável legal, Data de nascimento, CPF do responsável legal, E-mail, Senha, Telefone, CEP, Endereço, Número, Bairro, Cidade, Estado, Complemento, Descrição Pública do Perfil, Razão Social, Nome Fantasia, CNPJ, Ramo de atuação.</param>
+        /// <returns>Conta/perfil do usuário criada.</returns>
+        /// <response code="201">Conta/perfil criada com sucesso.</response>
+        /// <response code="400">Informações inseridas inválidas.</response>
+        /// <response code="409">E-mail, CPF ou CNPJ já associado à outra conta.</response>
+        /// <response code="500">Falha ao criar a conta.</response>
         [ProducesResponseType(201)]
         [ProducesResponseType(400)]
         [ProducesResponseType(409)]
@@ -155,6 +182,20 @@ namespace _01_Presentation.Controllers
                         {
                             message =
                                 "O CNPJ informado já está em uso por outra conta."
+                        }),
+
+                CreateUserStatus.InvalidCPF =>
+                    BadRequest(
+                        new
+                        {
+                            message = "O CPF informado é inválido."
+                        }),
+
+                CreateUserStatus.InvalidCNPJ =>
+                    BadRequest(
+                        new
+                        {
+                            message = "O CNPJ informado é inválido."
                         }),
 
                 CreateUserStatus.InvalidData =>
@@ -537,7 +578,7 @@ namespace _01_Presentation.Controllers
                 });
         }
 
-        // NOVO: GET /candidaturas?freelancerId=&empresaId=&vagaId=&status=
+        // GET /candidaturas?freelancerId=&empresaId=&vagaId=&status=
         [ProducesResponseType(200)]
         [HttpGet("candidaturas")]
         [Authorize]
@@ -584,7 +625,7 @@ namespace _01_Presentation.Controllers
             });
         }
 
-        // NOVO: PATCH /candidaturas/{id}/status (Selecionado/Rejeitado/Cancelada)
+        // PATCH /candidaturas/{id}/status (Selecionado/Rejeitado/Cancelada)
         [ProducesResponseType(200)]
         [ProducesResponseType(404)]
         [HttpPatch("candidaturas/{id:int}/status")]
@@ -612,6 +653,97 @@ namespace _01_Presentation.Controllers
                 mensagem = "Status da candidatura atualizado com sucesso.",
                 dados = candidatura
             });
+        }
+
+        /// <summary>Envia ou substitui a foto de perfil do usuário logado (PNG/JPG até 5 MiB).</summary>
+        /// <response code="200">Upload concluído; retorna profileImageUrl.</response>
+        /// <response code="404">Usuário não localizado.</response>
+        /// <response code="413">Arquivo excede 5 MiB.</response>
+        /// <response code="415">Formato não permitido (apenas PNG/JPG).</response>
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(413)]
+        [ProducesResponseType(415)]
+        [HttpPut("perfil/imagem")]
+        [Consumes("multipart/form-data")]
+        [RequestSizeLimit(6 * 1024 * 1024)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 6 * 1024 * 1024)]
+        [Authorize(Roles = $"{nameof(Roles.Freelancer)}, {nameof(Roles.Company)}")]
+        public async Task<IActionResult> UploadProfileImageAsync(
+            [FromForm] UploadProfileImageRequest request,
+            CancellationToken cancellationToken)
+        {
+            int? userId = GetLoggedUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            await using Stream content = request.Image.OpenReadStream();
+
+            ProfileImageUpdateResult result = await _profileImageService.ReplaceAsync(
+                (int)userId,
+                new ProfileImageUpload(content, request.Image.FileName, request.Image.ContentType, request.Image.Length),
+                cancellationToken);
+
+            return result switch
+            {
+                ProfileImageUpdateResult.Success => Ok(new { profileImageUrl = $"/api/v1/User/{userId}/imagem-perfil" }),
+                ProfileImageUpdateResult.UserNotFound => NotFound(),
+                ProfileImageUpdateResult.EmptyFile => BadRequest(new { message = "O arquivo de imagem está vazio." }),
+                ProfileImageUpdateResult.FileTooLarge => StatusCode(413, new { message = "A imagem excede o limite de 5 MB." }),
+                ProfileImageUpdateResult.UnsupportedFormat => StatusCode(415, new { message = "Formato não permitido. Envie apenas PNG ou JPG." }),
+                ProfileImageUpdateResult.Conflict => Conflict(new { message = "A foto foi alterada por outra requisição. Tente novamente." }),
+                _ => StatusCode(500, new { message = "Não foi possível salvar a imagem. Tente novamente." })
+            };
+        }
+
+        /// <summary>Obtém a foto de perfil atual de um usuário ativo.</summary>
+        /// <response code="200">Ok, retorna a imagem.</response>
+        /// <response code="404">Usuário inexistente/excluído ou sem foto.</response>
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [AllowAnonymous]
+        [HttpGet("{userId:int}/imagem-perfil")]
+        public async Task<IActionResult> GetProfileImageAsync(int userId, CancellationToken cancellationToken)
+        {
+            ProfileImageReadResult? image = await _profileImageService.GetAsync(userId, cancellationToken);
+
+            if (image == null)
+            {
+                return NotFound();
+            }
+
+            Response.Headers["X-Content-Type-Options"] = "nosniff";
+            Response.Headers["Cache-Control"] = "public, no-cache";
+            Response.Headers["ETag"] = $"\"{image.ETag}\"";
+
+            return File(image.Content, image.ContentType);
+        }
+
+        /// <summary>Remove a foto de perfil do usuário logado.</summary>
+        [ProducesResponseType(204)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(409)]
+        [HttpDelete("perfil/imagem")]
+        [Authorize(Roles = $"{nameof(Roles.Freelancer)}, {nameof(Roles.Company)}")]
+        public async Task<IActionResult> DeleteProfileImageAsync(CancellationToken cancellationToken)
+        {
+            int? userId = GetLoggedUserId();
+            if (userId == null)
+            {
+                return Unauthorized();
+            }
+
+            ProfileImageUpdateResult result = await _profileImageService.RemoveAsync((int)userId, cancellationToken);
+
+            return result switch
+            {
+                ProfileImageUpdateResult.Success => NoContent(),
+                ProfileImageUpdateResult.UserNotFound => NotFound(),
+                ProfileImageUpdateResult.Conflict => Conflict(new { message = "A foto foi alterada por outra requisição. Tente novamente." }),
+                _ => StatusCode(500, new { message = "Não foi possível remover a imagem. Tente novamente." })
+            };
         }
     }
 

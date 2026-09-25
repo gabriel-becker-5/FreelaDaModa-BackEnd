@@ -28,5 +28,8 @@ namespace _04_Domain.Interfaces
         Task<bool> IsEmailRegistered(string email);
         Task<bool> IsCpfRegistered(string cpf);
         Task<bool> IsCnpjRegistered(string cnpj);
+
+        Task<string?> GetProfileImageKeyAsync(int userId);
+        Task<bool> TrySetProfileImageKeyAsync(int userId, string? expectedKey, string? newKey);
     }
 }

@@ -1,4 +1,4 @@
-﻿using _02_Application.DTOs.User;
+using _02_Application.DTOs.User;
 
 namespace _02_Application.DTOs.Freelancer
 {

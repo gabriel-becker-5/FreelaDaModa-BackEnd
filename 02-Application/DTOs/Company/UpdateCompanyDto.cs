@@ -1,5 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
-using _02_Application.DTOs.User;
+﻿using _02_Application.DTOs.User;
+using System.ComponentModel.DataAnnotations;
 
 namespace _02_Application.DTOs.Company
 {
@@ -12,7 +12,8 @@ namespace _02_Application.DTOs.Company
         [MaxLength(150)]
         public string? CompanyName { get; set; } // Nome Fantasia
 
-        [RegularExpression(@"^$|^[A-Z0-9]{12}\d{2}$", ErrorMessage = "O CNPJ informado é inválido.")]
+        [MaxLength(14, ErrorMessage = "O CNPJ deve ter exatamente 14 caracteres.")]
+        [RegularExpression(@"\A[A-Z0-9]{8}[0-9]{6}\z", ErrorMessage = "O CNPJ informado é inválido. Não inclua caracteres especiais.")]
         public string? CompanyRegistrationDocument { get; set; } // CNPJ
 
         [MaxLength(150)]

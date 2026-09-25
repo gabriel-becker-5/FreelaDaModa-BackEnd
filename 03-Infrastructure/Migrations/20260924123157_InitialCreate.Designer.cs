@@ -2,7 +2,6 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using _03_Infrastructure.Data;
@@ -12,65 +11,22 @@ using _03_Infrastructure.Data;
 namespace _03_Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260925042300_AdicionaIsDeletedVaga")]
-    partial class AdicionaIsDeletedVaga
+    [Migration("20260924123157_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.31")
+                .HasAnnotation("ProductVersion", "8.0.30")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
-
-            MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
-
-            modelBuilder.Entity("_04_Domain.Entities.Candidatura", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime>("DataCandidatura")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("FreelancerId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Mensagem")
-                        .HasColumnType("longtext");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("UsuarioId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("VagaId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("VagaId");
-
-                    b.ToTable("Candidaturas");
-                });
 
             modelBuilder.Entity("_04_Domain.Entities.Identity.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("AdditionalAddressInfo")
                         .HasMaxLength(150)
@@ -83,6 +39,9 @@ namespace _03_Infrastructure.Migrations
 
                     b.Property<int>("AddressNumber")
                         .HasColumnType("int");
+
+                    b.Property<DateTime>("BirthDate")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("City")
                         .IsRequired()
@@ -103,6 +62,9 @@ namespace _03_Infrastructure.Migrations
                         .HasColumnType("varchar(100)");
 
                     b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsVerified")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("LegalResponsibleDocument")
@@ -156,46 +118,11 @@ namespace _03_Infrastructure.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("_04_Domain.Entities.Notificacao", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<bool>("Lida")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("Mensagem")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Titulo")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("UsuarioId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Notificacoes");
-                });
-
             modelBuilder.Entity("_04_Domain.Entities.Profiles.CompanyProfile", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("CompanyName")
                         .IsRequired()
@@ -245,36 +172,13 @@ namespace _03_Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
                     b.Property<int>("AvailableTimeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("AverageRevenueId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("BirthDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("BusinessTypeId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<int>("ExperienceYearsId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("FreelancerPreferencesId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("HasFixedProducer")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<bool>("HasOwnCar")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<int>("HowUsuallyArrangeServicesId")
                         .HasColumnType("int");
 
                     b.Property<bool>("IsDeleted")
@@ -294,9 +198,6 @@ namespace _03_Infrastructure.Migrations
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
-                    b.Property<int>("WorkshopSizeId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("UserId")
@@ -311,8 +212,6 @@ namespace _03_Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
                     b.Property<bool>("Ativa")
                         .HasColumnType("tinyint(1)");
 
@@ -323,21 +222,12 @@ namespace _03_Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("tinyint(1)");
-
                     b.Property<decimal>("Orcamento")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Titulo")
                         .IsRequired()
                         .HasColumnType("longtext");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("UsuarioId")
                         .HasColumnType("int");
@@ -345,17 +235,6 @@ namespace _03_Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Vagas");
-                });
-
-            modelBuilder.Entity("_04_Domain.Entities.Candidatura", b =>
-                {
-                    b.HasOne("_04_Domain.Entities.Vaga", "Vaga")
-                        .WithMany()
-                        .HasForeignKey("VagaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Vaga");
                 });
 
             modelBuilder.Entity("_04_Domain.Entities.Profiles.CompanyProfile", b =>

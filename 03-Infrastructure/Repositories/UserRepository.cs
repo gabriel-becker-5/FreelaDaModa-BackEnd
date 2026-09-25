@@ -40,7 +40,7 @@ namespace _03_Infrastructure.Repositories
 
                 return user.Id;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 await transaction.RollbackAsync();
                 return null;
@@ -64,7 +64,7 @@ namespace _03_Infrastructure.Repositories
 
                 return user.Id;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 await transaction.RollbackAsync();
                 return null;
@@ -114,7 +114,9 @@ namespace _03_Infrastructure.Repositories
 
         public async Task<User?> GetUserByEmailAsync(string email)
         {
-            return await _context.Users.Where(u => u.Email.ToLower() == email.ToLower()).FirstOrDefaultAsync();
+            return await _context.Users
+                      .Where(u => u.Email.ToLower() == email.ToLower())
+                      .FirstOrDefaultAsync();
         }
 
         public async Task<User?> GetByEmailAsync(string email)
@@ -153,18 +155,16 @@ namespace _03_Infrastructure.Repositories
         public async Task UpdateFreelancerAsync(User user, FreelancerProfile profile)
         {
             _context.FreelancerProfiles.Update(profile);
-            _context.Users.Update(user);
             await _context.SaveChangesAsync();
         }
 
         public async Task UpdateCompanyAsync(User user, CompanyProfile profile)
         {
             _context.CompanyProfiles.Update(profile);
-            _context.Users.Update(user);
             await _context.SaveChangesAsync();
         }
 
-        private bool IsUserRoleActive(User user, int roleId)
+        private static bool IsUserRoleActive(User user, int roleId)
         {
             return user.Roles.Contains((Roles)roleId);
         }
@@ -174,7 +174,6 @@ namespace _03_Infrastructure.Repositories
             if (!IsUserRoleActive(user, roleId))
             {
                 user.Roles.Add((Roles)roleId);
-                _context.Users.Update(user);
                 await _context.SaveChangesAsync();
             }
         }
@@ -195,7 +194,7 @@ namespace _03_Infrastructure.Repositories
 
             if (result != null)
             {
-                result.Roles.Clear();
+                result.Roles = [];
                 await _context.SaveChangesAsync();
             }
         }
@@ -203,6 +202,7 @@ namespace _03_Infrastructure.Repositories
         public async Task DeleteCurrentUserAsync(User user)
         {
             user.IsDeleted = true;
+            user.ProfileImageKey = null;
 
             CompanyProfile? company = await _context.CompanyProfiles
                 .FirstOrDefaultAsync(cp => cp.UserId == user.Id);
@@ -217,7 +217,9 @@ namespace _03_Infrastructure.Repositories
 
         public async Task<bool> IsEmailRegistered(string email)
         {
-            User? result = await _context.Users.Where(u => u.Email.ToLower() == email.ToLower()).FirstOrDefaultAsync();
+            User? result = await _context.Users
+                                      .Where(u => u.Email.ToLower() == email.ToLower())
+                                      .FirstOrDefaultAsync();
 
             if (result == null)
             {
@@ -237,6 +239,41 @@ namespace _03_Infrastructure.Repositories
         {
             return await _context.CompanyProfiles
                 .AnyAsync(c => c.CompanyRegistrationDocument.ToLower() == cnpj.ToLower());
+        }
+
+
+
+        public async Task<string?> GetProfileImageKeyAsync(int userId)
+        {
+            return await _context.Users
+                .AsNoTracking()
+                .Where(u => u.Id == userId) // query filter garante IsDeleted = 0
+                .Select(u => u.ProfileImageKey)
+                .FirstOrDefaultAsync();
+        }
+
+        public async Task<bool> TrySetProfileImageKeyAsync(int userId, string? expectedKey, string? newKey)
+        {
+            string? currentKey = await _context.Users
+                .AsNoTracking()
+                .Where(u => u.Id == userId)
+                .Select(u => u.ProfileImageKey)
+                .FirstOrDefaultAsync();
+
+            if (!string.Equals(currentKey, expectedKey, StringComparison.Ordinal))
+            {
+                return false; // troca concorrente ou usuário excluído
+            }
+
+            User? user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                return false;
+            }
+
+            user.ProfileImageKey = newKey;
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }
