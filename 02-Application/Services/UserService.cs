@@ -1,4 +1,6 @@
-﻿using _02_Application.DTOs;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using _02_Application.DTOs;
 using _02_Application.DTOs.Company;
 using _02_Application.DTOs.Freelancer;
 using _02_Application.DTOs.User;
@@ -16,14 +18,18 @@ namespace _02_Application.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher _passwordHasher;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public UserService(IUserRepository userRepository, IPasswordHasher passwordHasher)
+        public UserService(
+            IUserRepository userRepository,
+            IPasswordHasher passwordHasher,
+            IHttpContextAccessor httpContextAccessor)
         {
             _userRepository = userRepository;
             _passwordHasher = passwordHasher;
+            _httpContextAccessor = httpContextAccessor;
         }
 
-        // Leitura de usuário
         public async Task<UserDto?> GetUserByIdAsync(int id)
         {
             User? result = await _userRepository.GetUserByIdAsync(id);
@@ -48,7 +54,9 @@ namespace _02_Application.Services
             return result.Id;
         }
 
-        public async Task<AuthenticatedUserDto?> AuthenticateAsync(string email, string password)
+        public async Task<AuthenticatedUserDto?> AuthenticateAsync(
+            string email,
+            string password)
         {
             User? user = await _userRepository.GetUserByEmailAsync(email);
 
@@ -71,18 +79,24 @@ namespace _02_Application.Services
             {
                 UserId = user.Id,
                 Email = user.Email,
-                Roles = user.Roles.Select(role => role.ToString().Replace("_", " ")).ToList()
+                Roles = user.Roles
+                    .Select(role => role.ToString().Replace("_", " "))
+                    .ToList()
             };
         }
 
-        public async Task<PagedResult<UserDto>> GetAllUsersAsync(int page, int pageSize)
+        public async Task<PagedResult<UserDto>> GetAllUsersAsync(
+            int page,
+            int pageSize)
         {
             page = PageGuard(page);
             pageSize = PageSizeGuard(pageSize);
 
             int skip = (page - 1) * pageSize;
 
-            ICollection<User> users = await _userRepository.GetAllUsersAsync(skip, pageSize);
+            ICollection<User> users =
+                await _userRepository.GetAllUsersAsync(skip, pageSize);
+
             int total = await _userRepository.CountUsersAsync();
 
             List<UserDto> items = [];
@@ -102,7 +116,6 @@ namespace _02_Application.Services
             };
         }
 
-
         private static int PageGuard(int page)
         {
             return Math.Clamp(page, 1, 1000);
@@ -113,14 +126,18 @@ namespace _02_Application.Services
             return Math.Clamp(pageSize, 1, 50);
         }
 
-
-        public async Task<PagedResult<GetFreelancerDto>> GetAllFreelancersAsync(int page, int pageSize)
+        public async Task<PagedResult<GetFreelancerDto>> GetAllFreelancersAsync(
+            int page,
+            int pageSize)
         {
             page = PageGuard(page);
             pageSize = PageSizeGuard(pageSize);
+
             int skip = (page - 1) * pageSize;
 
-            ICollection<User> users = await _userRepository.GetAllFreelancersAsync(skip, pageSize);
+            ICollection<User> users =
+                await _userRepository.GetAllFreelancersAsync(skip, pageSize);
+
             int total = await _userRepository.CountFreelancersAsync();
 
             List<GetFreelancerDto> items = [];
@@ -143,13 +160,13 @@ namespace _02_Application.Services
             };
         }
 
-
-        // Leitura de perfil
-        public async Task<GetFreelancerDto?> GetFreelancerProfileByIdAsync(int userId)
+        public async Task<GetFreelancerDto?> GetFreelancerProfileByIdAsync(
+            int userId)
         {
-            User? user = await _userRepository.GetFreelancerProfileAsync(userId);
+            User? user =
+                await _userRepository.GetFreelancerProfileAsync(userId);
 
-            if (user.FreelancerProfile == null)
+            if (user == null || user.FreelancerProfile == null)
             {
                 return null;
             }
@@ -157,11 +174,13 @@ namespace _02_Application.Services
             return MapToFreelancerDto(user);
         }
 
-        public async Task<FreelancerPublicProfileDto?> GetFreelancerPublicProfileByIdAsync(int userId)
+        public async Task<FreelancerPublicProfileDto?> GetFreelancerPublicProfileByIdAsync(
+            int userId)
         {
-            User? user = await _userRepository.GetFreelancerProfileAsync(userId);
+            User? user =
+                await _userRepository.GetFreelancerProfileAsync(userId);
 
-            if (user.FreelancerProfile == null)
+            if (user == null || user.FreelancerProfile == null)
             {
                 return null;
             }
@@ -169,11 +188,13 @@ namespace _02_Application.Services
             return MapToFreelancerPublicProfileDto(user);
         }
 
-
-        public async Task<GetCompanyDto?> GetCompanyProfileByIdAsync(int userId)
+        public async Task<GetCompanyDto?> GetCompanyProfileByIdAsync(
+            int userId)
         {
-            User? user = await _userRepository.GetCompanyProfileAsync(userId);
-            if (user.CompanyProfile == null)
+            User? user =
+                await _userRepository.GetCompanyProfileAsync(userId);
+
+            if (user == null || user.CompanyProfile == null)
             {
                 return null;
             }
@@ -181,11 +202,13 @@ namespace _02_Application.Services
             return MapToCompanyDto(user);
         }
 
-        public async Task<CompanyPublicProfileDto?> GetCompanyPublicProfileByIdAsync(int userId)
+        public async Task<CompanyPublicProfileDto?> GetCompanyPublicProfileByIdAsync(
+            int userId)
         {
-            User? user = await _userRepository.GetCompanyProfileAsync(userId);
+            User? user =
+                await _userRepository.GetCompanyProfileAsync(userId);
 
-            if (user.CompanyProfile == null)
+            if (user == null || user.CompanyProfile == null)
             {
                 return null;
             }
@@ -193,25 +216,35 @@ namespace _02_Application.Services
             return MapToCompanyPublicProfileDto(user);
         }
 
-        // Atualização de perfil
-        public async Task<ProfileUpdateResult> UpdateUserFreelancerAsync(UpdateFreelancerDto dto, int userId)
+        public async Task<ProfileUpdateResult> UpdateUserFreelancerAsync(
+            UpdateFreelancerDto dto,
+            int userId)
         {
-            User? user = await _userRepository.GetFreelancerProfileAsync(userId);
-            if (user == null)
+            User? user =
+                await _userRepository.GetFreelancerProfileAsync(userId);
+
+            if (user == null || user.FreelancerProfile == null)
             {
                 return ProfileUpdateResult.NotFound;
             }
 
             if (!string.IsNullOrEmpty(dto.Email)
-                && string.Equals(dto.Email, user.Email, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(
+                    dto.Email,
+                    user.Email,
+                    StringComparison.OrdinalIgnoreCase)
                 && await _userRepository.IsEmailRegistered(dto.Email))
             {
                 return ProfileUpdateResult.EmailInUse;
             }
 
             if (!string.IsNullOrEmpty(dto.LegalResponsibleDocument)
-                && string.Equals(dto.LegalResponsibleDocument, user.LegalResponsibleDocument, StringComparison.OrdinalIgnoreCase)
-                && await _userRepository.IsCpfRegistered(dto.LegalResponsibleDocument))
+                && !string.Equals(
+                    dto.LegalResponsibleDocument,
+                    user.LegalResponsibleDocument,
+                    StringComparison.OrdinalIgnoreCase)
+                && await _userRepository.IsCpfRegistered(
+                    dto.LegalResponsibleDocument))
             {
                 return ProfileUpdateResult.DocumentInUse;
             }
@@ -219,12 +252,30 @@ namespace _02_Application.Services
             ApplyUserChanges(user, dto);
 
             if (dto.BirthDate.HasValue
-                    && dto.BirthDate != user.BirthDate) // se tem valor e é diferente do atual, segue.
+                && dto.BirthDate != user.FreelancerProfile.BirthDate)
             {
                 if (dto.BirthDate.Value != default(DateTime)
-                        && dto.BirthDate.Value < DateTime.UtcNow) // se dto não é padrão e dto é menor igual agora
+                    && dto.BirthDate.Value < DateTime.UtcNow)
                 {
-                    user.BirthDate = (DateTime)dto.BirthDate;
+                    user.FreelancerProfile.BirthDate =
+                        dto.BirthDate.Value;
+                }
+                else
+                {
+                    return ProfileUpdateResult.InvalidData;
+                }
+            }
+
+            if (dto.BusinessTypeId.HasValue
+                && (BusinessType)dto.BusinessTypeId
+                    != user.FreelancerProfile.BusinessTypeId
+                && dto.BusinessTypeId != 0)
+            {
+                if (FreelancerFieldValidator.IsIdValid<BusinessType>(
+                    (int)dto.BusinessTypeId))
+                {
+                    user.FreelancerProfile.BusinessTypeId =
+                        (BusinessType)dto.BusinessTypeId;
                 }
                 else
                 {
@@ -233,12 +284,15 @@ namespace _02_Application.Services
             }
 
             if (dto.ExperienceYearsId.HasValue
-                    && (ExperienceYears)dto.ExperienceYearsId != user.FreelancerProfile.ExperienceYearsId
-                    && dto.ExperienceYearsId != 0)
+                && (ExperienceYears)dto.ExperienceYearsId
+                    != user.FreelancerProfile.ExperienceYearsId
+                && dto.ExperienceYearsId != 0)
             {
-                if (FreelancerFieldValidator.IsIdValid<ExperienceYears>((int)dto.ExperienceYearsId))
+                if (FreelancerFieldValidator.IsIdValid<ExperienceYears>(
+                    (int)dto.ExperienceYearsId))
                 {
-                    user.FreelancerProfile.ExperienceYearsId = (ExperienceYears)dto.ExperienceYearsId;
+                    user.FreelancerProfile.ExperienceYearsId =
+                        (ExperienceYears)dto.ExperienceYearsId;
                 }
                 else
                 {
@@ -246,14 +300,51 @@ namespace _02_Application.Services
                 }
             }
 
+            if (dto.WorkshopSizeId.HasValue
+                && (WorkshopSize)dto.WorkshopSizeId
+                    != user.FreelancerProfile.WorkshopSizeId
+                && dto.WorkshopSizeId != 0)
+            {
+                if (FreelancerFieldValidator.IsIdValid<WorkshopSize>(
+                    (int)dto.WorkshopSizeId))
+                {
+                    user.FreelancerProfile.WorkshopSizeId =
+                        (WorkshopSize)dto.WorkshopSizeId;
+                }
+                else
+                {
+                    return ProfileUpdateResult.InvalidData;
+                }
+            }
+
+            if (dto.HowUsuallyArrangeServicesId.HasValue
+                && (HowUsuallyArrangeServices)dto.HowUsuallyArrangeServicesId
+                    != user.FreelancerProfile.HowUsuallyArrangeServicesId
+                && dto.HowUsuallyArrangeServicesId != 0)
+            {
+                if (FreelancerFieldValidator.IsIdValid<HowUsuallyArrangeServices>(
+                    (int)dto.HowUsuallyArrangeServicesId))
+                {
+                    user.FreelancerProfile.HowUsuallyArrangeServicesId =
+                        (HowUsuallyArrangeServices)
+                        dto.HowUsuallyArrangeServicesId;
+                }
+                else
+                {
+                    return ProfileUpdateResult.InvalidData;
+                }
+            }
 
             if (dto.AvailableTimeId.HasValue
-                    && (AvailableTime)dto.AvailableTimeId != user.FreelancerProfile.AvailableTimeId
-                    && dto.AvailableTimeId != 0)
+                && (AvailableTime)dto.AvailableTimeId
+                    != user.FreelancerProfile.AvailableTimeId
+                && dto.AvailableTimeId != 0)
             {
-                if (FreelancerFieldValidator.IsIdValid<AvailableTime>((int)dto.AvailableTimeId))
+                if (FreelancerFieldValidator.IsIdValid<AvailableTime>(
+                    (int)dto.AvailableTimeId))
                 {
-                    user.FreelancerProfile.AvailableTimeId = (AvailableTime)dto.AvailableTimeId;
+                    user.FreelancerProfile.AvailableTimeId =
+                        (AvailableTime)dto.AvailableTimeId;
                 }
                 else
                 {
@@ -261,102 +352,190 @@ namespace _02_Application.Services
                 }
             }
 
-            // SpecialtyIds
-            if (dto.SpecialtyIds != null && dto.SpecialtyIds.Any())
+            if (dto.FreelancerPreferencesId.HasValue
+                && (FreelancerPreferences)dto.FreelancerPreferencesId
+                    != user.FreelancerProfile.FreelancerPreferencesId
+                && dto.FreelancerPreferencesId != 0)
+            {
+                if (FreelancerFieldValidator.IsIdValid<FreelancerPreferences>(
+                    (int)dto.FreelancerPreferencesId))
+                {
+                    user.FreelancerProfile.FreelancerPreferencesId =
+                        (FreelancerPreferences)
+                        dto.FreelancerPreferencesId;
+                }
+                else
+                {
+                    return ProfileUpdateResult.InvalidData;
+                }
+            }
+
+            if (dto.AverageRevenueId.HasValue
+                && (AverageRevenue)dto.AverageRevenueId
+                    != user.FreelancerProfile.AverageRevenueId
+                && dto.AverageRevenueId != 0)
+            {
+                if (FreelancerFieldValidator.IsIdValid<AverageRevenue>(
+                    (int)dto.AverageRevenueId))
+                {
+                    user.FreelancerProfile.AverageRevenueId =
+                        (AverageRevenue)dto.AverageRevenueId;
+                }
+                else
+                {
+                    return ProfileUpdateResult.InvalidData;
+                }
+            }
+
+            if (dto.HasFixedProducer.HasValue
+                && dto.HasFixedProducer
+                    != user.FreelancerProfile.HasFixedProducer)
+            {
+                user.FreelancerProfile.HasFixedProducer =
+                    dto.HasFixedProducer.Value;
+            }
+
+            if (dto.HasOwnCar.HasValue
+                && dto.HasOwnCar
+                    != user.FreelancerProfile.HasOwnCar)
+            {
+                user.FreelancerProfile.HasOwnCar =
+                    dto.HasOwnCar.Value;
+            }
+
+            if (dto.SpecialtyIds != null
+                && dto.SpecialtyIds.Any())
             {
                 if (!dto.SpecialtyIds.Any(id => id == 0))
                 {
-                    if (!FreelancerFieldValidator.IsIdValid<Specialty>(dto.SpecialtyIds.Cast<int>().ToList()))
+                    if (!FreelancerFieldValidator.IsIdValid<Specialty>(
+                        dto.SpecialtyIds.Cast<int>().ToList()))
                     {
                         return ProfileUpdateResult.InvalidData;
                     }
 
                     user.FreelancerProfile.SpecialtiesIds.Clear();
+
                     foreach (int specialtyId in dto.SpecialtyIds)
                     {
-                        user.FreelancerProfile.SpecialtiesIds.Add((Specialty)specialtyId);
+                        user.FreelancerProfile.SpecialtiesIds.Add(
+                            (Specialty)specialtyId);
                     }
                 }
             }
 
-            // OwnMachineIds
-            if (dto.OwnMachineIds != null && dto.OwnMachineIds.Any())
+            if (dto.OwnMachineIds != null
+                && dto.OwnMachineIds.Any())
             {
                 if (!dto.OwnMachineIds.Any(id => id == 0))
                 {
-                    if (!FreelancerFieldValidator.IsIdValid<OwnMachine>(dto.OwnMachineIds.Cast<int>().ToList()))
+                    if (!FreelancerFieldValidator.IsIdValid<OwnMachine>(
+                        dto.OwnMachineIds.Cast<int>().ToList()))
                     {
                         return ProfileUpdateResult.InvalidData;
                     }
 
                     user.FreelancerProfile.OwnMachinesIds.Clear();
+
                     foreach (int machineId in dto.OwnMachineIds)
                     {
-                        user.FreelancerProfile.OwnMachinesIds.Add((OwnMachine)machineId);
+                        user.FreelancerProfile.OwnMachinesIds.Add(
+                            (OwnMachine)machineId);
                     }
                 }
             }
 
-            await _userRepository.UpdateFreelancerAsync(user, user.FreelancerProfile);
+            await _userRepository.UpdateFreelancerAsync(
+                user,
+                user.FreelancerProfile);
+
             return ProfileUpdateResult.Success;
         }
 
-        public async Task<ProfileUpdateResult> UpdateUserCompanyAsync(UpdateCompanyDto dto, int userId)
+        public async Task<ProfileUpdateResult> UpdateUserCompanyAsync(
+            UpdateCompanyDto dto,
+            int userId)
         {
-            User? user = await _userRepository.GetCompanyProfileAsync(userId);
-            if (user == null)
+            User? user =
+                await _userRepository.GetCompanyProfileAsync(userId);
+
+            if (user == null || user.CompanyProfile == null)
             {
                 return ProfileUpdateResult.NotFound;
             }
 
             if (!string.IsNullOrEmpty(dto.Email)
-                && string.Equals(dto.Email, user.Email, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(
+                    dto.Email,
+                    user.Email,
+                    StringComparison.OrdinalIgnoreCase)
                 && await _userRepository.IsEmailRegistered(dto.Email))
             {
                 return ProfileUpdateResult.EmailInUse;
             }
 
             if (!string.IsNullOrEmpty(dto.CompanyRegistrationDocument)
-                && string.Equals(dto.CompanyRegistrationDocument, user.CompanyProfile.CompanyRegistrationDocument, StringComparison.OrdinalIgnoreCase)
-                && await _userRepository.IsCnpjRegistered(dto.CompanyRegistrationDocument))
+                && !string.Equals(
+                    dto.CompanyRegistrationDocument,
+                    user.CompanyProfile.CompanyRegistrationDocument,
+                    StringComparison.OrdinalIgnoreCase)
+                && await _userRepository.IsCnpjRegistered(
+                    dto.CompanyRegistrationDocument))
             {
                 return ProfileUpdateResult.DocumentInUse;
             }
 
             if (!string.IsNullOrEmpty(dto.CompanyRegistrationDocument)
-                    && string.Equals(dto.CompanyRegistrationDocument, user.CompanyProfile.CompanyRegistrationDocument, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(
+                    dto.CompanyRegistrationDocument,
+                    user.CompanyProfile.CompanyRegistrationDocument,
+                    StringComparison.OrdinalIgnoreCase))
             {
-                user.CompanyProfile.CompanyRegistrationDocument = dto.CompanyRegistrationDocument;
+                user.CompanyProfile.CompanyRegistrationDocument =
+                    dto.CompanyRegistrationDocument;
             }
 
             ApplyUserChanges(user, dto);
 
             if (!string.IsNullOrEmpty(dto.LegalName)
-                && string.Equals(dto.LegalName, user.CompanyProfile.LegalName, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(
+                    dto.LegalName,
+                    user.CompanyProfile.LegalName,
+                    StringComparison.OrdinalIgnoreCase))
             {
                 user.CompanyProfile.LegalName = dto.LegalName;
             }
 
             if (!string.IsNullOrEmpty(dto.CompanyName)
-                && string.Equals(dto.CompanyName, user.CompanyProfile.CompanyName, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(
+                    dto.CompanyName,
+                    user.CompanyProfile.CompanyName,
+                    StringComparison.OrdinalIgnoreCase))
             {
                 user.CompanyProfile.CompanyName = dto.CompanyName;
             }
 
             if (!string.IsNullOrEmpty(dto.CoreBusiness)
-                && string.Equals(dto.CoreBusiness, user.CompanyProfile.CoreBusiness, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(
+                    dto.CoreBusiness,
+                    user.CompanyProfile.CoreBusiness,
+                    StringComparison.OrdinalIgnoreCase))
             {
-                user.CompanyProfile.CoreBusiness = dto.CoreBusiness;
+                user.CompanyProfile.CoreBusiness =
+                    dto.CoreBusiness;
             }
 
-            await _userRepository.UpdateCompanyAsync(user, user.CompanyProfile);
+            await _userRepository.UpdateCompanyAsync(
+                user,
+                user.CompanyProfile);
+
             return ProfileUpdateResult.Success;
         }
 
-        // Excluir perfil
         public async Task<bool> DeleteUserByIdAsync(int id)
         {
-            User? user = await _userRepository.GetUserByIdAsync(id);
+            User? user =
+                await _userRepository.GetUserByIdAsync(id);
 
             if (user == null)
             {
@@ -364,89 +543,127 @@ namespace _02_Application.Services
             }
 
             await _userRepository.DeleteCurrentUserAsync(user);
+
             return true;
         }
 
-        // Helpers de Enums e Validações
-        private static void ApplyUserChanges(User user, UpdateUserDto dto)
+        private static void ApplyUserChanges(
+            User user,
+            UpdateUserDto dto)
         {
             if (!string.IsNullOrEmpty(dto.LegalResponsibleFullName)
-                && string.Equals(dto.LegalResponsibleFullName, user.LegalResponsibleFullName, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(
+                    dto.LegalResponsibleFullName,
+                    user.LegalResponsibleFullName,
+                    StringComparison.OrdinalIgnoreCase))
             {
-                user.LegalResponsibleFullName = dto.LegalResponsibleFullName;
+                user.LegalResponsibleFullName =
+                    dto.LegalResponsibleFullName;
             }
 
             if (!string.IsNullOrEmpty(dto.LegalResponsibleDocument)
-                && string.Equals(dto.LegalResponsibleDocument, user.LegalResponsibleDocument, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(
+                    dto.LegalResponsibleDocument,
+                    user.LegalResponsibleDocument,
+                    StringComparison.OrdinalIgnoreCase))
             {
-                user.LegalResponsibleDocument = dto.LegalResponsibleDocument;
+                user.LegalResponsibleDocument =
+                    dto.LegalResponsibleDocument;
             }
 
             if (!string.IsNullOrEmpty(dto.Email)
-                && string.Equals(dto.Email, user.Email, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(
+                    dto.Email,
+                    user.Email,
+                    StringComparison.OrdinalIgnoreCase))
             {
                 user.Email = dto.Email;
             }
 
             if (!string.IsNullOrEmpty(dto.ContactNumber)
-                && string.Equals(dto.ContactNumber, user.ContactNumber, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(
+                    dto.ContactNumber,
+                    user.ContactNumber,
+                    StringComparison.OrdinalIgnoreCase))
             {
                 user.ContactNumber = dto.ContactNumber;
             }
 
             if (!string.IsNullOrEmpty(dto.PostalCode)
-                && string.Equals(dto.PostalCode, user.PostalCode, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(
+                    dto.PostalCode,
+                    user.PostalCode,
+                    StringComparison.OrdinalIgnoreCase))
             {
                 user.PostalCode = dto.PostalCode;
             }
 
             if (!string.IsNullOrEmpty(dto.Address)
-                && string.Equals(dto.Address, user.Address, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(
+                    dto.Address,
+                    user.Address,
+                    StringComparison.OrdinalIgnoreCase))
             {
                 user.Address = dto.Address;
             }
 
             if (dto.AddressNumber.HasValue
-                    && dto.AddressNumber != user.AddressNumber
-                    && dto.AddressNumber.Value != 0)
+                && dto.AddressNumber != user.AddressNumber
+                && dto.AddressNumber.Value != 0)
             {
-                user.AddressNumber = (int)dto.AddressNumber;
+                user.AddressNumber = dto.AddressNumber.Value;
             }
 
             if (!string.IsNullOrEmpty(dto.Neighborhood)
-                && string.Equals(dto.Neighborhood, user.Neighborhood, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(
+                    dto.Neighborhood,
+                    user.Neighborhood,
+                    StringComparison.OrdinalIgnoreCase))
             {
                 user.Neighborhood = dto.Neighborhood;
             }
 
             if (dto.AdditionalAddressInfo == "")
             {
-                user.AdditionalAddressInfo = null; // permite limpar o complemento
+                user.AdditionalAddressInfo = null;
             }
             else if (dto.AdditionalAddressInfo != null
                 && (user.AdditionalAddressInfo == null
-                    || string.Equals(dto.AdditionalAddressInfo, user.AdditionalAddressInfo, StringComparison.OrdinalIgnoreCase)))
+                    || !string.Equals(
+                        dto.AdditionalAddressInfo,
+                        user.AdditionalAddressInfo,
+                        StringComparison.OrdinalIgnoreCase)))
             {
-                user.AdditionalAddressInfo = dto.AdditionalAddressInfo;
+                user.AdditionalAddressInfo =
+                    dto.AdditionalAddressInfo;
             }
 
             if (!string.IsNullOrEmpty(dto.City)
-                && string.Equals(dto.City, user.City, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(
+                    dto.City,
+                    user.City,
+                    StringComparison.OrdinalIgnoreCase))
             {
                 user.City = dto.City;
             }
 
             if (!string.IsNullOrEmpty(dto.State)
-                && string.Equals(dto.State, user.State, StringComparison.OrdinalIgnoreCase))
+                && !string.Equals(
+                    dto.State,
+                    user.State,
+                    StringComparison.OrdinalIgnoreCase))
             {
                 user.State = dto.State;
             }
 
             if (!string.IsNullOrEmpty(dto.PublicProfileDescription)
-                && (dto.PublicProfileDescription == null
-                    || string.Equals(dto.PublicProfileDescription, user.PublicProfileDescription, StringComparison.OrdinalIgnoreCase)))
+                && !string.Equals(
+                    dto.PublicProfileDescription,
+                    user.PublicProfileDescription,
+                    StringComparison.OrdinalIgnoreCase))
             {
-                user.PublicProfileDescription = dto.PublicProfileDescription;
+                user.PublicProfileDescription =
+                    dto.PublicProfileDescription;
             }
         }
 
@@ -454,73 +671,141 @@ namespace _02_Application.Services
         {
             return new UserDto
             {
-                LegalResponsibleFullName = user.LegalResponsibleFullName,
+                LegalResponsibleFullName =
+                    user.LegalResponsibleFullName,
+
                 ContactNumber = user.ContactNumber,
                 Email = user.Email,
-                PublicProfileDescription = user.PublicProfileDescription,
+
+                PublicProfileDescription =
+                    user.PublicProfileDescription,
+
                 Address = user.Address,
                 AddressNumber = user.AddressNumber,
                 Neighborhood = user.Neighborhood,
                 PostalCode = user.PostalCode,
                 City = user.City,
                 State = user.State,
-                AdditionalAddressInfo = user.AdditionalAddressInfo
+                AdditionalAddressInfo =
+                    user.AdditionalAddressInfo
             };
         }
 
-        private static GetFreelancerDto MapToFreelancerDto(User user)
+        private static GetFreelancerDto MapToFreelancerDto(
+            User user)
         {
             return new GetFreelancerDto
             {
                 Email = user.Email,
-                PublicProfileDescription = user.PublicProfileDescription,
+
+                PublicProfileDescription =
+                    user.PublicProfileDescription,
+
                 ContactNumber = user.ContactNumber,
-                LegalResponsibleFullName = user.LegalResponsibleFullName,
+
+                LegalResponsibleFullName =
+                    user.LegalResponsibleFullName,
+
                 Address = user.Address,
                 AddressNumber = user.AddressNumber,
                 Neighborhood = user.Neighborhood,
                 City = user.City,
                 State = user.State,
-                AdditionalAddressInfo = user.AdditionalAddressInfo,
+                AdditionalAddressInfo =
+                    user.AdditionalAddressInfo,
+
                 PostalCode = user.PostalCode,
-                BirthDate = user.BirthDate,
-                AvailableTimeName = user.FreelancerProfile.AvailableTimeId.ToString().Replace("_", " "),
-                ExperienceYearsName = user.FreelancerProfile.ExperienceYearsId.ToString().Replace("_", " "),
-                OwnMachineNames = user.FreelancerProfile.OwnMachinesIds
-                                    .Select(id => id
-                                    .ToString()
-                                    .Replace("_", " "))
-                                    .ToList(),
-                SpecialtyNames = user.FreelancerProfile.SpecialtiesIds
-                                    .Select(id => id
-                                    .ToString()
-                                    .Replace("_", " "))
-                                    .ToList()
+
+                HasFixedProducer =
+                    user.FreelancerProfile.HasFixedProducer,
+
+                HasOwnCar =
+                    user.FreelancerProfile.HasOwnCar,
+
+                BirthDate =
+                    user.FreelancerProfile.BirthDate,
+
+                AvailableTimeName =
+                    user.FreelancerProfile.AvailableTimeId
+                        .ToString()
+                        .Replace("_", " "),
+
+                AverageRevenueName =
+                    user.FreelancerProfile.AverageRevenueId
+                        .ToString()
+                        .Replace("_", " "),
+
+                HowUsuallyArrangeServicesName =
+                    user.FreelancerProfile.HowUsuallyArrangeServicesId
+                        .ToString()
+                        .Replace("_", " "),
+
+                BusinessTypeName =
+                    user.FreelancerProfile.BusinessTypeId
+                        .ToString()
+                        .Replace("_", " "),
+
+                ExperienceYearsName =
+                    user.FreelancerProfile.ExperienceYearsId
+                        .ToString()
+                        .Replace("_", " "),
+
+                FreelancerPreferencesName =
+                    user.FreelancerProfile.FreelancerPreferencesId
+                        .ToString()
+                        .Replace("_", " "),
+
+                WorkshopSizeName =
+                    user.FreelancerProfile.WorkshopSizeId
+                        .ToString()
+                        .Replace("_", " "),
+
+                OwnMachineNames =
+                    user.FreelancerProfile.OwnMachinesIds
+                        .Select(id => id.ToString().Replace("_", " "))
+                        .ToList(),
+
+                SpecialtyNames =
+                    user.FreelancerProfile.SpecialtiesIds
+                        .Select(id => id.ToString().Replace("_", " "))
+                        .ToList()
             };
         }
 
-
-        private static FreelancerPublicProfileDto MapToFreelancerPublicProfileDto(User user)
+        private static FreelancerPublicProfileDto MapToFreelancerPublicProfileDto(
+            User user)
         {
             return new FreelancerPublicProfileDto
             {
-                LegalResponsibleFullName = user.LegalResponsibleFullName,
+                LegalResponsibleFullName =
+                    user.LegalResponsibleFullName,
+
                 City = user.City,
                 State = user.State,
                 IsVerified = user.IsVerified,
-                PublicProfileDescription = user.PublicProfileDescription,
-                AvailableTimeName = user.FreelancerProfile.AvailableTimeId.ToString().Replace("_", " "),
-                ExperienceYearsName = user.FreelancerProfile.ExperienceYearsId.ToString().Replace("_", " "),
-                OwnMachineNames = user.FreelancerProfile.OwnMachinesIds
-                                    .Select(id => id
-                                    .ToString()
-                                    .Replace("_", " "))
-                                    .ToList(),
-                SpecialtyNames = user.FreelancerProfile.SpecialtiesIds
-                                    .Select(id => id
-                                    .ToString()
-                                    .Replace("_", " "))
-                                    .ToList()
+
+                PublicProfileDescription =
+                    user.PublicProfileDescription,
+
+                AvailableTimeName =
+                    user.FreelancerProfile.AvailableTimeId
+                        .ToString()
+                        .Replace("_", " "),
+
+                ExperienceYearsName =
+                    user.FreelancerProfile.ExperienceYearsId
+                        .ToString()
+                        .Replace("_", " "),
+
+                OwnMachineNames =
+                    user.FreelancerProfile.OwnMachinesIds
+                        .Select(id => id.ToString().Replace("_", " "))
+                        .ToList(),
+
+                SpecialtyNames =
+                    user.FreelancerProfile.SpecialtiesIds
+                        .Select(id => id.ToString().Replace("_", " "))
+                        .ToList()
             };
         }
 
@@ -529,45 +814,75 @@ namespace _02_Application.Services
             return new GetCompanyDto
             {
                 Email = user.Email,
-                PublicProfileDescription = user.PublicProfileDescription,
-                ContactNumber = user.ContactNumber,
-                LegalResponsibleFullName = user.LegalResponsibleFullName,
+
+                PublicProfileDescription =
+                    user.PublicProfileDescription,
+
+                ContactNumber =
+                    user.ContactNumber,
+
+                LegalResponsibleFullName =
+                    user.LegalResponsibleFullName,
+
                 Address = user.Address,
                 AddressNumber = user.AddressNumber,
                 Neighborhood = user.Neighborhood,
                 City = user.City,
                 State = user.State,
-                AdditionalAddressInfo = user.AdditionalAddressInfo,
+                AdditionalAddressInfo =
+                    user.AdditionalAddressInfo,
+
                 PostalCode = user.PostalCode,
-                LegalName = user.CompanyProfile.LegalName,
-                CompanyName = user.CompanyProfile.CompanyName,
-                CoreBusiness = user.CompanyProfile.CoreBusiness
+
+                LegalName =
+                    user.CompanyProfile.LegalName,
+
+                CompanyName =
+                    user.CompanyProfile.CompanyName,
+
+                CoreBusiness =
+                    user.CompanyProfile.CoreBusiness
             };
         }
 
-        private static CompanyPublicProfileDto MapToCompanyPublicProfileDto(User user)
+        private static CompanyPublicProfileDto MapToCompanyPublicProfileDto(
+            User user)
         {
             return new CompanyPublicProfileDto
             {
-                CompanyName = user.CompanyProfile.CompanyName,
+                CompanyName =
+                    user.CompanyProfile.CompanyName,
+
                 City = user.City,
                 State = user.State,
                 IsVerified = user.IsVerified,
-                PublicProfileDescription = user.PublicProfileDescription,
-                CoreBusiness = user.CompanyProfile.CoreBusiness
+
+                PublicProfileDescription =
+                    user.PublicProfileDescription,
+
+                CoreBusiness =
+                    user.CompanyProfile.CoreBusiness
             };
         }
 
-        public async Task<CreateUserResult> CreateFreelancerAsync(CreateFreelancerDto dto)
+        public async Task<CreateUserResult> CreateFreelancerAsync(
+            CreateFreelancerDto dto)
         {
             if (await _userRepository.IsEmailRegistered(dto.Email))
             {
-                return new CreateUserResult { Status = CreateUserStatus.EmailInUse };
+                return new CreateUserResult
+                {
+                    Status = CreateUserStatus.EmailInUse
+                };
             }
 
-            if (await _userRepository.IsCpfRegistered(dto.LegalResponsibleDocument))
+            if (await _userRepository.IsCpfRegistered(
+                dto.LegalResponsibleDocument))
             {
-                return new CreateUserResult { Status = CreateUserStatus.CpfInUse };
+                return new CreateUserResult
+                {
+                    Status = CreateUserStatus.CpfInUse
+                };
             }
 
             ICollection<EnumValidationError> errors =
@@ -575,96 +890,223 @@ namespace _02_Application.Services
 
             if (errors.Count > 0)
             {
-                return new CreateUserResult { Status = CreateUserStatus.InvalidData, Errors = errors };
+                return new CreateUserResult
+                {
+                    Status = CreateUserStatus.InvalidData,
+                    Errors = errors
+                };
             }
 
             User newUser = new()
             {
-                LegalResponsibleFullName = dto.LegalResponsibleFullName,
-                LegalResponsibleDocument = dto.LegalResponsibleDocument,
+                LegalResponsibleFullName =
+                    dto.LegalResponsibleFullName,
+
+                LegalResponsibleDocument =
+                    dto.LegalResponsibleDocument,
+
                 Email = dto.Email,
                 ContactNumber = dto.ContactNumber,
-                PublicProfileDescription = dto.PublicProfileDescription,
+
+                PublicProfileDescription =
+                    dto.PublicProfileDescription,
+
                 Address = dto.Address,
                 AddressNumber = dto.AddressNumber,
                 Neighborhood = dto.Neighborhood,
                 City = dto.City,
                 State = dto.State,
                 PostalCode = dto.PostalCode,
-                AdditionalAddressInfo = dto.AdditionalAddressInfo,
-                Roles = new List<Roles> { Roles.Freelancer },
-                PasswordHash = _passwordHasher.HashPassword(dto.Password)
+
+                AdditionalAddressInfo =
+                    dto.AdditionalAddressInfo,
+
+                Roles = new List<Roles>
+                {
+                    Roles.Freelancer
+                },
+
+                PasswordHash =
+                    _passwordHasher.HashPassword(dto.Password)
             };
 
             FreelancerProfile newFreelancer = new()
             {
-                AvailableTimeId = (AvailableTime)dto.AvailableTimeId,
-                ExperienceYearsId = (ExperienceYears)dto.ExperienceYearsId,
-                SpecialtiesIds = dto.SpecialtyIds.Select(id => (Specialty)id).ToList(),
-                OwnMachinesIds = dto.OwnMachineIds.Select(id => (OwnMachine)id).ToList()
+                BirthDate = dto.BirthDate,
+                HasFixedProducer = dto.HasFixedProducer,
+                HasOwnCar = dto.HasOwnCar,
+
+                AvailableTimeId =
+                    (AvailableTime)dto.AvailableTimeId,
+
+                AverageRevenueId =
+                    (AverageRevenue)dto.AverageRevenueId,
+
+                BusinessTypeId =
+                    (BusinessType)dto.BusinessTypeId,
+
+                ExperienceYearsId =
+                    (ExperienceYears)dto.ExperienceYearsId,
+
+                FreelancerPreferencesId =
+                    (FreelancerPreferences)
+                    dto.FreelancerPreferencesId,
+
+                HowUsuallyArrangeServicesId =
+                    (HowUsuallyArrangeServices)
+                    dto.HowUsuallyArrangeServicesId,
+
+                WorkshopSizeId =
+                    (WorkshopSize)dto.WorkshopSizeId,
+
+                SpecialtiesIds =
+                    dto.SpecialtyIds
+                        .Select(id => (Specialty)id)
+                        .ToList(),
+
+                OwnMachinesIds =
+                    dto.OwnMachineIds
+                        .Select(id => (OwnMachine)id)
+                        .ToList()
             };
 
-            int? userId = await _userRepository.CreateFreelancerUserProfileAsync(newUser, newFreelancer);
+            int? userId =
+                await _userRepository
+                    .CreateFreelancerUserProfileAsync(
+                        newUser,
+                        newFreelancer);
 
             if (userId == null)
             {
-                return new CreateUserResult { Status = CreateUserStatus.DatabaseError };
+                return new CreateUserResult
+                {
+                    Status = CreateUserStatus.DatabaseError
+                };
             }
 
-            return new CreateUserResult { Status = CreateUserStatus.Success, UserId = userId };
+            return new CreateUserResult
+            {
+                Status = CreateUserStatus.Success,
+                UserId = userId
+            };
         }
 
-        public async Task<CreateUserResult> CreateCompanyAsync(CreateCompanyDto dto)
+        public async Task<CreateUserResult> CreateCompanyAsync(
+            CreateCompanyDto dto)
         {
             if (await _userRepository.IsEmailRegistered(dto.Email))
             {
-                return new CreateUserResult { Status = CreateUserStatus.EmailInUse };
+                return new CreateUserResult
+                {
+                    Status = CreateUserStatus.EmailInUse
+                };
             }
 
-            if (await _userRepository.IsCpfRegistered(dto.LegalResponsibleDocument))
+            if (await _userRepository.IsCpfRegistered(
+                dto.LegalResponsibleDocument))
             {
-                return new CreateUserResult { Status = CreateUserStatus.CpfInUse };
+                return new CreateUserResult
+                {
+                    Status = CreateUserStatus.CpfInUse
+                };
             }
 
-            if (await _userRepository.IsCnpjRegistered(dto.CompanyRegistrationDocument))
+            if (await _userRepository.IsCnpjRegistered(
+                dto.CompanyRegistrationDocument))
             {
-                return new CreateUserResult { Status = CreateUserStatus.CnpjInUse };
+                return new CreateUserResult
+                {
+                    Status = CreateUserStatus.CnpjInUse
+                };
             }
 
             User newUser = new()
             {
-                LegalResponsibleFullName = dto.LegalResponsibleFullName,
-                LegalResponsibleDocument = dto.LegalResponsibleDocument,
+                LegalResponsibleFullName =
+                    dto.LegalResponsibleFullName,
+
+                LegalResponsibleDocument =
+                    dto.LegalResponsibleDocument,
+
                 Email = dto.Email,
                 ContactNumber = dto.ContactNumber,
-                PublicProfileDescription = dto.PublicProfileDescription,
+
+                PublicProfileDescription =
+                    dto.PublicProfileDescription,
+
                 Address = dto.Address,
                 AddressNumber = dto.AddressNumber,
                 Neighborhood = dto.Neighborhood,
                 City = dto.City,
                 State = dto.State,
                 PostalCode = dto.PostalCode,
-                AdditionalAddressInfo = dto.AdditionalAddressInfo,
-                Roles = new List<Roles> { Roles.Company },
-                PasswordHash = _passwordHasher.HashPassword(dto.Password)
+
+                AdditionalAddressInfo =
+                    dto.AdditionalAddressInfo,
+
+                Roles = new List<Roles>
+                {
+                    Roles.Company
+                },
+
+                PasswordHash =
+                    _passwordHasher.HashPassword(dto.Password)
             };
 
             CompanyProfile newCompany = new()
             {
                 CompanyName = dto.CompanyName,
                 CoreBusiness = dto.CoreBusiness,
-                CompanyRegistrationDocument = dto.CompanyRegistrationDocument,
+
+                CompanyRegistrationDocument =
+                    dto.CompanyRegistrationDocument,
+
                 LegalName = dto.LegalName
             };
 
-            int? userId = await _userRepository.CreateCompanyUserProfileAsync(newUser, newCompany);
+            int? userId =
+                await _userRepository
+                    .CreateCompanyUserProfileAsync(
+                        newUser,
+                        newCompany);
 
             if (userId == null)
             {
-                return new CreateUserResult { Status = CreateUserStatus.DatabaseError };
+                return new CreateUserResult
+                {
+                    Status = CreateUserStatus.DatabaseError
+                };
             }
 
-            return new CreateUserResult { Status = CreateUserStatus.Success, UserId = userId };
+            return new CreateUserResult
+            {
+                Status = CreateUserStatus.Success,
+                UserId = userId
+            };
+        }
+
+        public async Task RemoveAllRolesFromUserAsync(
+            User user)
+        {
+            await _userRepository.RemoveAllRolesFromUserAsync(
+                user.Id);
+        }
+
+        public string GetLoggedUserEmailAddress()
+        {
+            return _httpContextAccessor.HttpContext?
+                .User?
+                .FindFirst(ClaimTypes.Name)?
+                .Value;
+        }
+
+        public async Task<User?> GetUserByEmailAsync(
+            string email)
+        {
+            User? result =
+                await _userRepository.GetUserByEmailAsync(email);
+
+            return result;
         }
     }
 }

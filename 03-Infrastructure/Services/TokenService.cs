@@ -19,7 +19,11 @@ namespace _03_Infrastructure.Services
         {
             List<Claim> claims = [];
 
+<<<<<<< HEAD
+            Claim? claimName = new Claim(ClaimTypes.Name, user);
+=======
             Claim claimName = new Claim(JwtRegisteredClaimNames.Name, user);
+>>>>>>> origin/main
             claims.Add(claimName);
 
             Claim claimId = new Claim(JwtRegisteredClaimNames.NameId, userId.ToString());

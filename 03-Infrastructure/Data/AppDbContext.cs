@@ -1,7 +1,11 @@
 ﻿using _04_Domain.Entities;
+<<<<<<< HEAD
+using _04_Domain.Entities.UserInfo;
+=======
 using _04_Domain.Entities.Identity;
 using _04_Domain.Entities.Profiles;
 using _04_Domain.Enums;
+>>>>>>> origin/main
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.Text.Json;
@@ -12,6 +16,13 @@ namespace _03_Infrastructure.Data
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
         public DbSet<User> Users { get; set; }
+<<<<<<< HEAD
+        public DbSet<Role> Roles { get; set; }
+        public DbSet<UserRole> UserRoles { get; set; }
+        public DbSet<OrdemServico> OrdensServico { get; set; }
+        public DbSet<Avaliacao> Avaliacoes { get; set; }
+        public DbSet<Mensagem> Mensagens { get; set; }
+=======
         public DbSet<Vaga> Vagas { get; set; }
         public DbSet<CompanyProfile> CompanyProfiles { get; set; }
         public DbSet<FreelancerProfile> FreelancerProfiles { get; set; }
@@ -105,5 +116,6 @@ namespace _03_Infrastructure.Data
                     );
             });
         }
+>>>>>>> origin/main
     }
 }
