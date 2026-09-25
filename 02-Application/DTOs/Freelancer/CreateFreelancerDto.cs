@@ -7,8 +7,8 @@ namespace _02_Application.DTOs.Freelancer
         [Required(ErrorMessage = "O Nome do responsável legal é obrigatório."), MaxLength(100)]
         public string LegalResponsibleFullName { get; set; }
 
-        [Required(ErrorMessage = "O CPF do responsável legal é obrigatório.")]
-        [RegularExpression(@"^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$", ErrorMessage = "Formato do CPF incorreto.")]
+        [Required(ErrorMessage = "O CPF do responsável legal é obrigatório."), MaxLength(11)]
+        [RegularExpression(@"\A[0-9]{11}\z", ErrorMessage = "O CPF deve conter exatamente 11 números. Não inclua espaços ou caracteres especiais.")]
         public string LegalResponsibleDocument { get; set; }
 
         [Required(ErrorMessage = "O E-mail é obrigatório."), MaxLength(100)]

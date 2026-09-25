@@ -6,6 +6,9 @@
         NotFound,
         InvalidData,
         EmailInUse,
-        DocumentInUse
+        DocumentInUse,
+        InvalidCPF,
+        InvalidCNPJ,
+        InvalidEmail
     }
 }

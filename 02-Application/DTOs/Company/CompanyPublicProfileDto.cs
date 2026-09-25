@@ -8,5 +8,7 @@
         public bool IsVerified { get; set; } // Perfil Verificado
         public string PublicProfileDescription { get; set; }
         public string CoreBusiness { get; set; } // Ramo de Atuação
+
+        public string? ProfileImageUrl { get; set; }
     }
 }

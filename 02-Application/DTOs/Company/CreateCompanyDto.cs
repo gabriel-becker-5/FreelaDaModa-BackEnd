@@ -7,8 +7,8 @@ namespace _02_Application.DTOs.Company
         [Required(ErrorMessage = "O Nome do responsável legal é obrigatório."), MaxLength(100)]
         public string LegalResponsibleFullName { get; set; }
 
-        [Required(ErrorMessage = "O CPF do responsável legal é obrigatório.")]
-        [RegularExpression(@"^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$", ErrorMessage = "Formato do CPF incorreto.")]
+        [Required(ErrorMessage = "O CPF do responsável legal é obrigatório."), MaxLength(11)]
+        [RegularExpression(@"\A[0-9]{11}\z", ErrorMessage = "O CPF deve conter exatamente 11 números. Não inclua espaços ou caracteres especiais.")]
         public string LegalResponsibleDocument { get; set; }
 
         [Required(ErrorMessage = "O E-mail é obrigatório."), MaxLength(100)]
@@ -28,7 +28,7 @@ namespace _02_Application.DTOs.Company
         [Required(ErrorMessage = "O CEP é obrigatório.")]
         [RegularExpression(@"^\d{5}-?\d{3}$", ErrorMessage = "O CEP deve conter 8 dígitos.")]
         public string PostalCode { get; set; }
-        
+
         [Required(ErrorMessage = "O Endereço é obrigatório."), MaxLength(150)]
         public string Address { get; set; }
 
@@ -47,7 +47,7 @@ namespace _02_Application.DTOs.Company
         [Required(ErrorMessage = "O estado é obrigatório."), MaxLength(150)]
         public string State { get; set; }
 
-        [Required(ErrorMessage = "A descrição pública do perfil é obrigatória."), 
+        [Required(ErrorMessage = "A descrição pública do perfil é obrigatória."),
          MaxLength(500, ErrorMessage = "A descrição aceita no máximo 500 caracteres.")]
         public string PublicProfileDescription { get; set; }
 
@@ -59,7 +59,7 @@ namespace _02_Application.DTOs.Company
         public string CompanyName { get; set; }
 
         [Required(ErrorMessage = "O CNPJ é obrigatório.")]
-        [RegularExpression(@"^[A-Z0-9]{12}\d{2}$", ErrorMessage = "O formato do CNPJ informado é inválido.")]
+        [RegularExpression(@"\A[A-Z0-9]{8}[0-9]{6}\z", ErrorMessage = "O CNPJ informado é inválido. Não inclua caracteres especiais.")]
         public string CompanyRegistrationDocument { get; set; }
 
         [Required(ErrorMessage = "O ramo de atuação é obrigatório."), MaxLength(150)]

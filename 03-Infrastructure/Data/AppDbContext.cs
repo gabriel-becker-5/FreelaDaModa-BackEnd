@@ -74,6 +74,7 @@ namespace _03_Infrastructure.Data
                 u.Property(x => x.AdditionalAddressInfo).HasMaxLength(150);
                 u.Property(x => x.City).HasMaxLength(150);
                 u.Property(x => x.State).HasMaxLength(150);
+                u.Property(x => x.ProfileImageKey).HasColumnType("varchar(255)").IsRequired(false);
 
                 u.Property(x => x.Roles)
                     .HasColumnType("json")
@@ -83,7 +84,6 @@ namespace _03_Infrastructure.Data
                     );
 
                 u.HasIndex(x => x.Email);
-
                 u.HasIndex(x => x.LegalResponsibleDocument);
             });
 

@@ -15,6 +15,7 @@ using _03_Infrastructure.Repositories;
 using _03_Infrastructure.Repositories.Vaga;
 using _03_Infrastructure.Seed;
 using _03_Infrastructure.Services;
+using _03_Infrastructure.Storage;
 using _04_Domain.Interfaces;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -40,6 +41,10 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod());
 });
 
+// Obtém a pasta das imagens de perfil de usuário
+builder.Services.Configure<DiskProfileImageStorageOptions>(
+    builder.Configuration.GetSection("ProfileImageStorage"));
+
 // Interfaces
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ITokenService, TokenService>();
@@ -60,6 +65,8 @@ builder.Services.AddScoped<IAvaliacaoService, AvaliacaoService>();
 builder.Services.AddScoped<IFreelancerFieldsService, FreelancerFieldsService>();
 builder.Services.AddScoped<IVagaRepository, VagaRepository>();
 builder.Services.AddScoped<IVagaService, VagaService>();
+builder.Services.AddScoped<IProfileImageStorage, DiskProfileImageStorage>();
+builder.Services.AddScoped<IProfileImageService, ProfileImageService>();
 
 string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("ConnectionString não configurada.");
