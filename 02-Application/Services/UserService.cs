@@ -647,7 +647,8 @@ namespace _02_Application.Services
                 PostalCode = user.PostalCode,
                 City = user.City,
                 State = user.State,
-                AdditionalAddressInfo = user.AdditionalAddressInfo
+                AdditionalAddressInfo = user.AdditionalAddressInfo,
+                ProfileImageUrl = GetProfileImageUrl(user)
             };
         }
 
@@ -678,7 +679,8 @@ namespace _02_Application.Services
                                     .Select(id => id
                                     .ToString()
                                     .Replace("_", " "))
-                                    .ToList()
+                                    .ToList(),
+                ProfileImageUrl = GetProfileImageUrl(user)
             };
         }
 
@@ -702,7 +704,8 @@ namespace _02_Application.Services
                                     .Select(id => id
                                     .ToString()
                                     .Replace("_", " "))
-                                    .ToList()
+                                    .ToList(),
+                ProfileImageUrl = GetProfileImageUrl(user)
             };
         }
 
@@ -723,7 +726,8 @@ namespace _02_Application.Services
                 PostalCode = user.PostalCode,
                 LegalName = user.CompanyProfile.LegalName,
                 CompanyName = user.CompanyProfile.CompanyName,
-                CoreBusiness = user.CompanyProfile.CoreBusiness
+                CoreBusiness = user.CompanyProfile.CoreBusiness,
+                ProfileImageUrl = GetProfileImageUrl(user)
             };
         }
 
@@ -736,7 +740,8 @@ namespace _02_Application.Services
                 State = user.State,
                 IsVerified = user.IsVerified,
                 PublicProfileDescription = user.PublicProfileDescription,
-                CoreBusiness = user.CompanyProfile.CoreBusiness
+                CoreBusiness = user.CompanyProfile.CoreBusiness,
+                ProfileImageUrl = GetProfileImageUrl(user)
             };
         }
 
@@ -764,6 +769,13 @@ namespace _02_Application.Services
         private static int PageSizeGuard(int pageSize)
         {
             return Math.Clamp(pageSize, 1, 50);
+        }
+
+        private static string? GetProfileImageUrl(User user)
+        {
+            return user.ProfileImageKey == null
+                ? null
+                : $"/api/v1/User/{user.Id}/imagem-perfil";
         }
     }
 }

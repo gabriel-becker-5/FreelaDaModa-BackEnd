@@ -11,5 +11,7 @@
         public ICollection<string> OwnMachineNames { get; set; }
         public string ExperienceYearsName { get; set; }
         public string AvailableTimeName { get; set; }
+
+        public string? ProfileImageUrl { get; set; }
     }
 }
