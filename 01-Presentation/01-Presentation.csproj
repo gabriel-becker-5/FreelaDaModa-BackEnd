@@ -6,7 +6,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>_01_Presentation</RootNamespace>
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
+
 	<UserSecretsId>ce17b2f0-fb8f-466d-a29a-f8a2cf454e86</UserSecretsId>
+
+    <UserSecretsId>13c9fc0b-b1ce-4320-98ff-73a98c67ea09</UserSecretsId>
+
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,7 +21,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.22.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,5 +1,7 @@
 ﻿using _03_Infrastructure.Data;
-using _04_Domain.Entities.UserInfo;
+using _04_Domain.Entities.Identity;
+using _04_Domain.Entities.Profiles;
+using _04_Domain.Enums;
 using _04_Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,46 +10,12 @@ namespace _03_Infrastructure.Repositories
     public class UserRepository : IUserRepository
     {
         private readonly AppDbContext _context;
-
         public UserRepository(AppDbContext context)
         {
             _context = context;
         }
 
-        public async Task<List<User>> ListAllAsync()
-        {
-            return await _context.Users.ToListAsync();
-        }
-
-        public async Task<User?> GetByIdAsync(int id)
-        {
-            return await _context.Users.FindAsync(id);
-        }
-
-        public async Task<User?> GetByEmailAsync(string email)
-        {
-            User? result = await _context.Users.Where(u => u.Email == email).FirstOrDefaultAsync();
-
-            if (result == null)
-            {
-                return null;
-            }
-
-            return result;
-        }
-
-        public async Task<bool> IsUserEmailRegistered(string email)
-        {
-            User? result = await _context.Users.Where(u => u.Email == email).FirstOrDefaultAsync();
-
-            if (result == null)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
+        // Crud Usuários
         public async Task<User> CreateUserAsync(User user)
         {
             _context.Users.Add(user);
@@ -55,54 +23,196 @@ namespace _03_Infrastructure.Repositories
             return user;
         }
 
-        public async Task UpdateUserAsync(User user)
+        public async Task<int?> CreateFreelancerUserProfileAsync(User user, FreelancerProfile profile)
         {
-            await _context.SaveChangesAsync();
-        }
+            await using var transaction = await _context.Database.BeginTransactionAsync();
 
-        public async Task DeleteUserAsync(User user)
-        {
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task<UserRole> CreateUserRoleAsync(UserRole userRole)
-        {
-            _context.UserRoles.Add(userRole);
-            await _context.SaveChangesAsync();
-            return userRole;
-        }
-
-        public async Task RemoveRoleFromUserAsync(int userId, int roleId)
-        {
-            UserRole? result = await _context.UserRoles.Where(ur => ur.UserId == userId &&
-                                                                 ur.RoleId == roleId).
-                                                                 FirstOrDefaultAsync();
-            if (result != null)
+            try
             {
-                _context.UserRoles.Remove(result);
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+
+                profile.UserId = user.Id;
+                _context.FreelancerProfiles.Add(profile);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                return user.Id;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return null;
+            }
+        }
+
+        public async Task<int?> CreateCompanyUserProfileAsync(User user, CompanyProfile profile)
+        {
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
+            {
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+
+                profile.UserId = user.Id;
+                _context.CompanyProfiles.Add(profile);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                return user.Id;
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return null;
+            }
+        }
+
+        public async Task<ICollection<User>> GetAllUsersAsync(int skip, int take)
+        {
+            return await _context.Users
+                .AsNoTracking()
+                .OrderBy(u => u.Id)
+                .Skip(skip)
+                .Take(take)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountUsersAsync()
+        {
+            return await _context.Users.AsNoTracking().CountAsync();
+        }
+
+
+        public async Task<ICollection<User>> GetAllFreelancersAsync(int skip, int take)
+        {
+            return await _context.Users
+                .AsNoTracking()
+                .Where(u => u.FreelancerProfile != null)
+                .Include(u => u.FreelancerProfile)
+                .OrderBy(u => u.Id)
+                .Skip(skip).Take(take)
+                .ToListAsync();
+        }
+
+        public async Task<int> CountFreelancersAsync()
+        {
+            return await _context.Users.AsNoTracking().CountAsync(u => u.FreelancerProfile != null);
+        }
+
+
+
+
+        public async Task<User?> GetUserByIdAsync(int id)
+        {
+            // ATENÇÃO: não alterar para '.AsNoTracking' — A entidade é mutada por update/delete do UserService
+            return await _context.Users.FindAsync(id);
+        }
+
+        public async Task<User?> GetUserByEmailAsync(string email)
+        {
+            return await _context.Users.Where(u => u.Email.ToLower() == email.ToLower()).FirstOrDefaultAsync();
+        }
+
+        public async Task<User?> GetFreelancerProfileAsync(int id)
+        {
+            // ATENÇÃO: não alterar para '.AsNoTracking' — A entidade é mutada por update/delete do UserService
+            return await _context.Users
+                .Include(x => x.FreelancerProfile)
+                .FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public async Task<User?> GetCompanyProfileAsync(int id)
+        {
+            // ATENÇÃO: não alterar para '.AsNoTracking' — A entidade é mutada por update/delete do UserService
+            return await _context.Users
+                .Include(x => x.CompanyProfile)
+                .FirstOrDefaultAsync(x => x.Id == id);
+        }
+
+        public async Task<ICollection<Roles>> GetUserRolesAsync(int userId)
+        {
+            User? result = await _context.Users.FindAsync(userId);
+
+            if (result == null)
+            {
+                return [];
+            }
+
+            return result.Roles;
+        }
+
+        public async Task UpdateFreelancerAsync(User user, FreelancerProfile profile)
+        {
+            _context.FreelancerProfiles.Update(profile);
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateCompanyAsync(User user, CompanyProfile profile)
+        {
+            _context.CompanyProfiles.Update(profile);
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+        }
+
+        private bool IsUserRoleActive(User user, int roleId)
+        {
+            return user.Roles.Contains((Roles)roleId);
+        }
+
+        public async Task AddRoleToUserAsync(User user, int roleId)
+        {
+            if (!IsUserRoleActive(user, roleId))
+            {
+                user.Roles.Add((Roles)roleId);
+                _context.Users.Update(user);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task RemoveRoleFromUserAsync(User user, int roleId)
+        {
+            if (IsUserRoleActive(user, roleId))
+            {
+                user.Roles.Remove((Roles)roleId);
+                _context.Users.Update(user);
                 await _context.SaveChangesAsync();
             }
         }
 
         public async Task RemoveAllRolesFromUserAsync(int userId)
         {
-            List<UserRole> allUserRoles = await _context.UserRoles.Where(ur => ur.UserId == userId)
-                                                          .ToListAsync();
+            User? result = await _context.Users.FindAsync(userId);
 
-            foreach (UserRole userRole in allUserRoles)
+            if (result != null)
             {
-                _context.UserRoles.Remove(userRole);
+                result.Roles.Clear();
+                await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task DeleteCurrentUserAsync(User user)
+        {
+            user.IsDeleted = true;
+
+            CompanyProfile? company = await _context.CompanyProfiles
+                .FirstOrDefaultAsync(cp => cp.UserId == user.Id);
+            if (company != null) company.IsDeleted = true;
+
+            FreelancerProfile? freelancer = await _context.FreelancerProfiles
+                .FirstOrDefaultAsync(fp => fp.UserId == user.Id);
+            if (freelancer != null) freelancer.IsDeleted = true;
 
             await _context.SaveChangesAsync();
         }
 
-        public async Task<bool> UserRoleExists(int userId, int roleId)
+        public async Task<bool> IsEmailRegistered(string email)
         {
-            UserRole? result = await _context.UserRoles.Where(ur => ur.UserId == userId &&
-                                                                 ur.RoleId == roleId).
-                                                                 FirstOrDefaultAsync();
+            User? result = await _context.Users.Where(u => u.Email.ToLower() == email.ToLower()).FirstOrDefaultAsync();
 
             if (result == null)
             {
@@ -112,10 +222,16 @@ namespace _03_Infrastructure.Repositories
             return true;
         }
 
-        public async Task<List<UserRole?>> GetUserRoles(int userId)
+        public async Task<bool> IsCpfRegistered(string cpf)
         {
-            List<UserRole> allUserRoles = await _context.UserRoles.Where(ur => ur.UserId == userId).ToListAsync();
-            return allUserRoles;
+            return await _context.Users
+                .AnyAsync(u => u.LegalResponsibleDocument.ToLower() == cpf.ToLower());
+        }
+
+        public async Task<bool> IsCnpjRegistered(string cnpj)
+        {
+            return await _context.CompanyProfiles
+                .AnyAsync(c => c.CompanyRegistrationDocument.ToLower() == cnpj.ToLower());
         }
     }
 }

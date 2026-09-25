@@ -1,10 +1,9 @@
-﻿using _02_Application.Interfaces;
-using _04_Domain.Entities.UserInfo;
+﻿using _02_Application.DTOs.User;
+using _02_Application.Interfaces;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace _01_Presentation.Controllers
 {
@@ -14,47 +13,39 @@ namespace _01_Presentation.Controllers
     [Authorize]
     public class AuthenticationController : ControllerBase
     {
-        private readonly ITokenService _tokenservice;
+        private readonly ITokenService _tokenService;
         private readonly IUserService _userService;
-        private readonly IRoleService _roleService;
 
         public AuthenticationController(ITokenService tokenservice,
-                                        IUserService userservice,
-                                        IRoleService roleService)
+                                        IUserService userservice)
         {
-            _tokenservice = tokenservice;
+            _tokenService = tokenservice;
             _userService = userservice;
-            _roleService = roleService;
         }
 
-        /// <summary>
-        /// Realiza o login no sistema e gera o Token JWT.
-        /// </summary>
-        /// <response code="200">Acesso autorizado.</response>
+        /// <summary>Realiza o login no sistema e gera o Token JWT</summary>
+        /// <param name="login">Credenciais de acesso: E-mail e senha.</param>
+        /// <response code="200">Acesso autorizado, retorna o token JWT.</response>
+        /// <response code="400">As informações inseridas são inválidas.</response>
         /// <response code="401">Acesso não autorizado, e-mail ou senha incorretos.</response>
+        /// <response code="429">Limite de tentativas de login excedido.</response>
         [HttpPost("login")]
         [AllowAnonymous]
+        [EnableRateLimiting("login")]
         [ProducesResponseType(401)]
         [ProducesResponseType(200)]
-        public async Task<IActionResult> Login(LoginRequest login)
+        [ProducesResponseType(400)]
+        [ProducesResponseType(429)]
+        public async Task<IActionResult> Login(LoginDto login)
         {
-            User? user = await _userService.GetUserByEmailAsync(login.Email);
+            AuthenticatedUserDto? authenticatedUser = await _userService.AuthenticateAsync(login.Email, login.Password);
 
-            if (user == null)
+            if (authenticatedUser == null)
             {
                 return Unauthorized();
             }
 
-            PasswordVerificationResult isPasswordCorrect = _userService.VerifyPassword(user, login.Password);
-
-            if (isPasswordCorrect != PasswordVerificationResult.Success)
-            {
-                return Unauthorized();
-            }
-
-            List<int> UserRolesInteger = await _userService.GetUserRolesAsync(user);
-            List<string> UserRolesString = await _roleService.GetRoleNameByIdAsync(UserRolesInteger);
-            string token = _tokenservice.GenerateToken(login.Email, UserRolesString);
+            string token = _tokenService.GenerateToken(authenticatedUser.UserId, authenticatedUser.Email, authenticatedUser.Roles);
 
             return Ok(new { token });
         }

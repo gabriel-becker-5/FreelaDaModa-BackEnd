@@ -19,6 +19,7 @@ namespace _03_Infrastructure.Migrations
                 .HasAnnotation("ProductVersion", "8.0.30")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
+<<<<<<< HEAD
             modelBuilder.Entity("_04_Domain.Entities.Avaliacao", b =>
                 {
                     b.Property<int>("Id")
@@ -122,95 +123,270 @@ namespace _03_Infrastructure.Migrations
                 });
 
             modelBuilder.Entity("_04_Domain.Entities.UserInfo.Role", b =>
+=======
+            modelBuilder.Entity("_04_Domain.Entities.Identity.User", b =>
+>>>>>>> origin/main
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("RoleName")
+                    b.Property<string>("AdditionalAddressInfo")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Address")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
-                    b.HasKey("Id");
-
-                    b.ToTable("Roles");
-                });
-
-            modelBuilder.Entity("_04_Domain.Entities.UserInfo.User", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<int>("AddressNumber")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("BirthDate")
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("ContactNumber")
+                        .IsRequired()
+                        .HasMaxLength(11)
+                        .HasColumnType("varchar(11)");
+
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
-                    b.Property<string>("Name")
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("LegalResponsibleDocument")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
+                        .HasMaxLength(14)
+                        .HasColumnType("varchar(14)");
+
+                    b.Property<string>("LegalResponsibleFullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Neighborhood")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasColumnType("longtext");
+                        .HasMaxLength(512)
+                        .HasColumnType("varchar(512)");
+
+                    b.Property<string>("PostalCode")
+                        .IsRequired()
+                        .HasMaxLength(9)
+                        .HasColumnType("varchar(9)");
+
+                    b.Property<string>("PublicProfileDescription")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Roles")
+                        .IsRequired()
+                        .HasColumnType("json");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Email");
+
+                    b.HasIndex("LegalResponsibleDocument");
 
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("_04_Domain.Entities.UserInfo.UserRole", b =>
+            modelBuilder.Entity("_04_Domain.Entities.Profiles.CompanyProfile", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("RoleId")
-                        .HasColumnType("int");
+                    b.Property<string>("CompanyName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("CompanyRegistrationDocument")
+                        .IsRequired()
+                        .HasMaxLength(14)
+                        .HasColumnType("varchar(14)");
+
+                    b.Property<string>("CoreBusiness")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("LegalName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RoleId");
+                    b.HasIndex("CompanyRegistrationDocument");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
-                    b.ToTable("UserRoles");
+                    b.ToTable("CompanyProfiles");
                 });
+
+            modelBuilder.Entity("_04_Domain.Entities.Profiles.FreelancerProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<int>("AvailableTimeId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("AverageRevenueId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("BirthDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("BusinessTypeId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("ExperienceYearsId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FreelancerPreferencesId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("HasFixedProducer")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("HasOwnCar")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("HowUsuallyArrangeServicesId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("OwnMachinesIds")
+                        .IsRequired()
+                        .HasColumnType("json");
+
+                    b.Property<string>("SpecialtiesIds")
+                        .IsRequired()
+                        .HasColumnType("json");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("WorkshopSizeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("FreelancerProfiles");
+                });
+
+            modelBuilder.Entity("_04_Domain.Entities.Profiles.CompanyProfile", b =>
+            modelBuilder.Entity("_04_Domain.Entities.Vaga", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Ativa")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("DataPublicacao")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Descricao")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("Orcamento")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Vagas");
+                }));
 
             modelBuilder.Entity("_04_Domain.Entities.UserInfo.UserRole", b =>
                 {
-                    b.HasOne("_04_Domain.Entities.UserInfo.Role", "Role")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("RoleId")
+                    b.HasOne("_04_Domain.Entities.Identity.User", "User")
+                        .WithOne("CompanyProfile")
+                        .HasForeignKey("_04_Domain.Entities.Profiles.CompanyProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("_04_Domain.Entities.UserInfo.User", "User")
-                        .WithMany("UserRoles")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Role");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("_04_Domain.Entities.UserInfo.Role", b =>
+            modelBuilder.Entity("_04_Domain.Entities.Profiles.FreelancerProfile", b =>
                 {
-                    b.Navigation("UserRoles");
+                    b.HasOne("_04_Domain.Entities.Identity.User", "User")
+                        .WithOne("FreelancerProfile")
+                        .HasForeignKey("_04_Domain.Entities.Profiles.FreelancerProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("_04_Domain.Entities.UserInfo.User", b =>
+            modelBuilder.Entity("_04_Domain.Entities.Identity.User", b =>
                 {
-                    b.Navigation("UserRoles");
+                    b.Navigation("CompanyProfile")
+                        .IsRequired();
+
+                    b.Navigation("FreelancerProfile")
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }
