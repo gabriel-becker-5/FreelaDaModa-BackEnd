@@ -1,6 +1,7 @@
 ﻿using System;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
-using MySql.EntityFrameworkCore.Metadata;
+using Pomelo.EntityFrameworkCore.MySql.Metadata;
 
 #nullable disable
 
@@ -17,7 +18,7 @@ namespace _03_Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     RemetenteId = table.Column<int>(type: "int", nullable: false),
                     DestinatarioId = table.Column<int>(type: "int", nullable: false),
                     Conteudo = table.Column<string>(type: "longtext", nullable: false),
@@ -27,7 +28,7 @@ namespace _03_Infrastructure.Migrations
                 {
                     table.PrimaryKey("PK_Mensagens", x => x.Id);
                 })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                .Annotation("MySql:Charset", "utf8mb4");
         }
 
         /// <inheritdoc />

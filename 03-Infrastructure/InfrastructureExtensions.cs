@@ -18,7 +18,7 @@ namespace _03_Infrastructure
                 ?? "Server=localhost;Port=3306;Database=freeladamoda;User=root;Password=root;";
 
             services.AddDbContext<AppDbContext>(options =>
-                options.UseMySQL(connectionString)
+                options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
             );
 
             // Registo de Repositórios e Serviços de Infraestrutura
