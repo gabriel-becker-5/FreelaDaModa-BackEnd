@@ -21,7 +21,6 @@ namespace _04_Domain.Entities.Identity
         public string? AdditionalAddressInfo { get; set; } // Complemento, não obrigatório
         public string City { get; set; }
         public string State { get; set; }
-        public DateTime BirthDate { get; set; }
         public virtual FreelancerProfile FreelancerProfile { get; set; }
         public virtual CompanyProfile CompanyProfile { get; set; }
         public string? ProfileImageKey { get; set; }

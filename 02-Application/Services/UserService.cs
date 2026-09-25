@@ -31,6 +31,17 @@ namespace _02_Application.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
+        public async Task<User?> GetUserByEmailAsync(string email)
+        {
+            return await _userRepository.GetUserByEmailAsync(email);
+        }
+
+        public string GetLoggedUserEmailAddress()
+        {
+            return _httpContextAccessor.HttpContext?.User.FindFirstValue(ClaimTypes.Email)
+                ?? string.Empty;
+        }
+
         // Criar usuários
         public async Task<CreateUserResult> CreateFreelancerAsync(CreateFreelancerDto dto)
         {
@@ -72,14 +83,21 @@ namespace _02_Application.Services
                 PostalCode = dto.PostalCode,
                 AdditionalAddressInfo = dto.AdditionalAddressInfo,
                 Roles = new List<Roles> { Roles.Freelancer },
-                PasswordHash = _passwordHasher.HashPassword(dto.Password),
-                BirthDate = dto.BirthDate
+                PasswordHash = _passwordHasher.HashPassword(dto.Password)
             };
 
             FreelancerProfile newFreelancer = new()
             {
+                BirthDate = dto.BirthDate,
+                HasFixedProducer = dto.HasFixedProducer,
+                HasOwnCar = dto.HasOwnCar,
                 AvailableTimeId = (AvailableTime)dto.AvailableTimeId,
+                AverageRevenueId = (AverageRevenue)dto.AverageRevenueId,
+                BusinessTypeId = (BusinessType)dto.BusinessTypeId,
                 ExperienceYearsId = (ExperienceYears)dto.ExperienceYearsId,
+                FreelancerPreferencesId = (FreelancerPreferences)dto.FreelancerPreferencesId,
+                HowUsuallyArrangeServicesId = (HowUsuallyArrangeServices)dto.HowUsuallyArrangeServicesId,
+                WorkshopSizeId = (WorkshopSize)dto.WorkshopSizeId,
                 SpecialtiesIds = dto.SpecialtyIds.Select(id => (Specialty)id).ToList(),
                 OwnMachinesIds = dto.OwnMachineIds.Select(id => (OwnMachine)id).ToList()
             };
@@ -350,6 +368,7 @@ namespace _02_Application.Services
             return MapToCompanyPublicProfileDto(user);
         }
 
+        // Atualização de perfil
         public async Task<ProfileUpdateResult> UpdateUserFreelancerAsync(
             UpdateFreelancerDto dto,
             int userId)
@@ -363,21 +382,13 @@ namespace _02_Application.Services
             }
 
             ProfileUpdateResult emailValidation = await ValidateEmail(dto.Email, user.Email);
-            if (emailValidation == ProfileUpdateResult.Success)
-            {
-                user.Email = dto.Email;
-            }
-            else
+            if (emailValidation != ProfileUpdateResult.Success)
             {
                 return emailValidation;
             }
 
             ProfileUpdateResult cpfValidation = await ValidarCpf(dto.LegalResponsibleDocument, user.LegalResponsibleDocument);
-            if (cpfValidation == ProfileUpdateResult.Success)
-            {
-                user.LegalResponsibleDocument = dto.LegalResponsibleDocument;
-            }
-            else
+            if (cpfValidation != ProfileUpdateResult.Success)
             {
                 return cpfValidation;
             }
@@ -426,6 +437,23 @@ namespace _02_Application.Services
                 {
                     user.FreelancerProfile.ExperienceYearsId =
                         (ExperienceYears)dto.ExperienceYearsId;
+                }
+                else
+                {
+                    return ProfileUpdateResult.InvalidData;
+                }
+            }
+
+            if (dto.WorkshopSizeId.HasValue
+                && (WorkshopSize)dto.WorkshopSizeId
+                    != user.FreelancerProfile.WorkshopSizeId
+                && dto.WorkshopSizeId != 0)
+            {
+                if (FreelancerFieldValidator.IsIdValid<WorkshopSize>(
+                    (int)dto.WorkshopSizeId))
+                {
+                    user.FreelancerProfile.WorkshopSizeId =
+                        (WorkshopSize)dto.WorkshopSizeId;
                 }
                 else
                 {
@@ -581,37 +609,31 @@ namespace _02_Application.Services
             }
 
             ProfileUpdateResult emailValidation = await ValidateEmail(dto.Email, user.Email);
-            if (emailValidation == ProfileUpdateResult.Success)
-            {
-                user.Email = dto.Email;
-            }
-            else
+            if (emailValidation != ProfileUpdateResult.Success)
             {
                 return emailValidation;
             }
 
             ProfileUpdateResult cpfValidation = await ValidarCpf(dto.LegalResponsibleDocument, user.LegalResponsibleDocument);
-            if (cpfValidation == ProfileUpdateResult.Success)
-            {
-                user.LegalResponsibleDocument = dto.LegalResponsibleDocument;
-            }
-            else
+            if (cpfValidation != ProfileUpdateResult.Success)
             {
                 return cpfValidation;
             }
 
             ProfileUpdateResult cnpjValidation = await ValidarCNPJ(dto.CompanyRegistrationDocument, user.CompanyProfile.CompanyRegistrationDocument);
-            if (cnpjValidation == ProfileUpdateResult.Success)
-            {
-                user.CompanyProfile.CompanyRegistrationDocument =
-                    dto.CompanyRegistrationDocument;
-            }
-            else
+            if (cnpjValidation != ProfileUpdateResult.Success)
             {
                 return cnpjValidation;
             }
 
             ApplyUserChanges(user, dto);
+
+            if (!string.IsNullOrEmpty(dto.CompanyRegistrationDocument)
+                && !string.Equals(dto.CompanyRegistrationDocument, user.CompanyProfile.CompanyRegistrationDocument, StringComparison.OrdinalIgnoreCase))
+            {
+                user.CompanyProfile.CompanyRegistrationDocument =
+                    dto.CompanyRegistrationDocument;
+            }
 
             if (!string.IsNullOrEmpty(dto.LegalName)
                 && !string.Equals(dto.LegalName, user.CompanyProfile.LegalName, StringComparison.OrdinalIgnoreCase))
@@ -639,6 +661,7 @@ namespace _02_Application.Services
             return ProfileUpdateResult.Success;
         }
 
+        // Excluir perfil
         public async Task<bool> DeleteUserByIdAsync(int id)
         {
             User? user =
@@ -655,11 +678,31 @@ namespace _02_Application.Services
         }
 
         // Helpers de Enums e Validações
-        public async Task<ProfileUpdateResult> ValidarCpf(string dtoDocument, string userDocument)
+        private async Task<ProfileUpdateResult> ValidateEmail(string dtoEmail, string userEmail)
+        {
+            if (string.IsNullOrEmpty(dtoEmail)
+                || string.Equals(dtoEmail, userEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                return ProfileUpdateResult.Success;
+            }
+
+            if (await _userRepository.IsEmailRegistered(dtoEmail))
+            {
+                return ProfileUpdateResult.EmailInUse;
+            }
+
+            return ProfileUpdateResult.Success;
+        }
+
+        private async Task<ProfileUpdateResult> ValidarCpf(string dtoDocument, string userDocument)
         {
             if (string.IsNullOrEmpty(dtoDocument)
-                || string.Equals(dtoDocument, userDocument, StringComparison.OrdinalIgnoreCase)
-                || !Cpf.IsValid(dtoDocument))
+                || string.Equals(dtoDocument, userDocument, StringComparison.OrdinalIgnoreCase))
+            {
+                return ProfileUpdateResult.Success;
+            }
+
+            if (!Cpf.IsValid(dtoDocument))
             {
                 return ProfileUpdateResult.InvalidCPF;
             }
@@ -672,11 +715,15 @@ namespace _02_Application.Services
             return ProfileUpdateResult.Success;
         }
 
-        public async Task<ProfileUpdateResult> ValidarCNPJ(string dtoDocument, string userDocument)
+        private async Task<ProfileUpdateResult> ValidarCNPJ(string dtoDocument, string userDocument)
         {
             if (string.IsNullOrEmpty(dtoDocument)
-                || string.Equals(dtoDocument, userDocument, StringComparison.OrdinalIgnoreCase)
-                || !Cnpj.IsValid(dtoDocument))
+                || string.Equals(dtoDocument, userDocument, StringComparison.OrdinalIgnoreCase))
+            {
+                return ProfileUpdateResult.Success;
+            }
+
+            if (!Cnpj.IsValid(dtoDocument))
             {
                 return ProfileUpdateResult.InvalidCNPJ;
             }
@@ -823,9 +870,16 @@ namespace _02_Application.Services
                     user.AdditionalAddressInfo,
 
                 PostalCode = user.PostalCode,
-                BirthDate = user.BirthDate,
+                HasFixedProducer = user.FreelancerProfile.HasFixedProducer,
+                HasOwnCar = user.FreelancerProfile.HasOwnCar,
+                BirthDate = user.FreelancerProfile.BirthDate,
                 AvailableTimeName = user.FreelancerProfile.AvailableTimeId.ToString().Replace("_", " "),
+                AverageRevenueName = user.FreelancerProfile.AverageRevenueId.ToString().Replace("_", " "),
+                HowUsuallyArrangeServicesName = user.FreelancerProfile.HowUsuallyArrangeServicesId.ToString().Replace("_", " "),
+                BusinessTypeName = user.FreelancerProfile.BusinessTypeId.ToString().Replace("_", " "),
                 ExperienceYearsName = user.FreelancerProfile.ExperienceYearsId.ToString().Replace("_", " "),
+                FreelancerPreferencesName = user.FreelancerProfile.FreelancerPreferencesId.ToString().Replace("_", " "),
+                WorkshopSizeName = user.FreelancerProfile.WorkshopSizeId.ToString().Replace("_", " "),
                 OwnMachineNames = user.FreelancerProfile.OwnMachinesIds
                                     .Select(id => id
                                     .ToString()
@@ -913,22 +967,6 @@ namespace _02_Application.Services
                 CoreBusiness = user.CompanyProfile.CoreBusiness,
                 ProfileImageUrl = GetProfileImageUrl(user)
             };
-        }
-
-        public async Task<ProfileUpdateResult> ValidateEmail(string dtoEmail, string userEmail)
-        {
-            if (string.IsNullOrEmpty(dtoEmail)
-                || string.Equals(dtoEmail, userEmail, StringComparison.OrdinalIgnoreCase))
-            {
-                return ProfileUpdateResult.InvalidEmail;
-            }
-
-            if (await _userRepository.IsEmailRegistered(dtoEmail))
-            {
-                return ProfileUpdateResult.EmailInUse;
-            }
-
-            return ProfileUpdateResult.Success;
         }
 
         private static int PageGuard(int page)

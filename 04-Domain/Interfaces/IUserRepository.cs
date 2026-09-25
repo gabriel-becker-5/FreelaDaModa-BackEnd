@@ -15,6 +15,7 @@ namespace _04_Domain.Interfaces
         Task<int> CountFreelancersAsync();
         Task<User?> GetUserByIdAsync(int id);
         Task<User?> GetUserByEmailAsync(string email);
+        Task<User?> GetByEmailAsync(string email);
         Task<User?> GetFreelancerProfileAsync(int userId);
         Task<User?> GetCompanyProfileAsync(int userId);
         Task<ICollection<Roles>> GetUserRolesAsync(int userId);

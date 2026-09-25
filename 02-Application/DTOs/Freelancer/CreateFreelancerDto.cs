@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace _02_Application.DTOs.Freelancer
 {
@@ -17,8 +17,8 @@ namespace _02_Application.DTOs.Freelancer
 
         [Required(ErrorMessage = "A senha é obrigatória."), MaxLength(50)]
         [RegularExpression(
-    @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z\s]).{10,}$",
-    ErrorMessage = "A senha deve ter no mínimo 10 caracteres, incluindo maiúscula, minúscula, número e caractere especial.")]
+            @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z\s]).{10,}$",
+            ErrorMessage = "A senha deve ter no mínimo 10 caracteres, incluindo maiúscula, minúscula, número e caractere especial.")]
         public string Password { get; set; }
 
         [Required(ErrorMessage = "O telefone/celular é obrigatório.")]
@@ -51,23 +51,41 @@ namespace _02_Application.DTOs.Freelancer
          MaxLength(500, ErrorMessage = "A descrição aceita no máximo 500 caracteres.")]
         public string PublicProfileDescription { get; set; }
 
-
         // Campos de Freelancer
         [Required(ErrorMessage = "A data de nascimento é obrigatória.")]
         public DateTime BirthDate { get; set; }
 
+        [Required(ErrorMessage = "O tipo de negócio é obrigatório.")]
+        public int BusinessTypeId { get; set; }
+
         [Required(ErrorMessage = "O tempo de experiência é obrigatório.")]
         public int ExperienceYearsId { get; set; }
+
+        [Required(ErrorMessage = "O tamanho da oficina é obrigatório.")]
+        public int WorkshopSizeId { get; set; }
 
         [Required(ErrorMessage = "Selecione ao menos uma especialidade.")]
         [MinLength(1, ErrorMessage = "Selecione ao menos uma especialidade.")]
         public List<int> SpecialtyIds { get; set; }
 
-        [Required(ErrorMessage = "Selecione ao menos uma máquina.")]
-        [MinLength(1, ErrorMessage = "Selecione ao menos uma máquina.")]
-        public List<int> OwnMachineIds { get; set; }
+        public List<int> OwnMachineIds { get; set; } = new();
+
+        [Required(ErrorMessage = "Informe como costuma fechar serviços.")]
+        public int HowUsuallyArrangeServicesId { get; set; }
 
         [Required(ErrorMessage = "A disponibilidade de tempo é obrigatória.")]
         public int AvailableTimeId { get; set; }
+
+        [Required(ErrorMessage = "A preferência de Freelancer é obrigatória.")]
+        public int FreelancerPreferencesId { get; set; }
+
+        [Required(ErrorMessage = "O faturamento médio é obrigatório.")]
+        public int AverageRevenueId { get; set; }
+
+        [Required(ErrorMessage = "Informe se já tem um produtor fixo.")]
+        public bool HasFixedProducer { get; set; }
+
+        [Required(ErrorMessage = "Informe se possui veículo próprio para levar/buscar peças.")]
+        public bool HasOwnCar { get; set; }
     }
 }

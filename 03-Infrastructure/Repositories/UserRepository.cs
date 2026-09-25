@@ -115,9 +115,13 @@ namespace _03_Infrastructure.Repositories
         public async Task<User?> GetUserByEmailAsync(string email)
         {
             return await _context.Users
-                      .Where(u => string
-                      .Equals(u.Email, email, StringComparison.OrdinalIgnoreCase))
+                      .Where(u => u.Email.ToLower() == email.ToLower())
                       .FirstOrDefaultAsync();
+        }
+
+        public async Task<User?> GetByEmailAsync(string email)
+        {
+            return await GetUserByEmailAsync(email);
         }
 
         public async Task<User?> GetFreelancerProfileAsync(int id)
@@ -214,8 +218,7 @@ namespace _03_Infrastructure.Repositories
         public async Task<bool> IsEmailRegistered(string email)
         {
             User? result = await _context.Users
-                                      .Where(u => string
-                                      .Equals(u.Email, email, StringComparison.OrdinalIgnoreCase))
+                                      .Where(u => u.Email.ToLower() == email.ToLower())
                                       .FirstOrDefaultAsync();
 
             if (result == null)
@@ -229,15 +232,13 @@ namespace _03_Infrastructure.Repositories
         public async Task<bool> IsCpfRegistered(string cpf)
         {
             return await _context.Users
-                .AnyAsync(u => string
-                .Equals(u.LegalResponsibleDocument, cpf, StringComparison.OrdinalIgnoreCase));
+                .AnyAsync(u => u.LegalResponsibleDocument.ToLower() == cpf.ToLower());
         }
 
         public async Task<bool> IsCnpjRegistered(string cnpj)
         {
             return await _context.CompanyProfiles
-                .AnyAsync(c => string
-                .Equals(c.CompanyRegistrationDocument, cnpj, StringComparison.OrdinalIgnoreCase));
+                .AnyAsync(c => c.CompanyRegistrationDocument.ToLower() == cnpj.ToLower());
         }
 
 

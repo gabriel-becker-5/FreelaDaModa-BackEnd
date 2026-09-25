@@ -51,7 +51,12 @@ namespace _02_Application.Validation
             List<DtoFieldValidation> fields = new()
             {
                 new("AvailableTimeId", typeof(AvailableTime), dto.AvailableTimeId),
+                new("AverageRevenueId", typeof(AverageRevenue), dto.AverageRevenueId),
+                new("BusinessTypeId", typeof(BusinessType), dto.BusinessTypeId),
                 new("ExperienceYearsId", typeof(ExperienceYears), dto.ExperienceYearsId),
+                new("FreelancerPreferencesId", typeof(FreelancerPreferences), dto.FreelancerPreferencesId),
+                new("HowUsuallyArrangeServicesId", typeof(HowUsuallyArrangeServices), dto.HowUsuallyArrangeServicesId),
+                new("WorkshopSizeId", typeof(WorkshopSize), dto.WorkshopSizeId),
                 new("SpecialtyIds", typeof(Specialty), dto.SpecialtyIds),
                 new("OwnMachineIds", typeof(OwnMachine), dto.OwnMachineIds)
             };

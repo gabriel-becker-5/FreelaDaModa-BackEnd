@@ -1,26 +1,23 @@
-﻿using Microsoft.AspNetCore.Identity;
-using _02_Application.DTOs;
+﻿using _02_Application.DTOs;
 using _02_Application.DTOs.Company;
 using _02_Application.DTOs.Freelancer;
 using _02_Application.DTOs.User;
 using _02_Application.Enums;
 using _04_Domain.Entities.Identity;
-using _04_Domain.Enums;
 
 namespace _02_Application.Interfaces
 {
     public interface IUserService
     {
-        public Task RemoveAllRolesFromUserAsync(User user);
-        public Task<User?> GetUserByEmailAsync(string email);
-        public string GetLoggedUserEmailAddress();
+        Task<User?> GetUserByEmailAsync(string email);
+        string GetLoggedUserEmailAddress();
 
         Task<CreateUserResult> CreateFreelancerAsync(CreateFreelancerDto dto);
         Task<CreateUserResult> CreateCompanyAsync(CreateCompanyDto dto);
         Task<UserDto?> GetUserByIdAsync(int id);
         Task<int?> GetUserIdByEmailAsync(string email);
         Task<PagedResult<UserDto>> GetAllUsersAsync(int page, int pageSize);
-        Task<PagedResult<GetFreelancerDto>> GetAllFreelancersAsync(int page, int pageSize);
+        Task<PagedResult<GetFreelancerDto>> GetAllFreelancersAsync(int skip, int take);
         Task<GetFreelancerDto?> GetFreelancerProfileByIdAsync(int userId);
         Task<FreelancerPublicProfileDto?> GetFreelancerPublicProfileByIdAsync(int userId);
         Task<GetCompanyDto?> GetCompanyProfileByIdAsync(int userId);

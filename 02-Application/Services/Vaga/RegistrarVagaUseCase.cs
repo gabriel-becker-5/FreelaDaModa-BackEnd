@@ -1,9 +1,15 @@
-﻿using _02_Application.Interfaces;
+using _02_Application.DTOs.Vaga;
+using _02_Application.Mappings;
+using _03_Infrastructure.Repositories.Vaga;
+using _04_Domain.Entities;
+using _04_Domain.Entities.Identity;
+using DominioVaga = _04_Domain.Entities.Vaga;
+using _02_Application.Interfaces;
 using _04_Domain.Interfaces;
 
 namespace _02_Application.Services.Vaga
 {
-    public class RegistrarVagaUseCase : IVagaService
+    public class RegistrarVagaUseCase
     {
         private readonly IVagaRepository _vagaRepository;
         private readonly IUserRepository _userRepository;
@@ -14,29 +20,27 @@ namespace _02_Application.Services.Vaga
             _userRepository = userRepository;
         }
 
-        public async Task<object> RegistrarAsync(RequisicaoRegistrarVagaJson requisicao, string emailUsuario)
+        public async Task<RespostavagaJson> ExecutarAsync(RequisicaoRegistrarVagaJson requisicao, string emailUsuario)
         {
-            var usuario = await _userRepository.GetUserByEmailAsync(emailUsuario);
-            if (usuario == null)
-                throw new Exception("Usuário não encontrado.");
+            // Busca o utilizador usando a interface correta do domínio
+            var user = await _userRepository.GetUserByEmailAsync(emailUsuario);
+            if (user == null)
+            {
+                throw new UnauthorizedAccessException("Usuário não encontrado.");
+            }
 
-            var vaga = new _04_Domain.Entities.Vaga
+            var entidade = new DominioVaga
             {
                 Titulo = requisicao.Titulo,
                 Descricao = requisicao.Descricao,
-                Orcamento = requisicao.Salario, // Ajustado para o campo correto da entidade
-                UsuarioId = usuario.Id          // Ajustado para o campo correto da entidade
+                Orcamento = Convert.ToDecimal(requisicao.Salario),
+                DataPublicacao = DateTime.UtcNow,
+                Ativa = true,
+                UsuarioId = user.Id
             };
 
-            await _vagaRepository.AdicionarAsync(vaga);
-
-            return new { Mensagem = "Vaga cadastrada com sucesso!" };
-        }
-
-        public async Task<IEnumerable<object>> ObterTodasAsync()
-        {
-            var vagas = await _vagaRepository.ObterTodasAsync();
-            return vagas;
+            await _vagaRepository.AdicionarAsync(entidade);
+            return entidade.ParaRespostaJson();
         }
     }
 }
