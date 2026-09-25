@@ -46,11 +46,22 @@ builder.Services.Configure<DiskProfileImageStorageOptions>(
     builder.Configuration.GetSection("ProfileImageStorage"));
 
 // Interfaces
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton<ITokenService, TokenService>();
 builder.Services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
 builder.Services.AddScoped<IRoleService, RoleService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddScoped<IOrdemServicoRepository, OrdemServicoRepository>();
+builder.Services.AddScoped<IOrdemServicoService, OrdemServicoService>();
+
+builder.Services.AddScoped<IMensagemRepository, MensagemRepository>();
+builder.Services.AddScoped<IMensagemService, MensagemService>();
+
+builder.Services.AddScoped<IAvaliacaoRepository, AvaliacaoRepository>();
+builder.Services.AddScoped<IAvaliacaoService, AvaliacaoService>();
+
 builder.Services.AddScoped<IFreelancerFieldsService, FreelancerFieldsService>();
 builder.Services.AddScoped<IVagaRepository, VagaRepository>();
 builder.Services.AddScoped<IVagaService, VagaService>();
@@ -59,6 +70,7 @@ builder.Services.AddScoped<IProfileImageService, ProfileImageService>();
 
 string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("ConnectionString não configurada.");
+
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 options.UseMySQL(connectionString));
