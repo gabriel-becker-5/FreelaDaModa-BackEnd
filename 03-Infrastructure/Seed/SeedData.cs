@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace _03_Infrastructure.Seed
 {
-    public class SeedData
+    public static class SeedData
     {
         public async static Task Initializer(IUserRepository userRepository,
                                              IPasswordHasher passwordHasher,
