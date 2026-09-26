@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
-using MySql.EntityFrameworkCore.Metadata;
+using Pomelo.EntityFrameworkCore.MySql.Metadata;
 
 #nullable disable
 
@@ -17,23 +17,23 @@ namespace _03_Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("MySQL:ValueGenerationStrategy", MySQLValueGenerationStrategy.IdentityColumn),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     Titulo = table.Column<string>(type: "varchar(200)", maxLength: 200, nullable: false),
-                    Descricao = table.Column<string>(type: "varchar(1000)", maxLength: 1000, nullable: true),
                     Categoria = table.Column<string>(type: "longtext", nullable: false),
-                    Modalidade = table.Column<string>(type: "longtext", nullable: false),
                     Cidade = table.Column<string>(type: "longtext", nullable: false),
-                    Valor = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Descricao = table.Column<string>(type: "varchar(1000)", maxLength: 1000, nullable: true),
+                    FreelancerId = table.Column<int>(type: "int", nullable: true),
+                    Modalidade = table.Column<string>(type: "longtext", nullable: false),
+                    Observacoes = table.Column<string>(type: "longtext", nullable: true),
                     Prazo = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     Status = table.Column<string>(type: "longtext", nullable: true),
-                    Observacoes = table.Column<string>(type: "longtext", nullable: true),
-                    FreelancerId = table.Column<int>(type: "int", nullable: true)
+                    Valor = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_OrdensServico", x => x.Id);
                 })
-                .Annotation("MySQL:Charset", "utf8mb4");
+                .Annotation("MySql:Charset", "utf8mb4");
         }
 
         /// <inheritdoc />
