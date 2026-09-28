@@ -11,6 +11,8 @@ namespace _04_Domain.Interfaces
     {
         Task<List<OrdemServico>> ListAllAsync();
 
+        Task<List<OrdemServico>> ListByUserIdAsync(int userId);
+
         Task<OrdemServico?> GetByIdAsync(int id);
 
         Task<OrdemServico> CreateAsync(OrdemServico ordemServico);

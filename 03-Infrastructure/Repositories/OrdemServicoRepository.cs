@@ -26,6 +26,13 @@ namespace _03_Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<OrdemServico>> ListByUserIdAsync(int userId)
+        {
+            return await _context.OrdensServico
+                .Where(o => o.UserId == userId && !o.IsDeleted)
+                .ToListAsync();
+        }
+
         public async Task<OrdemServico?> GetByIdAsync(int id)
         {
             return await _context.OrdensServico
