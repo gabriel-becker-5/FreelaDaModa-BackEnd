@@ -16,12 +16,15 @@ using _02_Application.Interfaces;
 using _02_Application.Services;
 using _02_Application.Services.Vaga;
 using _03_Infrastructure;
+using _03_Infrastructure.Data;
 using _03_Infrastructure.Repositories;
 using _03_Infrastructure.Repositories.Vaga;
 using _03_Infrastructure.Storage;
 using _04_Domain.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using _03_Infrastructure.Seed;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -142,6 +145,16 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await dbContext.Database.MigrateAsync();
+
+    IUserRepository userRepository = scope.ServiceProvider.GetRequiredService<IUserRepository>();
+    IPasswordHasher passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+    await SeedData.Initializer(userRepository, passwordHasher, builder.Configuration);
+}
 
 // Pipeline HTTP
 if (app.Environment.IsDevelopment())
