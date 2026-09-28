@@ -26,7 +26,16 @@ namespace _02_Application.Services
 
         public async Task<List<OrdemServico>> ListAllAsync()
         {
-            return await _ordemServicoRepository.ListAllAsync();
+            string email = _userService.GetLoggedUserEmailAddress();
+
+            User? usuario = await _userService.GetUserByEmailAsync(email);
+
+            if (usuario == null)
+            {
+                throw new UnauthorizedAccessException("Usuário não encontrado.");
+            }
+
+            return await _ordemServicoRepository.ListByUserIdAsync(usuario.Id);
         }
 
         public async Task<OrdemServico?> GetByIdAsync(int id)
