@@ -24,12 +24,17 @@ using _04_Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+using System.Text.Json.Serialization; // <-- Adicionado para padronizar os Enums como String
 using _03_Infrastructure.Seed;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Adicionar controllers
-builder.Services.AddControllers();
+// Adicionar controllers com conversão global de Enums para String (Resolve a inconsistência do status da vaga)
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    });
 
 // Configuração do CORS para permitir a comunicação com o front-end
 builder.Services.AddCors(options =>
@@ -69,7 +74,7 @@ builder.Services.AddScoped<IProfileImageService, ProfileImageService>();
 
 // Serviços da camada de Aplicação
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<RegistrarVagaUseCase>(); // <-- Registo adicionado aqui
+builder.Services.AddScoped<RegistrarVagaUseCase>();
 
 // API Versioning
 builder.Services.AddApiVersioning(options =>
