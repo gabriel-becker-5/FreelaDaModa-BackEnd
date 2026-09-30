@@ -578,31 +578,47 @@ namespace _01_Presentation.Controllers
                 });
         }
 
-        // GET /candidaturas?freelancerId=&empresaId=&vagaId=&status=
+        // GET /candidaturas?vagaId=&status=
         [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
         [HttpGet("candidaturas")]
         [Authorize]
         public async Task<IActionResult> GetCandidaturasAsync(
-            [FromQuery] int? freelancerId,
-            [FromQuery] int? empresaId,
             [FromQuery] int? vagaId,
             [FromQuery] StatusCandidatura? status)
         {
+            int? userId = GetLoggedUserId();
+
+            if (userId == null)
+            {
+                return Unauthorized(
+                    new
+                    {
+                        sucesso = false,
+                        mensagem =
+                            "Não foi possível identificar o usuário logado."
+                    });
+            }
+
             var query = _context.Candidaturas
                 .Include(c => c.Vaga)
                 .AsQueryable();
 
-            if (freelancerId.HasValue)
-                query = query.Where(c => c.FreelancerId == freelancerId.Value);
+            // CORREÇÃO: Restrição por role/ownership - cada usuário só vê as próprias candidaturas
+            if (User.IsInRole(nameof(Roles.Company)))
+            {
+                query = query.Where(c => c.Vaga != null && c.Vaga.UsuarioId == userId.Value);
+            }
+            else
+            {
+                query = query.Where(c => c.FreelancerId == userId.Value);
+            }
 
             if (vagaId.HasValue)
                 query = query.Where(c => c.VagaId == vagaId.Value);
 
             if (status.HasValue)
                 query = query.Where(c => c.Status == status.Value);
-
-            if (empresaId.HasValue)
-                query = query.Where(c => c.Vaga != null && c.Vaga.UsuarioId == empresaId.Value);
 
             var resultado = await query.Select(c => new
             {
@@ -627,14 +643,32 @@ namespace _01_Presentation.Controllers
 
         // PATCH /candidaturas/{id}/status (Selecionado/Rejeitado/Cancelada)
         [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
         [ProducesResponseType(404)]
         [HttpPatch("candidaturas/{id:int}/status")]
-        [Authorize]
+        [Authorize(Roles = nameof(Roles.Company))]
         public async Task<IActionResult> UpdateCandidaturaStatusAsync(
             int id,
             [FromBody] UpdateCandidaturaStatusDto dto)
         {
-            var candidatura = await _context.Candidaturas.FindAsync(id);
+            int? userId = GetLoggedUserId();
+
+            if (userId == null)
+            {
+                return Unauthorized(
+                    new
+                    {
+                        sucesso = false,
+                        mensagem =
+                            "Não foi possível identificar o usuário logado."
+                    });
+            }
+
+            var candidatura = await _context.Candidaturas
+                .Include(c => c.Vaga)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
             if (candidatura == null)
             {
                 return NotFound(new
@@ -644,7 +678,18 @@ namespace _01_Presentation.Controllers
                 });
             }
 
+            // CORREÇÃO: Validação de Propriedade (Ownership Check) - só a empresa dona da vaga pode alterar o status
+            if (candidatura.Vaga == null || candidatura.Vaga.UsuarioId != userId.Value)
+            {
+                return StatusCode(403, new
+                {
+                    sucesso = false,
+                    mensagem = "Você não tem permissão para alterar o status desta candidatura."
+                });
+            }
+
             candidatura.Status = dto.Status;
+            candidatura.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
             return Ok(new

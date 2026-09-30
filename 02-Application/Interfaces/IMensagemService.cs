@@ -10,7 +10,7 @@ namespace _02_Application.Interfaces
 {
     public interface IMensagemService
     {
-        Task<List<Mensagem>> ListarAsync();
+        Task<List<Mensagem>> ListarAsync(int usuarioId);
 
         Task<Mensagem?> BuscarPorIdAsync(int id);
 
