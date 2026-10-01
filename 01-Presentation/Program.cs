@@ -14,7 +14,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using _02_Application.Interfaces;
 using _02_Application.Services;
-using _02_Application.Services.Vaga;
 using _03_Infrastructure;
 using _03_Infrastructure.Data;
 using _03_Infrastructure.Repositories;
@@ -74,7 +73,6 @@ builder.Services.AddScoped<IProfileImageService, ProfileImageService>();
 
 // Serviços da camada de Aplicação
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<RegistrarVagaUseCase>();
 
 // API Versioning
 builder.Services.AddApiVersioning(options =>
