@@ -10,22 +10,30 @@ namespace _02_Application.Services;
 public class VagaService : IVagaService
 {
     private readonly IVagaRepository _vagaRepository;
+    private readonly IUserRepository _userRepository;
 
-    public VagaService(IVagaRepository vagaRepository)
+    public VagaService(IVagaRepository vagaRepository, IUserRepository userRepository)
     {
         _vagaRepository = vagaRepository;
+        _userRepository = userRepository;
     }
 
     public async Task<RespostavagaJson> RegistrarAsync(RequisicaoRegistrarVagaJson requisicao, string emailUsuario)
     {
+        var user = await _userRepository.GetUserByEmailAsync(emailUsuario);
+        if (user == null)
+        {
+            throw new UnauthorizedAccessException("Usuário não encontrado.");
+        }
+
         var entidade = new DominioVaga
         {
             Titulo = requisicao.Titulo,
             Descricao = requisicao.Descricao,
             Orcamento = Convert.ToDecimal(requisicao.Salario),
-            DataPublicacao = DateTime.Now,
+            DataPublicacao = DateTime.UtcNow,
             Ativa = true,
-            UsuarioId = 1
+            UsuarioId = user.Id
         };
 
         await _vagaRepository.AdicionarAsync(entidade);

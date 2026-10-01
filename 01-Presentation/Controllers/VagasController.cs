@@ -1,6 +1,5 @@
 using _02_Application.DTOs.Vaga;
 using _02_Application.Interfaces;
-using _02_Application.Services.Vaga;
 using _03_Infrastructure.Data;
 using _04_Domain.Entities;
 using _04_Domain.Entities.Identity;
@@ -21,12 +20,12 @@ namespace _01_Presentation.Controllers
     public class VagasController : ControllerBase
     {
         private readonly AppDbContext _context;
-        private readonly RegistrarVagaUseCase _registrarVagaUseCase;
+        private readonly IVagaService _vagaService;
 
-        public VagasController(AppDbContext context, RegistrarVagaUseCase registrarVagaUseCase)
+        public VagasController(AppDbContext context, IVagaService vagaService)
         {
             _context = context;
-            _registrarVagaUseCase = registrarVagaUseCase;
+            _vagaService = vagaService;
         }
 
         private string? GetLoggedUserEmail()
@@ -55,7 +54,7 @@ namespace _01_Presentation.Controllers
 
             try
             {
-                var resposta = await _registrarVagaUseCase.ExecutarAsync(dto, userEmail);
+                var resposta = await _vagaService.RegistrarAsync(dto, userEmail);
                 return Ok(new { sucesso = true, dados = resposta });
             }
             catch (UnauthorizedAccessException ex)
