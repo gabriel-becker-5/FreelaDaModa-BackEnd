@@ -1,6 +1,7 @@
 ﻿using _02_Application.DTOs;
 using _02_Application.Interfaces;
 using _04_Domain.Entities;
+using _04_Domain.Enums;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -49,34 +50,42 @@ namespace _01_Presentation.Controllers
         [HttpGet("detalhe/{id}")]
         public async Task<IActionResult> Detalhe(int id)
         {
-            OrdemServico? ordem =
-                await _ordemServicoService.GetByIdAsync(id);
-
-            if (ordem == null)
+            try
             {
-                return NotFound("Ordem de serviço não encontrada.");
+                OrdemServico? ordem =
+                    await _ordemServicoService.GetByIdAsync(id);
+
+                if (ordem == null)
+                {
+                    return NotFound("Ordem de serviço não encontrada.");
+                }
+
+                OrdemServicoResponseDto response = new()
+                {
+                    Id = ordem.Id,
+                    UserId = ordem.UserId,
+                    Titulo = ordem.Titulo,
+                    Descricao = ordem.Descricao,
+                    Categoria = ordem.Categoria,
+                    Modalidade = ordem.Modalidade,
+                    Cidade = ordem.Cidade,
+                    Valor = ordem.Valor,
+                    Prazo = ordem.Prazo,
+                    Status = ordem.Status,
+                    Observacoes = ordem.Observacoes,
+                    FreelancerId = ordem.FreelancerId
+                };
+
+                return Ok(response);
             }
-
-            OrdemServicoResponseDto response = new()
+            catch (UnauthorizedAccessException ex)
             {
-                Id = ordem.Id,
-                UserId = ordem.UserId,
-                Titulo = ordem.Titulo,
-                Descricao = ordem.Descricao,
-                Categoria = ordem.Categoria,
-                Modalidade = ordem.Modalidade,
-                Cidade = ordem.Cidade,
-                Valor = ordem.Valor,
-                Prazo = ordem.Prazo,
-                Status = ordem.Status,
-                Observacoes = ordem.Observacoes,
-                FreelancerId = ordem.FreelancerId
-            };
-
-            return Ok(response);
+                return StatusCode(403, ex.Message);
+            }
         }
 
         [HttpPost("cadastrar")]
+        [Authorize(Roles = nameof(Roles.Company))]
         public async Task<IActionResult> Cadastrar(OrdemServicoDto dto)
         {
             OrdemServico ordem =
