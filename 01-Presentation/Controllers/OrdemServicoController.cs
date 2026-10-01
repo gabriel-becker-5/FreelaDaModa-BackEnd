@@ -1,6 +1,7 @@
 ﻿using _02_Application.DTOs;
 using _02_Application.Interfaces;
 using _04_Domain.Entities;
+using _04_Domain.Enums;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -77,6 +78,7 @@ namespace _01_Presentation.Controllers
         }
 
         [HttpPost("cadastrar")]
+        [Authorize(Roles = nameof(Roles.Company))]
         public async Task<IActionResult> Cadastrar(OrdemServicoDto dto)
         {
             OrdemServico ordem =
