@@ -57,7 +57,7 @@ namespace _02_Application.Services
                 throw new UnauthorizedAccessException("Usuário não encontrado.");
             }
 
-            if (ordemServico.UserId != usuario.Id)
+            if (ordemServico.UserId != usuario.Id && ordemServico.FreelancerId != usuario.Id)
             {
                 throw new UnauthorizedAccessException(
                     "Você não tem permissão para acessar esta ordem de serviço.");
