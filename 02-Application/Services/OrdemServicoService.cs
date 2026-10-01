@@ -40,7 +40,30 @@ namespace _02_Application.Services
 
         public async Task<OrdemServico?> GetByIdAsync(int id)
         {
-            return await _ordemServicoRepository.GetByIdAsync(id);
+            OrdemServico? ordemServico =
+                await _ordemServicoRepository.GetByIdAsync(id);
+
+            if (ordemServico == null)
+            {
+                return null;
+            }
+
+            string email = _userService.GetLoggedUserEmailAddress();
+
+            User? usuario = await _userService.GetUserByEmailAsync(email);
+
+            if (usuario == null)
+            {
+                throw new UnauthorizedAccessException("Usuário não encontrado.");
+            }
+
+            if (ordemServico.UserId != usuario.Id)
+            {
+                throw new UnauthorizedAccessException(
+                    "Você não tem permissão para acessar esta ordem de serviço.");
+            }
+
+            return ordemServico;
         }
 
         public async Task<OrdemServico> CreateAsync(OrdemServicoDto dto)
