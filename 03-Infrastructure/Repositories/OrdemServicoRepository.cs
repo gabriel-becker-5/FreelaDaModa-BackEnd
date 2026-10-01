@@ -29,7 +29,7 @@ namespace _03_Infrastructure.Repositories
         public async Task<List<OrdemServico>> ListByUserIdAsync(int userId)
         {
             return await _context.OrdensServico
-                .Where(o => o.UserId == userId && !o.IsDeleted)
+                .Where(o => (o.UserId == userId || o.FreelancerId == userId) && !o.IsDeleted)
                 .ToListAsync();
         }
 
