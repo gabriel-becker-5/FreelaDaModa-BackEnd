@@ -9,7 +9,7 @@ namespace _04_Domain.Interfaces
 {
     public interface IMensagemRepository
     {
-        Task<List<Mensagem>> ListarAsync();
+        Task<List<Mensagem>> ListarAsync(int usuarioId);
 
         Task<Mensagem?> BuscarPorIdAsync(int id);
 

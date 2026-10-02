@@ -19,9 +19,9 @@ namespace _02_Application.Services
             _mensagemRepository = mensagemRepository;
         }
 
-        public async Task<List<Mensagem>> ListarAsync()
+        public async Task<List<Mensagem>> ListarAsync(int usuarioId)
         {
-            return await _mensagemRepository.ListarAsync();
+            return await _mensagemRepository.ListarAsync(usuarioId);
         }
 
         public async Task<Mensagem?> BuscarPorIdAsync(int id)

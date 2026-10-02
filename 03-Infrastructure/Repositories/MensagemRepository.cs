@@ -19,9 +19,11 @@ namespace _03_Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<List<Mensagem>> ListarAsync()
+        public async Task<List<Mensagem>> ListarAsync(int usuarioId)
         {
-            return await _context.Mensagens.ToListAsync();
+            return await _context.Mensagens
+                .Where(m => m.RemetenteId == usuarioId || m.DestinatarioId == usuarioId)
+                .ToListAsync();
         }
 
         public async Task<Mensagem?> BuscarPorIdAsync(int id)
