@@ -641,16 +641,17 @@ namespace _01_Presentation.Controllers
             });
         }
 
-        // PATCH /candidaturas/{id}/status (Selecionado/Rejeitado/Cancelada)
+        // PATCH /candidaturas/status (Selecionado/Rejeitado/Cancelada)
         [ProducesResponseType(200)]
         [ProducesResponseType(401)]
         [ProducesResponseType(403)]
         [ProducesResponseType(404)]
-        [HttpPatch("candidaturas/{id:int}/status")]
+        [HttpPatch("candidaturas/status")]
         [Authorize(Roles = nameof(Roles.Company))]
         public async Task<IActionResult> UpdateCandidaturaStatusAsync(
-            int id,
-            [FromBody] UpdateCandidaturaStatusDto dto)
+            int vagaId,
+            int freelancerId,
+            StatusCandidatura statusCandidatura)
         {
             int? userId = GetLoggedUserId();
 
@@ -667,14 +668,14 @@ namespace _01_Presentation.Controllers
 
             var candidatura = await _context.Candidaturas
                 .Include(c => c.Vaga)
-                .FirstOrDefaultAsync(c => c.Id == id);
+                .FirstOrDefaultAsync(c => c.VagaId == vagaId && c.FreelancerId == freelancerId && c.Vaga.Ativa == true);
 
             if (candidatura == null)
             {
                 return NotFound(new
                 {
                     sucesso = false,
-                    mensagem = "Candidatura não encontrada."
+                    mensagem = "Candidatura não encontrada ou Vaga já está encerrada."
                 });
             }
 
@@ -688,8 +689,7 @@ namespace _01_Presentation.Controllers
                 });
             }
 
-            candidatura.Status = dto.Status;
-            candidatura.UpdatedAt = DateTime.UtcNow;
+            candidatura.Status = statusCandidatura;
             await _context.SaveChangesAsync();
 
             return Ok(new
