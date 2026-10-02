@@ -8,6 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using _04_Domain.Entities.Identity;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Http;
 
 namespace _02_Application.Services
 {
@@ -16,15 +18,18 @@ namespace _02_Application.Services
         private readonly IAvaliacaoRepository _avaliacaoRepository;
         private readonly IUserService _userService;
         private readonly IOrdemServicoRepository _ordemServicoRepository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         public AvaliacaoService(
     IAvaliacaoRepository avaliacaoRepository,
     IUserService userService,
-    IOrdemServicoRepository ordemServicoRepository)
+    IOrdemServicoRepository ordemServicoRepository,
+    IHttpContextAccessor httpContextAccessor)
         {
             _avaliacaoRepository = avaliacaoRepository;
             _userService = userService;
             _ordemServicoRepository = ordemServicoRepository;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<Avaliacao> CreateAsync(AvaliacaoDto dto)
@@ -51,7 +56,26 @@ namespace _02_Application.Services
                 throw new UnauthorizedAccessException("Usuário não encontrado.");
             }
 
-            if (ordemServico.UserId != usuario.Id && ordemServico.FreelancerId != usuario.Id)
+            ClaimsPrincipal user = _httpContextAccessor.HttpContext?.User
+    ?? throw new UnauthorizedAccessException("Usuário não autenticado.");
+
+            if (user.IsInRole("Company"))
+            {
+                if (ordemServico.UserId != usuario.Id)
+                {
+                    throw new UnauthorizedAccessException(
+                        "Você não tem permissão para avaliar esta ordem de serviço.");
+                }
+            }
+            else if (user.IsInRole("Freelancer"))
+            {
+                if (ordemServico.FreelancerId != usuario.Id)
+                {
+                    throw new UnauthorizedAccessException(
+                        "Você não tem permissão para avaliar esta ordem de serviço.");
+                }
+            }
+            else
             {
                 throw new UnauthorizedAccessException(
                     "Você não tem permissão para avaliar esta ordem de serviço.");
