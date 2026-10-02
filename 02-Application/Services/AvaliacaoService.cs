@@ -51,6 +51,12 @@ namespace _02_Application.Services
                 throw new UnauthorizedAccessException("Usuário não encontrado.");
             }
 
+            if (ordemServico.UserId != usuario.Id && ordemServico.FreelancerId != usuario.Id)
+            {
+                throw new UnauthorizedAccessException(
+                    "Você não tem permissão para avaliar esta ordem de serviço.");
+            }
+
             Avaliacao avaliacao = new()
             {
                 OrdemServicoId = dto.OrdemServicoId,
