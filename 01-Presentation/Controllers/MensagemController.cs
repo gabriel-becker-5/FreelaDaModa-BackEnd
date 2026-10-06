@@ -89,8 +89,15 @@ namespace _01_Presentation.Controllers
         [HttpPost("enviar")]
         public async Task<IActionResult> Enviar(MensagemDto dto)
         {
+            int? userId = GetLoggedUserId();
+
+            if (userId == null)
+            {
+                return Unauthorized("Não foi possível identificar o usuário logado.");
+            }
+
             Mensagem mensagem =
-                await _mensagemService.CriarAsync(dto);
+                await _mensagemService.CriarAsync(dto, userId.Value);
 
             return Ok(mensagem);
         }

@@ -14,6 +14,6 @@ namespace _02_Application.Interfaces
 
         Task<Mensagem?> BuscarPorIdAsync(int id);
 
-        Task<Mensagem> CriarAsync(MensagemDto dto);
+        Task<Mensagem> CriarAsync(MensagemDto dto, int remetenteId);
     }
 }

@@ -23,18 +23,25 @@ namespace _01_Presentation.Controllers
         [HttpPost("enviar")]
         public async Task<IActionResult> Enviar(AvaliacaoDto dto)
         {
-            var avaliacao = await _avaliacaoService.CreateAsync(dto);
-
-            var response = new AvaliacaoResponseDto
+            try
             {
-                Id = avaliacao.Id,
-                OrdemServicoId = avaliacao.OrdemServicoId,
-                UserId = avaliacao.UserId,
-                Nota = avaliacao.Nota,
-                Comentario = avaliacao.Comentario
-            };
+                var avaliacao = await _avaliacaoService.CreateAsync(dto);
 
-            return Ok(response);
+                var response = new AvaliacaoResponseDto
+                {
+                    Id = avaliacao.Id,
+                    OrdemServicoId = avaliacao.OrdemServicoId,
+                    UserId = avaliacao.UserId,
+                    Nota = avaliacao.Nota,
+                    Comentario = avaliacao.Comentario
+                };
+
+                return Ok(response);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, ex.Message);
+            }
         }
 
         [HttpGet("listar/{ordemServicoId}")]
