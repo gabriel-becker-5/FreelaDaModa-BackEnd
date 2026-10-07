@@ -89,15 +89,8 @@ namespace _02_Application.Services
             FreelancerProfile newFreelancer = new()
             {
                 BirthDate = dto.BirthDate,
-                HasFixedProducer = dto.HasFixedProducer,
-                HasOwnCar = dto.HasOwnCar,
                 AvailableTimeId = (AvailableTime)dto.AvailableTimeId,
-                AverageRevenueId = (AverageRevenue)dto.AverageRevenueId,
-                BusinessTypeId = (BusinessType)dto.BusinessTypeId,
                 ExperienceYearsId = (ExperienceYears)dto.ExperienceYearsId,
-                FreelancerPreferencesId = (FreelancerPreferences)dto.FreelancerPreferencesId,
-                HowUsuallyArrangeServicesId = (HowUsuallyArrangeServices)dto.HowUsuallyArrangeServicesId,
-                WorkshopSizeId = (WorkshopSize)dto.WorkshopSizeId,
                 SpecialtiesIds = dto.SpecialtyIds.Select(id => (Specialty)id).ToList(),
                 OwnMachinesIds = dto.OwnMachineIds.Select(id => (OwnMachine)id).ToList()
             };
@@ -410,23 +403,6 @@ namespace _02_Application.Services
                 }
             }
 
-            if (dto.BusinessTypeId.HasValue
-                && (BusinessType)dto.BusinessTypeId
-                    != user.FreelancerProfile.BusinessTypeId
-                && dto.BusinessTypeId != 0)
-            {
-                if (FreelancerFieldValidator.IsIdValid<BusinessType>(
-                    (int)dto.BusinessTypeId))
-                {
-                    user.FreelancerProfile.BusinessTypeId =
-                        (BusinessType)dto.BusinessTypeId;
-                }
-                else
-                {
-                    return ProfileUpdateResult.InvalidData;
-                }
-            }
-
             if (dto.ExperienceYearsId.HasValue
                 && (ExperienceYears)dto.ExperienceYearsId
                     != user.FreelancerProfile.ExperienceYearsId
@@ -437,41 +413,6 @@ namespace _02_Application.Services
                 {
                     user.FreelancerProfile.ExperienceYearsId =
                         (ExperienceYears)dto.ExperienceYearsId;
-                }
-                else
-                {
-                    return ProfileUpdateResult.InvalidData;
-                }
-            }
-
-            if (dto.WorkshopSizeId.HasValue
-                && (WorkshopSize)dto.WorkshopSizeId
-                    != user.FreelancerProfile.WorkshopSizeId
-                && dto.WorkshopSizeId != 0)
-            {
-                if (FreelancerFieldValidator.IsIdValid<WorkshopSize>(
-                    (int)dto.WorkshopSizeId))
-                {
-                    user.FreelancerProfile.WorkshopSizeId =
-                        (WorkshopSize)dto.WorkshopSizeId;
-                }
-                else
-                {
-                    return ProfileUpdateResult.InvalidData;
-                }
-            }
-
-            if (dto.HowUsuallyArrangeServicesId.HasValue
-                && (HowUsuallyArrangeServices)dto.HowUsuallyArrangeServicesId
-                    != user.FreelancerProfile.HowUsuallyArrangeServicesId
-                && dto.HowUsuallyArrangeServicesId != 0)
-            {
-                if (FreelancerFieldValidator.IsIdValid<HowUsuallyArrangeServices>(
-                    (int)dto.HowUsuallyArrangeServicesId))
-                {
-                    user.FreelancerProfile.HowUsuallyArrangeServicesId =
-                        (HowUsuallyArrangeServices)
-                        dto.HowUsuallyArrangeServicesId;
                 }
                 else
                 {
@@ -494,57 +435,6 @@ namespace _02_Application.Services
                 {
                     return ProfileUpdateResult.InvalidData;
                 }
-            }
-
-            if (dto.FreelancerPreferencesId.HasValue
-                && (FreelancerPreferences)dto.FreelancerPreferencesId
-                    != user.FreelancerProfile.FreelancerPreferencesId
-                && dto.FreelancerPreferencesId != 0)
-            {
-                if (FreelancerFieldValidator.IsIdValid<FreelancerPreferences>(
-                    (int)dto.FreelancerPreferencesId))
-                {
-                    user.FreelancerProfile.FreelancerPreferencesId =
-                        (FreelancerPreferences)
-                        dto.FreelancerPreferencesId;
-                }
-                else
-                {
-                    return ProfileUpdateResult.InvalidData;
-                }
-            }
-
-            if (dto.AverageRevenueId.HasValue
-                && (AverageRevenue)dto.AverageRevenueId
-                    != user.FreelancerProfile.AverageRevenueId
-                && dto.AverageRevenueId != 0)
-            {
-                if (FreelancerFieldValidator.IsIdValid<AverageRevenue>(
-                    (int)dto.AverageRevenueId))
-                {
-                    user.FreelancerProfile.AverageRevenueId =
-                        (AverageRevenue)dto.AverageRevenueId;
-                }
-                else
-                {
-                    return ProfileUpdateResult.InvalidData;
-                }
-            }
-
-            if (dto.HasFixedProducer.HasValue
-                && dto.HasFixedProducer
-                    != user.FreelancerProfile.HasFixedProducer)
-            {
-                user.FreelancerProfile.HasFixedProducer =
-                    dto.HasFixedProducer.Value;
-            }
-
-            if (dto.HasOwnCar.HasValue
-                && dto.HasOwnCar
-                    != user.FreelancerProfile.HasOwnCar)
-            {
-                user.FreelancerProfile.HasOwnCar =
-                    dto.HasOwnCar.Value;
             }
 
             if (dto.SpecialtyIds != null
@@ -870,16 +760,9 @@ namespace _02_Application.Services
                     user.AdditionalAddressInfo,
 
                 PostalCode = user.PostalCode,
-                HasFixedProducer = user.FreelancerProfile.HasFixedProducer,
-                HasOwnCar = user.FreelancerProfile.HasOwnCar,
                 BirthDate = user.FreelancerProfile.BirthDate,
                 AvailableTimeName = user.FreelancerProfile.AvailableTimeId.ToString().Replace("_", " "),
-                AverageRevenueName = user.FreelancerProfile.AverageRevenueId.ToString().Replace("_", " "),
-                HowUsuallyArrangeServicesName = user.FreelancerProfile.HowUsuallyArrangeServicesId.ToString().Replace("_", " "),
-                BusinessTypeName = user.FreelancerProfile.BusinessTypeId.ToString().Replace("_", " "),
                 ExperienceYearsName = user.FreelancerProfile.ExperienceYearsId.ToString().Replace("_", " "),
-                FreelancerPreferencesName = user.FreelancerProfile.FreelancerPreferencesId.ToString().Replace("_", " "),
-                WorkshopSizeName = user.FreelancerProfile.WorkshopSizeId.ToString().Replace("_", " "),
                 OwnMachineNames = user.FreelancerProfile.OwnMachinesIds
                                     .Select(id => id
                                     .ToString()
