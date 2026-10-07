@@ -29,14 +29,14 @@ namespace _02_Application.Services
             return await _mensagemRepository.BuscarPorIdAsync(id);
         }
 
-        public async Task<Mensagem> CriarAsync(MensagemDto dto)
+        public async Task<Mensagem> CriarAsync(MensagemDto dto, int remetenteId)
         {
             Mensagem mensagem = new()
             {
-                RemetenteId = dto.RemetenteId,
+                RemetenteId = remetenteId,
                 DestinatarioId = dto.DestinatarioId,
                 Conteudo = dto.Conteudo,
-                DataEnvio = DateTime.Now
+                DataEnvio = DateTime.UtcNow
             };
 
             return await _mensagemRepository.CriarAsync(mensagem);
