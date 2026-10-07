@@ -2,7 +2,7 @@
 
 namespace _04_Domain.Entities
 {
-    public class Candidatura
+    public class Candidatura : BaseEntity
     {
         public int Id { get; set; }
         public int VagaId { get; set; }
@@ -12,7 +12,5 @@ namespace _04_Domain.Entities
         public DateTime DataCandidatura { get; set; }
         public StatusCandidatura Status { get; set; }
         public string? Mensagem { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
     }
 }
