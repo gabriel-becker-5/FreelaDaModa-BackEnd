@@ -7,10 +7,8 @@ namespace _02_Application.DTOs.Freelancer
         // Campos de Freelancer
         public DateTime? BirthDate { get; set; }
         public int? ExperienceYearsId { get; set; }
-        public int? WorkshopSizeId { get; set; }
         public IEnumerable<int>? SpecialtyIds { get; set; }
         public IEnumerable<int>? OwnMachineIds { get; set; }
-        public int? HowUsuallyArrangeServicesId { get; set; }
         public int? AvailableTimeId { get; set; }
     }
 }
