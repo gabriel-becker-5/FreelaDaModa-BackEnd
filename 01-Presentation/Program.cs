@@ -20,8 +20,10 @@ using _03_Infrastructure.Repositories;
 using _03_Infrastructure.Repositories.Vaga;
 using _03_Infrastructure.Storage;
 using _04_Domain.Interfaces;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
+using System.Threading.RateLimiting;
 using System.Text;
 using System.Text.Json.Serialization; // <-- Adicionado para padronizar os Enums como String
 using _03_Infrastructure.Seed;
@@ -108,7 +110,17 @@ builder.Services.AddAuthorization();
 // Rate Limiter
 builder.Services.AddRateLimiter(options =>
 {
-    // Configurações do rate limiter se necessário
+    options.RejectionStatusCode = 429;
+
+    options.AddPolicy("login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                Window = TimeSpan.FromMinutes(1),
+                PermitLimit = 5,
+                QueueLimit = 0
+            }));
 });
 
 // SWAGGER / OPENAPI
@@ -173,6 +185,8 @@ app.UseHttpsRedirection();
 
 // Ativar a política de CORS antes da autenticação e mapeamento
 app.UseCors("PermitirFrontend");
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
