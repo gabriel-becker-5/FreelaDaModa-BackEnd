@@ -24,6 +24,7 @@ namespace _03_Infrastructure
             // Registo de Repositórios e Serviços de Infraestrutura
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IVagaRepository, VagaRepository>(); // <-- Adicionado para resolver a dependência da vaga
+            services.AddScoped<ICandidaturaRepository, CandidaturaRepository>();
             services.AddScoped<IPasswordHasher, IdentityPasswordHasher>();
             services.AddScoped<ITokenService, TokenService>();
 

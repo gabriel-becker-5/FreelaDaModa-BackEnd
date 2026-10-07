@@ -53,6 +53,27 @@ namespace _03_Infrastructure.Repositories
             _context.Avaliacoes.Update(avaliacao);
             await _context.SaveChangesAsync();
         }
+
+        public async Task<(double? Media, int Total)> GetMediaAvaliacoesRecebidasAsync(int usuarioAlvoId)
+        {
+            var notas = await (
+                from avaliacao in _context.Avaliacoes.AsNoTracking()
+                join ordemServico in _context.OrdensServico.AsNoTracking()
+                    on avaliacao.OrdemServicoId equals ordemServico.Id
+                where !avaliacao.IsDeleted
+                    && !ordemServico.IsDeleted
+                    && avaliacao.UserId != usuarioAlvoId
+                    && (ordemServico.FreelancerId == usuarioAlvoId || ordemServico.UserId == usuarioAlvoId)
+                select avaliacao.Nota
+            ).ToListAsync();
+
+            if (notas.Count == 0)
+            {
+                return (null, 0);
+            }
+
+            return (notas.Average(), notas.Count);
+        }
     }
 }
 

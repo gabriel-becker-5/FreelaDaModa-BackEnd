@@ -15,5 +15,7 @@ namespace _04_Domain.Interfaces
         Task<Avaliacao?> GetByIdAsync(int id);
         Task UpdateAsync(Avaliacao avaliacao);
         Task DeleteAsync(Avaliacao avaliacao);
+
+        Task<(double? Media, int Total)> GetMediaAvaliacoesRecebidasAsync(int usuarioAlvoId);
     }
 }

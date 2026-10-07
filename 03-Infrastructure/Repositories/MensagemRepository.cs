@@ -39,5 +39,14 @@ namespace _03_Infrastructure.Repositories
 
             return mensagem;
         }
+
+        public async Task<List<Mensagem>> ListByParticipanteAsync(int usuarioId)
+        {
+            return await _context.Mensagens
+                .AsNoTracking()
+                .Where(m => m.RemetenteId == usuarioId || m.DestinatarioId == usuarioId)
+                .OrderByDescending(m => m.DataEnvio)
+                .ToListAsync();
+        }
     }
 }
