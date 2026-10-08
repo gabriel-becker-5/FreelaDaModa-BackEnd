@@ -67,7 +67,7 @@ namespace _02_Application.Services.Dashboard
                     v.Titulo,
                     v.Status.ToString(),
                     v.Orcamento,
-                    v.DataPublicacao,
+                    v.CreatedAt,
                     empresaUserId,
                     nomeExibicao))
                 .ToList();

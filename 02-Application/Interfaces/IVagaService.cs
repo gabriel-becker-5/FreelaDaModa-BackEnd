@@ -4,7 +4,7 @@ namespace _02_Application.Interfaces;
 
 public interface IVagaService
 {
-    Task<RespostavagaJson> RegistrarAsync(RequisicaoRegistrarVagaJson requisicao, string emailUsuario);
+    Task<RespostavagaJson> RegistrarAsync(RequisicaoRegistrarVagaJson requisicao, int usuarioId);
     Task<IEnumerable<RespostavagaJson>> ObterTodasAsync();
     Task<IEnumerable<RespostavagaJson>> ObterComFiltrosAsync(int? usuarioId, string? status);
     Task<RespostavagaJson?> ObterPorIdAsync(int id);

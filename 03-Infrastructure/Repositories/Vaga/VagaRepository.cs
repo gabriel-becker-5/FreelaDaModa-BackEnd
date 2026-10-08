@@ -107,7 +107,7 @@ namespace _03_Infrastructure.Repositories.Vaga
             return await _context.Vagas
                 .AsNoTracking()
                 .Where(v => !v.IsDeleted && v.Status == StatusVaga.Aberta)
-                .OrderByDescending(v => v.DataPublicacao)
+                .OrderByDescending(v => v.CreatedAt)
                 .Take(quantidade)
                 .ToListAsync();
         }
@@ -117,7 +117,7 @@ namespace _03_Infrastructure.Repositories.Vaga
             return await _context.Vagas
                 .AsNoTracking()
                 .Where(v => !v.IsDeleted && v.UsuarioId == empresaUserId)
-                .OrderByDescending(v => v.DataPublicacao)
+                .OrderByDescending(v => v.CreatedAt)
                 .ToListAsync();
         }
     }
