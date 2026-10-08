@@ -14,5 +14,7 @@ namespace _04_Domain.Interfaces
         Task<Mensagem?> BuscarPorIdAsync(int id);
 
         Task<Mensagem> CriarAsync(Mensagem mensagem);
+
+        Task<List<Mensagem>> ListByParticipanteAsync(int usuarioId);
     }
 }

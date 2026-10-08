@@ -61,6 +61,22 @@ namespace _03_Infrastructure.Repositories
             await _context.SaveChangesAsync();
         }
 
+        public async Task<List<OrdemServico>> ListByFreelancerIdAsync(int freelancerId)
+        {
+            return await _context.OrdensServico
+                .AsNoTracking()
+                .Where(o => o.FreelancerId == freelancerId && !o.IsDeleted)
+                .ToListAsync();
+        }
+
+        public async Task<List<OrdemServico>> ListByEmpresaIdAsync(int empresaUserId)
+        {
+            return await _context.OrdensServico
+                .AsNoTracking()
+                .Where(o => o.UserId == empresaUserId && !o.IsDeleted)
+                .ToListAsync();
+        }
+
     }
 }
 

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using _03_Infrastructure.Data;
 using _04_Domain.Entities;
+using _04_Domain.Enums;
 using _04_Domain.Interfaces;
 
 namespace _03_Infrastructure.Repositories.Vaga
@@ -98,6 +99,26 @@ namespace _03_Infrastructure.Repositories.Vaga
             _context.Vagas.Remove(vaga);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        // Filtra pelo campo Status (StatusVaga), não pelo legado Ativa (ver D7 do plano de dashboards).
+        public async Task<List<_04_Domain.Entities.Vaga>> ListarAbertasRecentesAsync(int quantidade)
+        {
+            return await _context.Vagas
+                .AsNoTracking()
+                .Where(v => !v.IsDeleted && v.Status == StatusVaga.Aberta)
+                .OrderByDescending(v => v.DataPublicacao)
+                .Take(quantidade)
+                .ToListAsync();
+        }
+
+        public async Task<List<_04_Domain.Entities.Vaga>> ListarPorEmpresaAsync(int empresaUserId)
+        {
+            return await _context.Vagas
+                .AsNoTracking()
+                .Where(v => !v.IsDeleted && v.UsuarioId == empresaUserId)
+                .OrderByDescending(v => v.DataPublicacao)
+                .ToListAsync();
         }
     }
 }

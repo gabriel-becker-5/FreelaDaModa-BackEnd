@@ -20,5 +20,9 @@ namespace _04_Domain.Interfaces
         Task UpdateAsync(OrdemServico ordemServico);
 
         Task DeleteAsync(OrdemServico ordemServico);
+
+        Task<List<OrdemServico>> ListByFreelancerIdAsync(int freelancerId);
+
+        Task<List<OrdemServico>> ListByEmpresaIdAsync(int empresaUserId);
     }
 }

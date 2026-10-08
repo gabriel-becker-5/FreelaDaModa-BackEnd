@@ -14,4 +14,6 @@ public interface IVagaRepository
     Task<IEnumerable<_04_Domain.Entities.Vaga>> ListarComFiltrosAsync(int? usuarioId, string? status);
     Task<bool> AtualizarStatusAsync(int id, string status);
     Task<bool> DeletarAsync(int id);
+    Task<List<_04_Domain.Entities.Vaga>> ListarAbertasRecentesAsync(int quantidade);
+    Task<List<_04_Domain.Entities.Vaga>> ListarPorEmpresaAsync(int empresaUserId);
 }

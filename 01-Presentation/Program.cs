@@ -76,6 +76,9 @@ builder.Services.AddScoped<IProfileImageService, ProfileImageService>();
 // Serviços da camada de Aplicação
 builder.Services.AddScoped<IUserService, UserService>();
 
+builder.Services.AddScoped<_02_Application.Services.Dashboard.ObterDashboardFreelancerUseCase>();
+builder.Services.AddScoped<_02_Application.Services.Dashboard.ObterDashboardEmpresaUseCase>();
+
 // API Versioning
 builder.Services.AddApiVersioning(options =>
 {
