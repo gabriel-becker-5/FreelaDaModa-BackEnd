@@ -68,8 +68,7 @@ builder.Services.AddScoped<IMensagemService, MensagemService>();
 builder.Services.AddScoped<IAvaliacaoRepository, AvaliacaoRepository>();
 builder.Services.AddScoped<IAvaliacaoService, AvaliacaoService>();
 
-builder.Services.AddScoped<ICandidaturaRepository, CandidaturaRepository>(); // NOVO
-builder.Services.AddScoped<ICandidaturaService, CandidaturaService>();        // NOVO
+builder.Services.AddScoped<ICandidaturaService, CandidaturaService>();
 
 builder.Services.AddScoped<IFreelancerFieldsService, FreelancerFieldsService>();
 builder.Services.AddScoped<IVagaService, VagaService>();
@@ -78,6 +77,9 @@ builder.Services.AddScoped<IProfileImageService, ProfileImageService>();
 
 // Serviços da camada de Aplicação
 builder.Services.AddScoped<IUserService, UserService>();
+
+builder.Services.AddScoped<_02_Application.Services.Dashboard.ObterDashboardFreelancerUseCase>();
+builder.Services.AddScoped<_02_Application.Services.Dashboard.ObterDashboardEmpresaUseCase>();
 
 // API Versioning
 builder.Services.AddApiVersioning(options =>

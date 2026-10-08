@@ -22,4 +22,8 @@ public interface IVagaRepository
 
     // Lista as vagas não excluídas, filtrando por dono e por StatusVaga
     Task<IEnumerable<_04_Domain.Entities.Vaga>> ListarNaoExcluidasAsync(int? usuarioId, StatusVaga? status);
+
+    // Usados pelo Dashboard
+    Task<List<_04_Domain.Entities.Vaga>> ListarAbertasRecentesAsync(int quantidade);
+    Task<List<_04_Domain.Entities.Vaga>> ListarPorEmpresaAsync(int empresaUserId);
 }

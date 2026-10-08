@@ -1,5 +1,7 @@
-﻿using _04_Domain.Entities;
+using _04_Domain.Entities;
 using _04_Domain.Enums;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace _04_Domain.Interfaces
 {
@@ -26,5 +28,10 @@ namespace _04_Domain.Interfaces
         Task<Candidatura?> GetDeVagaAtivaAsync(int vagaId, int freelancerId);
 
         Task UpdateAsync(Candidatura candidatura);
+
+        // Usados pelo Dashboard
+        Task<List<Candidatura>> ListByFreelancerIdAsync(int freelancerId);
+
+        Task<List<Candidatura>> ListByEmpresaIdAsync(int empresaUserId);
     }
 }

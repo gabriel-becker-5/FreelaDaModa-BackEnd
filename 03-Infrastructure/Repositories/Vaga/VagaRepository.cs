@@ -121,5 +121,26 @@ namespace _03_Infrastructure.Repositories.Vaga
 
             return await query.ToListAsync();
         }
+
+        // Usados pelo Dashboard
+        // Filtra pelo campo Status (StatusVaga), não pelo legado Ativa (ver D7 do plano de dashboards).
+        public async Task<List<_04_Domain.Entities.Vaga>> ListarAbertasRecentesAsync(int quantidade)
+        {
+            return await _context.Vagas
+                .AsNoTracking()
+                .Where(v => !v.IsDeleted && v.Status == StatusVaga.Aberta)
+                .OrderByDescending(v => v.DataPublicacao)
+                .Take(quantidade)
+                .ToListAsync();
+        }
+
+        public async Task<List<_04_Domain.Entities.Vaga>> ListarPorEmpresaAsync(int empresaUserId)
+        {
+            return await _context.Vagas
+                .AsNoTracking()
+                .Where(v => !v.IsDeleted && v.UsuarioId == empresaUserId)
+                .OrderByDescending(v => v.DataPublicacao)
+                .ToListAsync();
+        }
     }
 }
