@@ -1,15 +1,11 @@
-﻿using _02_Application.Interfaces;
-using _02_Application.DTOs;
+﻿using _02_Application.DTOs;
+using _02_Application.Interfaces;
 using _04_Domain.Entities;
-using _04_Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using _04_Domain.Entities.Identity;
-using System.Security.Claims;
+using _04_Domain.Enums;
+using _04_Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace _02_Application.Services
 {
@@ -97,7 +93,7 @@ namespace _02_Application.Services
             return await _avaliacaoRepository
                 .ListByOrdemServicoAsync(ordemServicoId);
         }
-        public async Task<bool> UpdateAsync(int id, AvaliacaoDto dto)
+        public async Task<bool> UpdateAsync(int id, UpdateAvaliacaoDto dto)
         {
             if (dto.Nota < 1 || dto.Nota > 5)
             {
@@ -127,14 +123,34 @@ namespace _02_Application.Services
             }
 
             OrdemServico? ordemServico =
-                await _ordemServicoRepository.GetByIdAsync(dto.OrdemServicoId);
+                await _ordemServicoRepository.GetByIdAsync(avaliacao.OrdemServicoId);
 
             if (ordemServico == null)
             {
                 throw new ArgumentException("Ordem de serviço não encontrada.");
             }
 
-            avaliacao.OrdemServicoId = dto.OrdemServicoId;
+            bool podeAvaliar;
+
+            if (usuario.Roles.Contains(Roles.Company))
+            {
+                podeAvaliar = ordemServico.UserId == usuario.Id;
+            }
+            else if (usuario.Roles.Contains(Roles.Freelancer))
+            {
+                podeAvaliar = ordemServico.FreelancerId == usuario.Id;
+            }
+            else
+            {
+                podeAvaliar = false;
+            }
+
+            if (!podeAvaliar)
+            {
+                throw new UnauthorizedAccessException(
+                    "Você não tem permissão para avaliar esta ordem de serviço.");
+            }
+
             avaliacao.Nota = dto.Nota;
             avaliacao.Comentario = dto.Comentario;
 
