@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using _03_Infrastructure.Data;
 using _04_Domain.Entities;
+using _04_Domain.Enums;
 using _04_Domain.Interfaces;
 
 namespace _03_Infrastructure.Repositories.Vaga
@@ -98,6 +99,27 @@ namespace _03_Infrastructure.Repositories.Vaga
             _context.Vagas.Remove(vaga);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<_04_Domain.Entities.Vaga?> ObterNaoExcluidaPorIdAsync(int id)
+        {
+            // ATENÇÃO: não alterar para '.AsNoTracking' — A entidade é mutada pelo VagaService
+            return await _context.Vagas.FirstOrDefaultAsync(v => v.Id == id && !v.IsDeleted);
+        }
+
+        public async Task<IEnumerable<_04_Domain.Entities.Vaga>> ListarNaoExcluidasAsync(int? usuarioId, StatusVaga? status)
+        {
+            var query = _context.Vagas
+                .AsNoTracking()
+                .Where(v => !v.IsDeleted);
+
+            if (usuarioId.HasValue)
+                query = query.Where(v => v.UsuarioId == usuarioId.Value);
+
+            if (status.HasValue)
+                query = query.Where(v => v.Status == status.Value);
+
+            return await query.ToListAsync();
         }
     }
 }

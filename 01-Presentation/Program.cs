@@ -68,6 +68,9 @@ builder.Services.AddScoped<IMensagemService, MensagemService>();
 builder.Services.AddScoped<IAvaliacaoRepository, AvaliacaoRepository>();
 builder.Services.AddScoped<IAvaliacaoService, AvaliacaoService>();
 
+builder.Services.AddScoped<ICandidaturaRepository, CandidaturaRepository>(); // NOVO
+builder.Services.AddScoped<ICandidaturaService, CandidaturaService>();        // NOVO
+
 builder.Services.AddScoped<IFreelancerFieldsService, FreelancerFieldsService>();
 builder.Services.AddScoped<IVagaService, VagaService>();
 builder.Services.AddScoped<IProfileImageStorage, DiskProfileImageStorage>();

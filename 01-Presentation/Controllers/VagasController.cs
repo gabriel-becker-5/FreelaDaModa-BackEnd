@@ -1,14 +1,10 @@
 using _02_Application.DTOs.Vaga;
+using _02_Application.Enums;
 using _02_Application.Interfaces;
-using _03_Infrastructure.Data;
-using _04_Domain.Entities;
-using _04_Domain.Entities.Identity;
 using _04_Domain.Enums;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace _01_Presentation.Controllers
@@ -19,26 +15,16 @@ namespace _01_Presentation.Controllers
     [Authorize]
     public class VagasController : ControllerBase
     {
-        private readonly AppDbContext _context;
         private readonly IVagaService _vagaService;
 
-        public VagasController(AppDbContext context, IVagaService vagaService)
+        public VagasController(IVagaService vagaService)
         {
-            _context = context;
             _vagaService = vagaService;
         }
 
         private string? GetLoggedUserEmail()
         {
             return User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue(ClaimTypes.Name);
-        }
-
-        // Método auxiliar para buscar o ID do usuário logado de forma segura
-        private async Task<User?> GetLoggedUserAsync()
-        {
-            var email = GetLoggedUserEmail();
-            if (string.IsNullOrEmpty(email)) return null;
-            return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
         }
 
         // POST /vagas
@@ -72,19 +58,9 @@ namespace _01_Presentation.Controllers
             [FromQuery] StatusVaga? status)
         {
             var idFiltro = empresaId ?? usuarioId;
-            var query = _context.Vagas.Where(v => !v.IsDeleted).AsQueryable();
 
-            if (idFiltro.HasValue)
-            {
-                query = query.Where(v => v.UsuarioId == idFiltro.Value);
-            }
+            var vagas = await _vagaService.ListarAsync(idFiltro, status);
 
-            if (status.HasValue)
-            {
-                query = query.Where(v => v.Status == status.Value);
-            }
-
-            var vagas = await query.ToListAsync();
             return Ok(new { sucesso = true, dados = vagas });
         }
 
@@ -93,7 +69,7 @@ namespace _01_Presentation.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetVagaByIdAsync(int id)
         {
-            var vaga = await _context.Vagas.FirstOrDefaultAsync(v => v.Id == id && !v.IsDeleted);
+            var vaga = await _vagaService.BuscarPorIdAsync(id);
 
             if (vaga == null)
             {
@@ -108,32 +84,32 @@ namespace _01_Presentation.Controllers
         [Authorize(Roles = "Company")]
         public async Task<IActionResult> UpdateVagaAsync(int id, [FromBody] UpdateVagaDto dto)
         {
-            var usuario = await GetLoggedUserAsync();
-            if (usuario == null)
+            var userEmail = GetLoggedUserEmail();
+            if (string.IsNullOrEmpty(userEmail))
             {
                 return Unauthorized(new { sucesso = false, mensagem = "Usuário não encontrado." });
             }
 
-            var vaga = await _context.Vagas.FirstOrDefaultAsync(v => v.Id == id && !v.IsDeleted);
+            VagaOperacaoResult result =
+                await _vagaService.EditarAsync(userEmail, id, dto.Titulo, dto.Descricao);
 
-            if (vaga == null)
+            return result.Status switch
             {
-                return NotFound(new { sucesso = false, mensagem = "Vaga não encontrada." });
-            }
+                VagaOperacaoStatus.Success =>
+                    Ok(new { sucesso = true, mensagem = "Vaga atualizada com sucesso.", dados = result.Vaga }),
 
-            // CORREÇÃO: Validação de Propriedade (Ownership Check)
-            if (vaga.UsuarioId != usuario.Id)
-            {
-                return StatusCode(403, new { sucesso = false, mensagem = "Você não tem permissão para alterar esta vaga pois ela pertence a outra empresa." });
-            }
+                VagaOperacaoStatus.UsuarioNaoEncontrado =>
+                    Unauthorized(new { sucesso = false, mensagem = "Usuário não encontrado." }),
 
-            vaga.Titulo = dto.Titulo ?? vaga.Titulo;
-            vaga.Descricao = dto.Descricao ?? vaga.Descricao;
-            vaga.UpdatedAt = DateTime.UtcNow;
+                VagaOperacaoStatus.NaoEncontrada =>
+                    NotFound(new { sucesso = false, mensagem = "Vaga não encontrada." }),
 
-            await _context.SaveChangesAsync();
+                VagaOperacaoStatus.SemPermissao =>
+                    StatusCode(403, new { sucesso = false, mensagem = "Você não tem permissão para alterar esta vaga pois ela pertence a outra empresa." }),
 
-            return Ok(new { sucesso = true, mensagem = "Vaga atualizada com sucesso.", dados = vaga });
+                _ =>
+                    StatusCode(500, new { sucesso = false, mensagem = "Não foi possível atualizar a vaga. Tente novamente." })
+            };
         }
 
         // PATCH /vagas/{id}/status (encerrar/pausar)
@@ -141,31 +117,32 @@ namespace _01_Presentation.Controllers
         [Authorize(Roles = "Company")]
         public async Task<IActionResult> UpdateVagaStatusAsync(int id, [FromBody] UpdateVagaStatusDto dto)
         {
-            var usuario = await GetLoggedUserAsync();
-            if (usuario == null)
+            var userEmail = GetLoggedUserEmail();
+            if (string.IsNullOrEmpty(userEmail))
             {
                 return Unauthorized(new { sucesso = false, mensagem = "Usuário não encontrado." });
             }
 
-            var vaga = await _context.Vagas.FirstOrDefaultAsync(v => v.Id == id && !v.IsDeleted);
+            VagaOperacaoResult result =
+                await _vagaService.AlterarStatusAsync(userEmail, id, dto.Status);
 
-            if (vaga == null)
+            return result.Status switch
             {
-                return NotFound(new { sucesso = false, mensagem = "Vaga não encontrada." });
-            }
+                VagaOperacaoStatus.Success =>
+                    Ok(new { sucesso = true, mensagem = "Status da vaga atualizado com sucesso.", dados = result.Vaga }),
 
-            // CORREÇÃO: Validação de Propriedade (Ownership Check)
-            if (vaga.UsuarioId != usuario.Id)
-            {
-                return StatusCode(403, new { sucesso = false, mensagem = "Você não tem permissão para alterar o status desta vaga." });
-            }
+                VagaOperacaoStatus.UsuarioNaoEncontrado =>
+                    Unauthorized(new { sucesso = false, mensagem = "Usuário não encontrado." }),
 
-            vaga.Status = dto.Status;
-            vaga.UpdatedAt = DateTime.UtcNow;
+                VagaOperacaoStatus.NaoEncontrada =>
+                    NotFound(new { sucesso = false, mensagem = "Vaga não encontrada." }),
 
-            await _context.SaveChangesAsync();
+                VagaOperacaoStatus.SemPermissao =>
+                    StatusCode(403, new { sucesso = false, mensagem = "Você não tem permissão para alterar o status desta vaga." }),
 
-            return Ok(new { sucesso = true, mensagem = "Status da vaga atualizado com sucesso.", dados = vaga });
+                _ =>
+                    StatusCode(500, new { sucesso = false, mensagem = "Não foi possível atualizar o status. Tente novamente." })
+            };
         }
 
         // DELETE /vagas/{id} (soft delete, só empresa)
@@ -173,32 +150,32 @@ namespace _01_Presentation.Controllers
         [Authorize(Roles = "Company")]
         public async Task<IActionResult> DeleteVagaAsync(int id)
         {
-            var usuario = await GetLoggedUserAsync();
-            if (usuario == null)
+            var userEmail = GetLoggedUserEmail();
+            if (string.IsNullOrEmpty(userEmail))
             {
                 return Unauthorized(new { sucesso = false, mensagem = "Usuário não encontrado." });
             }
 
-            var vaga = await _context.Vagas.FirstOrDefaultAsync(v => v.Id == id && !v.IsDeleted);
+            VagaOperacaoResult result =
+                await _vagaService.ExcluirAsync(userEmail, id);
 
-            if (vaga == null)
+            return result.Status switch
             {
-                return NotFound(new { sucesso = false, mensagem = "Vaga não encontrada." });
-            }
+                VagaOperacaoStatus.Success =>
+                    NoContent(),
 
-            // CORREÇÃO: Validação de Propriedade (Ownership Check)
-            if (vaga.UsuarioId != usuario.Id)
-            {
-                return StatusCode(403, new { sucesso = false, mensagem = "Você não tem permissão para excluir esta vaga." });
-            }
+                VagaOperacaoStatus.UsuarioNaoEncontrado =>
+                    Unauthorized(new { sucesso = false, mensagem = "Usuário não encontrado." }),
 
-            vaga.IsDeleted = true;
-            vaga.UpdatedAt = DateTime.UtcNow;
+                VagaOperacaoStatus.NaoEncontrada =>
+                    NotFound(new { sucesso = false, mensagem = "Vaga não encontrada." }),
 
-            _context.Vagas.Update(vaga);
-            await _context.SaveChangesAsync();
+                VagaOperacaoStatus.SemPermissao =>
+                    StatusCode(403, new { sucesso = false, mensagem = "Você não tem permissão para excluir esta vaga." }),
 
-            return NoContent();
+                _ =>
+                    StatusCode(500, new { sucesso = false, mensagem = "Não foi possível excluir a vaga. Tente novamente." })
+            };
         }
     }
 
