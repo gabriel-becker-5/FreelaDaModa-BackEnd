@@ -167,13 +167,14 @@ namespace _05_Tests
         }
 
         [Fact]
-        public async Task ContratarAsync_DeveRejeitarOutraCandidaturaJaAceita_EAceitarApenasAEscolhida()
+        public async Task ContratarAsync_DeveRetornarCandidaturaJaAceita_QuandoOutraCandidaturaDaVagaJaEstaAceita()
         {
             await using AppDbContext contextoSetup = NovoContexto();
             await SeedBaseAsync(contextoSetup);
 
-            // Simula uma candidatura concorrente já Aceita por fora (ex.: PATCH antigo de status),
-            // antes da contratação atômica ser feita por este endpoint.
+            // Simula uma candidatura concorrente já Aceita por fora (ex.: PATCH antigo de status).
+            // Correção de code review (#16): qualquer candidatura Aceita na vaga bloqueia uma nova
+            // contratação, para não criar uma segunda OS.
             Candidatura concorrenteSetup = await contextoSetup.Candidaturas
                 .SingleAsync(c => c.VagaId == IdVaga && c.FreelancerId == IdFreelancerConcorrente);
             concorrenteSetup.Status = StatusCandidatura.Aceita;
@@ -184,22 +185,72 @@ namespace _05_Tests
 
             var resultado = await servico.ContratarAsync(IdVaga, IdEmpresa, IdFreelancerEscolhido);
 
-            Assert.Equal(ContratarVagaResultado.Sucesso, resultado.Resultado);
+            Assert.Equal(ContratarVagaResultado.CandidaturaJaAceita, resultado.Resultado);
 
             await using AppDbContext contextoVerificacao = NovoContexto();
 
             Candidatura escolhida = await contextoVerificacao.Candidaturas
                 .SingleAsync(c => c.VagaId == IdVaga && c.FreelancerId == IdFreelancerEscolhido);
-            Assert.Equal(StatusCandidatura.Aceita, escolhida.Status);
+            Assert.Equal(StatusCandidatura.Pendente, escolhida.Status);
 
-            Candidatura concorrente = await contextoVerificacao.Candidaturas
-                .SingleAsync(c => c.VagaId == IdVaga && c.FreelancerId == IdFreelancerConcorrente);
-            Assert.Equal(StatusCandidatura.Rejeitada, concorrente.Status);
+            Vaga vaga = await contextoVerificacao.Vagas.SingleAsync(v => v.Id == IdVaga);
+            Assert.Equal(StatusVaga.Aberta, vaga.Status);
+
+            int totalOrdensServico = await contextoVerificacao.OrdensServico.CountAsync();
+            Assert.Equal(0, totalOrdensServico);
+        }
+
+        [Fact]
+        public async Task ContratarAsync_QuandoVagaEhReabertaAposContratacao_DeveRetornarCandidaturaJaAceita_ENaoCriarSegundaOs()
+        {
+            await using AppDbContext contextoSetup = NovoContexto();
+            await SeedBaseAsync(contextoSetup);
+
+            await using AppDbContext contexto1 = NovoContexto();
+            ContratarVagaService servico1 = CriarServico(contexto1);
+            var primeiraChamada = await servico1.ContratarAsync(IdVaga, IdEmpresa, IdFreelancerEscolhido);
+            Assert.Equal(ContratarVagaResultado.Sucesso, primeiraChamada.Resultado);
+
+            // Reabre a vaga "por fora" deste endpoint (ex.: PATCH de status em VagasController),
+            // deixando a candidatura Aceita da contratação anterior intacta.
+            await using AppDbContext contextoReabertura = NovoContexto();
+            Vaga vagaReaberta = await contextoReabertura.Vagas.SingleAsync(v => v.Id == IdVaga);
+            vagaReaberta.Status = StatusVaga.Aberta;
+            await contextoReabertura.SaveChangesAsync();
+
+            await using AppDbContext contexto2 = NovoContexto();
+            ContratarVagaService servico2 = CriarServico(contexto2);
+            var segundaChamada = await servico2.ContratarAsync(IdVaga, IdEmpresa, IdFreelancerConcorrente);
+
+            Assert.Equal(ContratarVagaResultado.CandidaturaJaAceita, segundaChamada.Resultado);
+
+            await using AppDbContext contextoVerificacao = NovoContexto();
+            int totalOrdensServico = await contextoVerificacao.OrdensServico.CountAsync();
+            Assert.Equal(1, totalOrdensServico);
+        }
+
+        [Fact]
+        public async Task ContratarAsync_DeveRetornarUsuarioInativo_QuandoUsuarioLogadoEstaExcluido()
+        {
+            await using AppDbContext contextoSetup = NovoContexto();
+            contextoSetup.Users.Add(CriarUsuario(IdEmpresa, new List<Roles> { Roles.Company }, isDeleted: true));
+            await contextoSetup.SaveChangesAsync();
+
+            await using AppDbContext contexto = NovoContexto();
+            ContratarVagaService servico = CriarServico(contexto);
+
+            var resultado = await servico.ContratarAsync(IdVaga, IdEmpresa, IdFreelancerEscolhido);
+
+            Assert.Equal(ContratarVagaResultado.UsuarioInativo, resultado.Resultado);
         }
 
         [Fact]
         public async Task ContratarAsync_DeveRetornarVagaNaoEncontrada_QuandoVagaNaoExiste()
         {
+            await using AppDbContext contextoSetup = NovoContexto();
+            contextoSetup.Users.Add(CriarUsuario(IdEmpresa, new List<Roles> { Roles.Company }));
+            await contextoSetup.SaveChangesAsync();
+
             await using AppDbContext contexto = NovoContexto();
             ContratarVagaService servico = CriarServico(contexto);
 

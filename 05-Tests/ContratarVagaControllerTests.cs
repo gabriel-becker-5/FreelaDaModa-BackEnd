@@ -99,9 +99,11 @@ namespace _05_Tests
         }
 
         [Theory]
+        [InlineData(ContratarVagaResultado.UsuarioInativo, 401)]
         [InlineData(ContratarVagaResultado.VagaNaoEncontrada, 404)]
         [InlineData(ContratarVagaResultado.NaoAutorizado, 403)]
         [InlineData(ContratarVagaResultado.VagaEncerrada, 409)]
+        [InlineData(ContratarVagaResultado.CandidaturaJaAceita, 409)]
         [InlineData(ContratarVagaResultado.FreelancerInvalido, 400)]
         [InlineData(ContratarVagaResultado.CandidaturaNaoEncontrada, 404)]
         [InlineData(ContratarVagaResultado.CandidaturaRejeitada, 409)]

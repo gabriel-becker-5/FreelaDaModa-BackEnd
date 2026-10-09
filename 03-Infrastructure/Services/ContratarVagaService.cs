@@ -4,6 +4,7 @@ using _02_Application.Interfaces;
 using _02_Application.Validation;
 using _03_Infrastructure.Data;
 using _04_Domain.Entities;
+using _04_Domain.Entities.Identity;
 using _04_Domain.Enums;
 using _04_Domain.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,20 @@ namespace _03_Infrastructure.Services
 
         public async Task<ContratarVagaResultadoDto> ContratarAsync(int vagaId, int usuarioLogadoId, int freelancerId)
         {
+            // O filtro global de IsDeleted em User (AppDbContext) já exclui contas excluídas desta
+            // consulta: usuário null cobre tanto "não existe" quanto "está excluído".
+            User? usuarioLogado = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == usuarioLogadoId);
+
+            if (usuarioLogado == null)
+            {
+                return new ContratarVagaResultadoDto(
+                    ContratarVagaResultado.UsuarioInativo,
+                    "Sua conta não está ativa ou não foi encontrada.",
+                    null);
+            }
+
             Vaga? vaga = await _context.Vagas
                 .FirstOrDefaultAsync(v => v.Id == vagaId && !v.IsDeleted);
 
@@ -42,6 +57,20 @@ namespace _03_Infrastructure.Services
             if (vaga.Status == StatusVaga.Encerrada)
             {
                 return new ContratarVagaResultadoDto(ContratarVagaResultado.VagaEncerrada, "Esta vaga já foi encerrada.", null);
+            }
+
+            // Impede uma segunda OS quando a vaga é reaberta (ex.: PATCH de status) depois de já ter
+            // sido contratada: a candidatura Aceita da contratação anterior continua existindo mesmo
+            // que o status da vaga volte para Aberta.
+            bool jaTemCandidaturaAceita = await _context.Candidaturas
+                .AnyAsync(c => c.VagaId == vagaId && c.Status == StatusCandidatura.Aceita);
+
+            if (jaTemCandidaturaAceita)
+            {
+                return new ContratarVagaResultadoDto(
+                    ContratarVagaResultado.CandidaturaJaAceita,
+                    "Esta vaga já tem uma candidatura aceita; não é possível contratar novamente.",
+                    null);
             }
 
             string? erroFreelancer = await FreelancerValidator.ValidarAsync(_userRepository, freelancerId);

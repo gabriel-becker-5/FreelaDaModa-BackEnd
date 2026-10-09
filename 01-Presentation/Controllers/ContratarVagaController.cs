@@ -79,6 +79,9 @@ namespace _01_Presentation.Controllers
                         dados = new { ordemServicoId = resultado.OrdemServicoId }
                     }),
 
+                ContratarVagaResultado.UsuarioInativo =>
+                    Unauthorized(new { sucesso = false, mensagem = resultado.Mensagem }),
+
                 ContratarVagaResultado.VagaNaoEncontrada =>
                     NotFound(new { sucesso = false, mensagem = resultado.Mensagem }),
 
@@ -86,6 +89,9 @@ namespace _01_Presentation.Controllers
                     StatusCode(403, new { sucesso = false, mensagem = resultado.Mensagem }),
 
                 ContratarVagaResultado.VagaEncerrada =>
+                    Conflict(new { sucesso = false, mensagem = resultado.Mensagem }),
+
+                ContratarVagaResultado.CandidaturaJaAceita =>
                     Conflict(new { sucesso = false, mensagem = resultado.Mensagem }),
 
                 ContratarVagaResultado.FreelancerInvalido =>
