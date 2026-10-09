@@ -157,7 +157,7 @@ namespace _02_Application.Services
 
             if (!string.IsNullOrWhiteSpace(dto.Status))
             {
-                if (!StatusOrdemServicoExtensions.TryParse(dto.Status, out StatusOrdemServico status))
+                if (!StatusOrdemServicoExtensions.TryParse(dto.Status, out StatusOrdemServico statusInformado))
                 {
                     throw new ArgumentException(
                         "O status da ordem de serviço deve ser um dos seguintes valores: " +
@@ -166,7 +166,17 @@ namespace _02_Application.Services
                         $"\"{StatusOrdemServicoExtensions.TextoCancelada}\".");
                 }
 
-                ordemServico.Status = status.ParaTexto();
+                bool statusAtualReconhecido =
+                    StatusOrdemServicoExtensions.TryParse(ordemServico.Status, out StatusOrdemServico statusAtual);
+
+                // O status só é alterado pelos endpoints de concluir/cancelar (#18): o PUT aceita o
+                // valor quando ele repete o status atual (tolerante a caixa/acento) e rejeita qualquer tentativa de mudá-lo.
+                if (!statusAtualReconhecido || statusInformado != statusAtual)
+                {
+                    throw new ArgumentException(
+                        "O status da ordem de serviço não pode ser alterado por esta operação. " +
+                        "Utilize os endpoints de concluir ou cancelar.");
+                }
             }
 
             ordemServico.Titulo = dto.Titulo;
