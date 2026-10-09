@@ -462,7 +462,8 @@ namespace _01_Presentation.Controllers
             }
 
             var vaga = await _context.Vagas
-                .FirstOrDefaultAsync(v => v.Id == dto.VagaId);
+                .FirstOrDefaultAsync(v =>
+                    v.Id == dto.VagaId && !v.IsDeleted);
 
             if (vaga == null)
             {
@@ -472,6 +473,17 @@ namespace _01_Presentation.Controllers
                         sucesso = false,
                         mensagem =
                             "A vaga informada não foi encontrada."
+                    });
+            }
+
+            if (vaga.Status != StatusVaga.Aberta)
+            {
+                return Conflict(
+                    new
+                    {
+                        sucesso = false,
+                        mensagem =
+                            "Esta vaga não está aberta para candidaturas."
                     });
             }
 
@@ -668,24 +680,35 @@ namespace _01_Presentation.Controllers
 
             var candidatura = await _context.Candidaturas
                 .Include(c => c.Vaga)
-                .FirstOrDefaultAsync(c => c.VagaId == vagaId && c.FreelancerId == freelancerId && c.Vaga.Ativa == true);
+                .FirstOrDefaultAsync(c =>
+                    c.VagaId == vagaId &&
+                    c.FreelancerId == freelancerId);
 
-            if (candidatura == null)
+            if (candidatura == null || candidatura.Vaga == null)
             {
                 return NotFound(new
                 {
                     sucesso = false,
-                    mensagem = "Candidatura não encontrada ou Vaga já está encerrada."
+                    mensagem = "Candidatura não encontrada ou Vaga já está encerrada/excluída."
                 });
             }
 
             // CORREÇÃO: Validação de Propriedade (Ownership Check) - só a empresa dona da vaga pode alterar o status
-            if (candidatura.Vaga == null || candidatura.Vaga.UsuarioId != userId.Value)
+            if (candidatura.Vaga.UsuarioId != userId.Value)
             {
                 return StatusCode(403, new
                 {
                     sucesso = false,
                     mensagem = "Você não tem permissão para alterar o status desta candidatura."
+                });
+            }
+
+            if (candidatura.Vaga.IsDeleted || candidatura.Vaga.Status == StatusVaga.Encerrada)
+            {
+                return NotFound(new
+                {
+                    sucesso = false,
+                    mensagem = "Candidatura não encontrada ou Vaga já está encerrada/excluída."
                 });
             }
 
