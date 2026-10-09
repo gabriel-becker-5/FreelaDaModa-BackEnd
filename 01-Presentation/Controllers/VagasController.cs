@@ -275,6 +275,8 @@ namespace _01_Presentation.Controllers
                 vaga.PrazoConclusao = (DateTime)dto.PrazoConclusao;
             }
 
+            vaga.UpdatedAt = DateTime.UtcNow;
+
             await _context.SaveChangesAsync();
 
             return Ok(new { sucesso = true, mensagem = "Vaga atualizada com sucesso.", dados = vaga.ParaRespostaJson() });

@@ -5,7 +5,7 @@ namespace _02_Application.DTOs.Dashboard
         string Titulo,
         string Status,
         decimal Valor,
-        DateTime CreatedAt,
+        DateTime DataPublicacao,
         int EmpresaId,
         string EmpresaNome);
 }

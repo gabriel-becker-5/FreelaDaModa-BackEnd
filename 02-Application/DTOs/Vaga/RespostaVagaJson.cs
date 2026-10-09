@@ -12,7 +12,7 @@ namespace _02_Application.DTOs.Vaga
         string Estado,
         decimal Orcamento,
         DateTime PrazoConclusao,
-        DateTime CreatedAt,
+        DateTime DataPublicacao,
         DateTime? UpdatedAt,
         bool Ativa,
         StatusVaga Status,

@@ -45,6 +45,7 @@ public class VagaService : IVagaService
             Estado = requisicao.Estado,
             Orcamento = requisicao.Orcamento,
             PrazoConclusao = requisicao.PrazoConclusao.Value,
+            DataPublicacao = DateTime.UtcNow,
             Descricao = requisicao.Descricao,
             Status = StatusVaga.Aberta,
             UsuarioId = user.Id

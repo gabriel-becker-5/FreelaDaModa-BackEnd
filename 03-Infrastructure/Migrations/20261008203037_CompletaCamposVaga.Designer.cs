@@ -413,7 +413,7 @@ namespace _03_Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<DateTime>("DataPublicacao")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("Descricao")

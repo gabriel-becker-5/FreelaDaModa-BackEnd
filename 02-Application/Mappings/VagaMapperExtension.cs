@@ -19,7 +19,7 @@ public static class VagaMapperExtension
             entidade.Estado,
             entidade.Orcamento,
             entidade.PrazoConclusao,
-            entidade.CreatedAt,
+            entidade.DataPublicacao,
             entidade.UpdatedAt,
             entidade.Ativa,
             entidade.Status,

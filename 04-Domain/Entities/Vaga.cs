@@ -2,8 +2,9 @@
 
 namespace _04_Domain.Entities
 {
-    public class Vaga : BaseEntity
+    public class Vaga
     {
+        public int Id { get; set; }
         public string Titulo { get; set; } = string.Empty;
         public Specialty Especialidade { get; set; }
         public ModalidadeVaga Modalidade { get; set; }
@@ -11,6 +12,8 @@ namespace _04_Domain.Entities
         public string Estado { get; set; } = string.Empty;
         public decimal Orcamento { get; set; }
         public DateTime PrazoConclusao { get; set; }
+        public DateTime DataPublicacao { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
         public string Descricao { get; set; } = string.Empty;
         public StatusVaga Status { get; set; } = StatusVaga.Aberta;
         public bool Ativa { get; set; } = true;

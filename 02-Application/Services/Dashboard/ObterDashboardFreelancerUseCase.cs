@@ -48,7 +48,7 @@ namespace _02_Application.Services.Dashboard
                     vaga.Titulo,
                     vaga.Status.ToString(),
                     vaga.Orcamento,
-                    vaga.CreatedAt,
+                    vaga.DataPublicacao,
                     vaga.UsuarioId,
                     await DashboardHelpers.ResolverNomeEmpresaAsync(_userRepository, vaga.UsuarioId)));
             }
