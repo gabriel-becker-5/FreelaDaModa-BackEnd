@@ -6,7 +6,7 @@ namespace _02_Application.Interfaces;
 
 public interface IVagaService
 {
-    Task<RespostavagaJson> RegistrarAsync(RequisicaoRegistrarVagaJson requisicao, string emailUsuario);
+    Task<RespostavagaJson> RegistrarAsync(RequisicaoRegistrarVagaJson requisicao, int usuarioId);
     Task<IEnumerable<RespostavagaJson>> ObterTodasAsync();
     Task<IEnumerable<RespostavagaJson>> ObterComFiltrosAsync(int? usuarioId, string? status);
     Task<RespostavagaJson?> ObterPorIdAsync(int id);
@@ -21,7 +21,7 @@ public interface IVagaService
     Task<VagaDto?> BuscarPorIdAsync(int id);
 
     // Só a empresa dona da vaga pode editar, alterar o status ou excluir (soft delete)
-    Task<VagaOperacaoResult> EditarAsync(string emailUsuario, int id, string? titulo, string? descricao);
+    Task<VagaOperacaoResult> EditarAsync(string emailUsuario, int id, UpdateVagaDto dto);
     Task<VagaOperacaoResult> AlterarStatusAsync(string emailUsuario, int id, StatusVaga status);
     Task<VagaOperacaoResult> ExcluirAsync(string emailUsuario, int id);
 }

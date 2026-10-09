@@ -20,21 +20,35 @@ public class VagaService : IVagaService
         _userRepository = userRepository;
     }
 
-    public async Task<RespostavagaJson> RegistrarAsync(RequisicaoRegistrarVagaJson requisicao, string emailUsuario)
+    public async Task<RespostavagaJson> RegistrarAsync(RequisicaoRegistrarVagaJson requisicao, int usuarioId)
     {
-        var user = await _userRepository.GetUserByEmailAsync(emailUsuario);
-        if (user == null)
+        var user = await _userRepository.GetUserByIdAsync(usuarioId);
+        if (user == null || user.IsDeleted)
         {
             throw new UnauthorizedAccessException("Usuário não encontrado.");
+        }
+
+        if (!requisicao.Especialidade.HasValue ||
+            !requisicao.Modalidade.HasValue ||
+            !requisicao.PrazoConclusao.HasValue)
+        {
+            throw new ArgumentException(
+                "Especialidade, modalidade e prazo de conclusão são obrigatórios.",
+                nameof(requisicao));
         }
 
         var entidade = new DominioVaga
         {
             Titulo = requisicao.Titulo,
-            Descricao = requisicao.Descricao,
-            Orcamento = Convert.ToDecimal(requisicao.Salario),
+            Especialidade = requisicao.Especialidade.Value,
+            Modalidade = requisicao.Modalidade.Value,
+            Cidade = requisicao.Cidade,
+            Estado = requisicao.Estado,
+            Orcamento = requisicao.Orcamento,
+            PrazoConclusao = requisicao.PrazoConclusao.Value,
             DataPublicacao = DateTime.UtcNow,
-            Ativa = true,
+            Descricao = requisicao.Descricao,
+            Status = StatusVaga.Aberta,
             UsuarioId = user.Id
         };
 
@@ -97,16 +111,35 @@ public class VagaService : IVagaService
         return vaga?.ParaVagaDto();
     }
 
-    public async Task<VagaOperacaoResult> EditarAsync(string emailUsuario, int id, string? titulo, string? descricao)
+    public async Task<VagaOperacaoResult> EditarAsync(string emailUsuario, int id, UpdateVagaDto dto)
     {
         var (resultado, vaga) = await ObterVagaDoUsuarioAsync(emailUsuario, id);
         if (vaga == null) return resultado;
 
-        if (!string.IsNullOrWhiteSpace(titulo))
-            vaga.Titulo = titulo;
+        // As validações de campo vazio, orçamento e prazo são feitas no controller
+        if (dto.Titulo is not null)
+            vaga.Titulo = dto.Titulo;
 
-        if (!string.IsNullOrWhiteSpace(descricao))
-            vaga.Descricao = descricao;
+        if (dto.Descricao is not null)
+            vaga.Descricao = dto.Descricao;
+
+        if (dto.Especialidade.HasValue)
+            vaga.Especialidade = dto.Especialidade.Value;
+
+        if (dto.Modalidade.HasValue)
+            vaga.Modalidade = dto.Modalidade.Value;
+
+        if (dto.Cidade is not null)
+            vaga.Cidade = dto.Cidade;
+
+        if (dto.Estado is not null)
+            vaga.Estado = dto.Estado;
+
+        if (dto.Orcamento.HasValue)
+            vaga.Orcamento = dto.Orcamento.Value;
+
+        if (dto.PrazoConclusao.HasValue)
+            vaga.PrazoConclusao = dto.PrazoConclusao.Value;
 
         vaga.UpdatedAt = DateTime.UtcNow;
         await _vagaRepository.AtualizarAsync(vaga);

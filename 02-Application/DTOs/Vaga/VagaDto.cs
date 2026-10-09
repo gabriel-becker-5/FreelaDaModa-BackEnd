@@ -6,11 +6,16 @@ namespace _02_Application.DTOs.Vaga
         int Id,
         string Titulo,
         string Descricao,
+        Specialty Especialidade,
+        ModalidadeVaga Modalidade,
+        string Cidade,
+        string Estado,
         decimal Orcamento,
+        DateTime PrazoConclusao,
         DateTime DataPublicacao,
+        DateTime? UpdatedAt,
         bool Ativa,
         StatusVaga Status,
-        int UsuarioId,
-        DateTime? UpdatedAt
+        int UsuarioId
     );
 }

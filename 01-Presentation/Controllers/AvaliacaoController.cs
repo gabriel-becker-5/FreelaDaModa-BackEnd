@@ -63,16 +63,23 @@ namespace _01_Presentation.Controllers
         }
 
         [HttpPut("editar/{id}")]
-        public async Task<IActionResult> Editar(int id, AvaliacaoDto dto)
+        public async Task<IActionResult> Editar(int id, UpdateAvaliacaoDto dto)
         {
-            bool atualizado = await _avaliacaoService.UpdateAsync(id, dto);
-
-            if (!atualizado)
+            try
             {
-                return NotFound("Avaliação não encontrada ou não pertence ao usuário.");
-            }
+                bool atualizado = await _avaliacaoService.UpdateAsync(id, dto);
 
-            return Ok("Avaliação atualizada com sucesso.");
+                if (!atualizado)
+                {
+                    return NotFound("Avaliação não encontrada ou não pertence ao usuário.");
+                }
+
+                return Ok("Avaliação atualizada com sucesso.");
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, ex.Message);
+            }
         }
 
         [HttpDelete("excluir/{id}")]

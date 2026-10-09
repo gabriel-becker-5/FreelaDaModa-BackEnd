@@ -5,6 +5,7 @@ using _04_Domain.Enums;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace _01_Presentation.Controllers
@@ -27,20 +28,59 @@ namespace _01_Presentation.Controllers
             return User.FindFirstValue(ClaimTypes.Email) ?? User.FindFirstValue(ClaimTypes.Name);
         }
 
+        private int? GetLoggedUserId()
+        {
+            string? claim = User.FindFirstValue(JwtRegisteredClaimNames.NameId);
+            return int.TryParse(claim, out int id) && id > 0 ? id : (int?)null;
+        }
+
         // POST /vagas
         [HttpPost]
         [Authorize(Roles = "Company")]
         public async Task<IActionResult> CreateVagaAsync([FromBody] RequisicaoRegistrarVagaJson dto)
         {
-            var userEmail = GetLoggedUserEmail();
-            if (string.IsNullOrEmpty(userEmail))
+            var usuarioId = GetLoggedUserId();
+            if (usuarioId is null)
             {
-                return Unauthorized(new { sucesso = false, mensagem = "E-mail não encontrado no token JWT." });
+                return Unauthorized(new { sucesso = false, mensagem = "Usuário não encontrado." });
+            }
+
+            if (dto.Orcamento < 0.01m || dto.Orcamento > 9999999999999999.99m)
+            {
+                return BadRequest(new
+                {
+                    sucesso = false,
+                    mensagem = "O orçamento deve ser maior que zero e respeitar o limite permitido."
+                });
+            }
+
+            if (decimal.Round(dto.Orcamento, 2) != dto.Orcamento)
+            {
+                return BadRequest(new
+                {
+                    sucesso = false,
+                    mensagem = "O orçamento deve ter no máximo duas casas decimais."
+                });
+            }
+
+            DateTime prazoMinimo = new DateTime(1000, 1, 1);
+            DateTime prazoMaximo = new DateTime(9999, 12, 31, 23, 59, 59)
+                .AddTicks(4999990);
+
+            if (!dto.PrazoConclusao.HasValue ||
+                dto.PrazoConclusao.Value < prazoMinimo ||
+                dto.PrazoConclusao.Value > prazoMaximo)
+            {
+                return BadRequest(new
+                {
+                    sucesso = false,
+                    mensagem = "Informe um prazo de conclusão válido."
+                });
             }
 
             try
             {
-                var resposta = await _vagaService.RegistrarAsync(dto, userEmail);
+                var resposta = await _vagaService.RegistrarAsync(dto, usuarioId.Value);
                 return Ok(new { sucesso = true, dados = resposta });
             }
             catch (UnauthorizedAccessException ex)
@@ -90,8 +130,84 @@ namespace _01_Presentation.Controllers
                 return Unauthorized(new { sucesso = false, mensagem = "Usuário não encontrado." });
             }
 
+            if (dto.Titulo != null && string.IsNullOrWhiteSpace(dto.Titulo))
+            {
+                return BadRequest(new
+                {
+                    sucesso = false,
+                    mensagem = "O título não pode estar vazio."
+                });
+            }
+
+            if (dto.Descricao != null && string.IsNullOrWhiteSpace(dto.Descricao))
+            {
+                return BadRequest(new
+                {
+                    sucesso = false,
+                    mensagem = "A descrição não pode estar vazia."
+                });
+            }
+
+            if (dto.Cidade != null && string.IsNullOrWhiteSpace(dto.Cidade))
+            {
+                return BadRequest(new
+                {
+                    sucesso = false,
+                    mensagem = "A cidade não pode estar vazia."
+                });
+            }
+
+            if (dto.Estado != null && string.IsNullOrWhiteSpace(dto.Estado))
+            {
+                return BadRequest(new
+                {
+                    sucesso = false,
+                    mensagem = "O estado não pode estar vazio."
+                });
+            }
+
+            if (dto.Orcamento.HasValue)
+            {
+                decimal orcamento = dto.Orcamento.Value;
+
+                if (orcamento < 0.01m || orcamento > 9999999999999999.99m)
+                {
+                    return BadRequest(new
+                    {
+                        sucesso = false,
+                        mensagem = "O orçamento deve ser maior que zero e respeitar o limite permitido."
+                    });
+                }
+
+                if (decimal.Round(orcamento, 2) != orcamento)
+                {
+                    return BadRequest(new
+                    {
+                        sucesso = false,
+                        mensagem = "O orçamento deve ter no máximo duas casas decimais."
+                    });
+                }
+            }
+
+            if (dto.PrazoConclusao.HasValue)
+            {
+                DateTime prazoMinimo = new DateTime(1000, 1, 1);
+                DateTime prazoMaximo = new DateTime(9999, 12, 31, 23, 59, 59)
+                    .AddTicks(4999990);
+
+                if (dto.PrazoConclusao.Value < prazoMinimo ||
+                    dto.PrazoConclusao.Value > prazoMaximo)
+                {
+                    return BadRequest(new
+                    {
+                        sucesso = false,
+                        mensagem = "Informe um prazo de conclusão válido."
+                    });
+                }
+            }
+
             VagaOperacaoResult result =
-                await _vagaService.EditarAsync(userEmail, id, dto.Titulo, dto.Descricao);
+                await _vagaService.EditarAsync(userEmail, id, dto);
 
             return result.Status switch
             {
@@ -123,8 +239,17 @@ namespace _01_Presentation.Controllers
                 return Unauthorized(new { sucesso = false, mensagem = "Usuário não encontrado." });
             }
 
+            if (!dto.Status.HasValue)
+            {
+                return BadRequest(new
+                {
+                    sucesso = false,
+                    mensagem = "O status da vaga é obrigatório."
+                });
+            }
+
             VagaOperacaoResult result =
-                await _vagaService.AlterarStatusAsync(userEmail, id, dto.Status);
+                await _vagaService.AlterarStatusAsync(userEmail, id, dto.Status.Value);
 
             return result.Status switch
             {
@@ -177,16 +302,5 @@ namespace _01_Presentation.Controllers
                     StatusCode(500, new { sucesso = false, mensagem = "Não foi possível excluir a vaga. Tente novamente." })
             };
         }
-    }
-
-    public class UpdateVagaDto
-    {
-        public string? Titulo { get; set; }
-        public string? Descricao { get; set; }
-    }
-
-    public class UpdateVagaStatusDto
-    {
-        public StatusVaga Status { get; set; }
     }
 }

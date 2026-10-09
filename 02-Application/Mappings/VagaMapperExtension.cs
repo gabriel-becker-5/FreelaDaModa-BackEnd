@@ -13,10 +13,16 @@ public static class VagaMapperExtension
             entidade.Id,
             entidade.Titulo,
             entidade.Descricao,
+            entidade.Especialidade,
+            entidade.Modalidade,
+            entidade.Cidade,
+            entidade.Estado,
             entidade.Orcamento,
+            entidade.PrazoConclusao,
             entidade.DataPublicacao,
+            entidade.UpdatedAt,
             entidade.Ativa,
-            entidade.Ativa ? "aberta" : "pausada",
+            entidade.Status,
             entidade.UsuarioId
         );
     }
@@ -32,12 +38,17 @@ public static class VagaMapperExtension
             entidade.Id,
             entidade.Titulo,
             entidade.Descricao,
+            entidade.Especialidade,
+            entidade.Modalidade,
+            entidade.Cidade,
+            entidade.Estado,
             entidade.Orcamento,
+            entidade.PrazoConclusao,
             entidade.DataPublicacao,
+            entidade.UpdatedAt,
             entidade.Ativa,
             entidade.Status,
-            entidade.UsuarioId,
-            entidade.UpdatedAt
+            entidade.UsuarioId
         );
     }
 

@@ -14,7 +14,14 @@ namespace _03_Infrastructure.Services
 
         public bool VerifyPassword(string password, string passwordHash)
         {
-            return _hasher.VerifyHashedPassword(null!, passwordHash, password) == PasswordVerificationResult.Success;
+            PasswordVerificationResult result = _hasher.VerifyHashedPassword(null!, passwordHash, password);
+
+            if (result == PasswordVerificationResult.SuccessRehashNeeded ||
+                result == PasswordVerificationResult.Success)
+            {
+                return true;
+            }
+            return false;
         }
     }
 }
