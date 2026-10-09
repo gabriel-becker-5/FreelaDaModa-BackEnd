@@ -1,13 +1,21 @@
-﻿namespace _02_Application.DTOs.Vaga
+﻿using _04_Domain.Enums;
+
+namespace _02_Application.DTOs.Vaga
 {
     public record RespostavagaJson(
         int Id,
         string Titulo,
         string Descricao,
+        Specialty Especialidade,
+        ModalidadeVaga Modalidade,
+        string Cidade,
+        string Estado,
         decimal Orcamento,
+        DateTime PrazoConclusao,
         DateTime DataPublicacao,
+        DateTime? UpdatedAt,
         bool Ativa,
-        string Status,
+        StatusVaga Status,
         int UsuarioId
     );
 }

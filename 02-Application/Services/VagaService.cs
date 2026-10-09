@@ -2,8 +2,9 @@
 using _02_Application.Interfaces;
 using _02_Application.Mappings;
 using _03_Infrastructure.Repositories.Vaga;
+using _04_Domain.Entities;
+using _04_Domain.Enums;
 using _04_Domain.Interfaces;
-using DominioVaga = _04_Domain.Entities.Vaga;
 
 namespace _02_Application.Services;
 
@@ -18,21 +19,35 @@ public class VagaService : IVagaService
         _userRepository = userRepository;
     }
 
-    public async Task<RespostavagaJson> RegistrarAsync(RequisicaoRegistrarVagaJson requisicao, string emailUsuario)
+    public async Task<RespostavagaJson> RegistrarAsync(RequisicaoRegistrarVagaJson requisicao, int usuarioId)
     {
-        var user = await _userRepository.GetUserByEmailAsync(emailUsuario);
-        if (user == null)
+        var user = await _userRepository.GetUserByIdAsync(usuarioId);
+        if (user == null || user.IsDeleted)
         {
             throw new UnauthorizedAccessException("Usuário não encontrado.");
         }
 
-        var entidade = new DominioVaga
+        if (!requisicao.Especialidade.HasValue ||
+            !requisicao.Modalidade.HasValue ||
+            !requisicao.PrazoConclusao.HasValue)
+        {
+            throw new ArgumentException(
+                "Especialidade, modalidade e prazo de conclusão são obrigatórios.",
+                nameof(requisicao));
+        }
+
+        var entidade = new Vaga
         {
             Titulo = requisicao.Titulo,
-            Descricao = requisicao.Descricao,
-            Orcamento = Convert.ToDecimal(requisicao.Salario),
+            Especialidade = requisicao.Especialidade.Value,
+            Modalidade = requisicao.Modalidade.Value,
+            Cidade = requisicao.Cidade,
+            Estado = requisicao.Estado,
+            Orcamento = requisicao.Orcamento,
+            PrazoConclusao = requisicao.PrazoConclusao.Value,
             DataPublicacao = DateTime.UtcNow,
-            Ativa = true,
+            Descricao = requisicao.Descricao,
+            Status = StatusVaga.Aberta,
             UsuarioId = user.Id
         };
 
