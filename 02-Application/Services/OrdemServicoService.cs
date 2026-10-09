@@ -1,5 +1,6 @@
 ﻿using _02_Application.DTOs;
 using _02_Application.Interfaces;
+using _02_Application.Validation;
 using _04_Domain.Entities;
 using _04_Domain.Entities.Identity;
 using _04_Domain.Enums;
@@ -185,21 +186,11 @@ namespace _02_Application.Services
 
         private async Task ValidarFreelancerAsync(int freelancerId)
         {
-            User? freelancer = await _userRepository.GetUserByIdAsync(freelancerId);
+            string? erro = await FreelancerValidator.ValidarAsync(_userRepository, freelancerId);
 
-            if (freelancer == null)
+            if (erro != null)
             {
-                throw new ArgumentException("O freelancer informado não foi encontrado.");
-            }
-
-            if (freelancer.IsDeleted)
-            {
-                throw new ArgumentException("O freelancer informado não está mais disponível.");
-            }
-
-            if (freelancer.Roles == null || !freelancer.Roles.Contains(Roles.Freelancer))
-            {
-                throw new ArgumentException("O usuário informado não possui o perfil de freelancer.");
+                throw new ArgumentException(erro);
             }
         }
 
