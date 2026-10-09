@@ -62,6 +62,7 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 
 builder.Services.AddScoped<IOrdemServicoRepository, OrdemServicoRepository>();
 builder.Services.AddScoped<IOrdemServicoService, OrdemServicoService>();
+builder.Services.AddScoped<IContratarVagaService, ContratarVagaService>();
 builder.Services.AddScoped<IOrdemServicoTransicaoService, OrdemServicoTransicaoService>();
 
 builder.Services.AddScoped<IMensagemRepository, MensagemRepository>();
