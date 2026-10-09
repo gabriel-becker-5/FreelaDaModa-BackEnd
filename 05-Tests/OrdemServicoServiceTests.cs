@@ -267,7 +267,7 @@ namespace _05_Tests
         }
 
         [Fact]
-        public async Task UpdateAsync_DeveNormalizarStatus_QuandoDtoEnviaValorValido()
+        public async Task UpdateAsync_DeveLancarArgumentException_QuandoTentaAlterarStatusViaPut()
         {
             OrdemServicoService servico = CriarServico(out FakeOrdemServicoRepository ordemServicoRepository, out _);
 
@@ -287,12 +287,47 @@ namespace _05_Tests
 
             OrdemServicoDto dto = CriarDtoValido();
             dto.Id = existente.Id;
+            dto.Titulo = "Tentativa de alteração";
             dto.Status = "Concluída";
+
+            ArgumentException excecao =
+                await Assert.ThrowsAsync<ArgumentException>(() => servico.UpdateAsync(dto));
+
+            Assert.Equal(
+                "O status da ordem de serviço não pode ser alterado por esta operação. " +
+                "Utilize os endpoints de concluir ou cancelar.",
+                excecao.Message);
+            Assert.Equal("Em andamento", existente.Status);
+            Assert.Equal("Título original", existente.Titulo);
+        }
+
+        [Fact]
+        public async Task UpdateAsync_DeveAceitarEIgnorar_QuandoDtoEnviaOMesmoStatusAtualComCaixaEAcentoDiferentes()
+        {
+            OrdemServicoService servico = CriarServico(out FakeOrdemServicoRepository ordemServicoRepository, out _);
+
+            OrdemServico existente = new()
+            {
+                Id = 16,
+                UserId = IdEmpresaLogada,
+                Titulo = "Título original",
+                Categoria = "Costura",
+                Modalidade = "Remoto",
+                Cidade = "São Paulo",
+                Valor = 100,
+                Prazo = DateTime.Now.AddDays(10),
+                Status = "Em andamento"
+            };
+            ordemServicoRepository.Adicionar(existente);
+
+            OrdemServicoDto dto = CriarDtoValido();
+            dto.Id = existente.Id;
+            dto.Status = "EM ANDAMENTO";
 
             bool resultado = await servico.UpdateAsync(dto);
 
             Assert.True(resultado);
-            Assert.Equal("Concluída", existente.Status);
+            Assert.Equal("Em andamento", existente.Status);
         }
 
         private sealed class FakeUserService : IUserService
