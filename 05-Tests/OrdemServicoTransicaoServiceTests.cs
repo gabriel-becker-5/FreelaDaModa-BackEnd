@@ -3,6 +3,8 @@ using _02_Application.Enums;
 using _03_Infrastructure.Data;
 using _03_Infrastructure.Services;
 using _04_Domain.Entities;
+using _04_Domain.Entities.Identity;
+using _04_Domain.Enums;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -41,12 +43,40 @@ namespace _05_Tests
 
         private static OrdemServicoTransicaoService CriarServico(AppDbContext context) => new(context);
 
+        private static User CriarUsuario(int id, Roles role, bool isDeleted = false)
+        {
+            return new User
+            {
+                Id = id,
+                Email = $"usuario{id}@teste.com",
+                LegalResponsibleFullName = "Responsável Teste",
+                LegalResponsibleDocument = $"{id:D11}",
+                PasswordHash = "hash",
+                ContactNumber = "11999999999",
+                PublicProfileDescription = "descrição",
+                PostalCode = "01000000",
+                Address = "Rua Teste",
+                Neighborhood = "Centro",
+                City = "São Paulo",
+                State = "SP",
+                Roles = new List<Roles> { role },
+                IsDeleted = isDeleted
+            };
+        }
+
         private async Task SeedAsync(
             AppDbContext context,
             string status = "Em andamento",
             bool isDeleted = false,
-            int? freelancerId = IdFreelancerDaOs)
+            int? freelancerId = IdFreelancerDaOs,
+            bool empresaDonaExcluida = false,
+            bool freelancerDaOsExcluido = false)
         {
+            context.Users.Add(CriarUsuario(IdEmpresaDona, Roles.Company, isDeleted: empresaDonaExcluida));
+            context.Users.Add(CriarUsuario(IdOutraEmpresa, Roles.Company));
+            context.Users.Add(CriarUsuario(IdFreelancerDaOs, Roles.Freelancer, isDeleted: freelancerDaOsExcluido));
+            context.Users.Add(CriarUsuario(IdOutroFreelancer, Roles.Freelancer));
+
             context.OrdensServico.Add(new OrdemServico
             {
                 Id = IdOrdemServico,
@@ -121,6 +151,10 @@ namespace _05_Tests
         [Fact]
         public async Task ConcluirAsync_DeveRetornarNaoEncontrada_QuandoOsNaoExiste()
         {
+            await using AppDbContext setup = NovoContexto();
+            setup.Users.Add(CriarUsuario(IdEmpresaDona, Roles.Company));
+            await setup.SaveChangesAsync();
+
             await using AppDbContext contexto = NovoContexto();
             OrdemServicoTransicaoService servico = CriarServico(contexto);
 
@@ -371,6 +405,44 @@ namespace _05_Tests
             OrdemServicoTransicaoResultadoDto resultado = await servico.CancelarAsync(IdOrdemServico, IdOutroFreelancer);
 
             Assert.Equal(OrdemServicoTransicaoResultado.NaoAutorizado, resultado.Resultado);
+        }
+
+        // ---------- Usuário inativo ----------
+
+        [Fact]
+        public async Task ConcluirAsync_DeveRetornarUsuarioInativo_QuandoEmpresaDonaEstaExcluida()
+        {
+            await using AppDbContext setup = NovoContexto();
+            await SeedAsync(setup, empresaDonaExcluida: true);
+
+            await using AppDbContext contexto = NovoContexto();
+            OrdemServicoTransicaoService servico = CriarServico(contexto);
+
+            OrdemServicoTransicaoResultadoDto resultado = await servico.ConcluirAsync(IdOrdemServico, IdEmpresaDona);
+
+            Assert.Equal(OrdemServicoTransicaoResultado.UsuarioInativo, resultado.Resultado);
+
+            await using AppDbContext verificacao = NovoContexto();
+            OrdemServico ordem = await verificacao.OrdensServico.SingleAsync(o => o.Id == IdOrdemServico);
+            Assert.Equal("Em andamento", ordem.Status);
+        }
+
+        [Fact]
+        public async Task CancelarAsync_DeveRetornarUsuarioInativo_QuandoFreelancerDaOsEstaExcluido()
+        {
+            await using AppDbContext setup = NovoContexto();
+            await SeedAsync(setup, freelancerDaOsExcluido: true);
+
+            await using AppDbContext contexto = NovoContexto();
+            OrdemServicoTransicaoService servico = CriarServico(contexto);
+
+            OrdemServicoTransicaoResultadoDto resultado = await servico.CancelarAsync(IdOrdemServico, IdFreelancerDaOs);
+
+            Assert.Equal(OrdemServicoTransicaoResultado.UsuarioInativo, resultado.Resultado);
+
+            await using AppDbContext verificacao = NovoContexto();
+            OrdemServico ordem = await verificacao.OrdensServico.SingleAsync(o => o.Id == IdOrdemServico);
+            Assert.Equal("Em andamento", ordem.Status);
         }
 
         // ---------- Concorrência ----------

@@ -97,6 +97,9 @@ namespace _01_Presentation.Controllers
                         dados = new { ordemServicoId = resultado.OrdemServicoId }
                     }),
 
+                OrdemServicoTransicaoResultado.UsuarioInativo =>
+                    Unauthorized(new { sucesso = false, mensagem = resultado.Mensagem }),
+
                 OrdemServicoTransicaoResultado.NaoEncontrada =>
                     NotFound(new { sucesso = false, mensagem = resultado.Mensagem }),
 

@@ -3,6 +3,7 @@ using _02_Application.Enums;
 using _02_Application.Interfaces;
 using _03_Infrastructure.Data;
 using _04_Domain.Entities;
+using _04_Domain.Entities.Identity;
 using _04_Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -47,6 +48,20 @@ namespace _03_Infrastructure.Services
             StatusOrdemServico statusDestino,
             string mensagemSucesso)
         {
+            // O filtro global de IsDeleted em User (AppDbContext) já exclui contas excluídas desta
+            // consulta: usuário null cobre tanto "não existe" quanto "está excluído".
+            User? usuarioLogado = await _context.Users
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == usuarioLogadoId);
+
+            if (usuarioLogado == null)
+            {
+                return new OrdemServicoTransicaoResultadoDto(
+                    OrdemServicoTransicaoResultado.UsuarioInativo,
+                    "Sua conta não está ativa ou não foi encontrada.",
+                    null);
+            }
+
             OrdemServico? ordemServico = await _context.OrdensServico
                 .AsNoTracking()
                 .FirstOrDefaultAsync(o => o.Id == ordemServicoId && !o.IsDeleted);

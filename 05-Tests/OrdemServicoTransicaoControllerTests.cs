@@ -95,6 +95,7 @@ namespace _05_Tests
         }
 
         [Theory]
+        [InlineData(OrdemServicoTransicaoResultado.UsuarioInativo, 401)]
         [InlineData(OrdemServicoTransicaoResultado.NaoEncontrada, 404)]
         [InlineData(OrdemServicoTransicaoResultado.NaoAutorizado, 403)]
         [InlineData(OrdemServicoTransicaoResultado.EstadoInvalido, 409)]
@@ -155,6 +156,7 @@ namespace _05_Tests
         }
 
         [Theory]
+        [InlineData(OrdemServicoTransicaoResultado.UsuarioInativo, 401)]
         [InlineData(OrdemServicoTransicaoResultado.NaoEncontrada, 404)]
         [InlineData(OrdemServicoTransicaoResultado.NaoAutorizado, 403)]
         [InlineData(OrdemServicoTransicaoResultado.EstadoInvalido, 409)]
