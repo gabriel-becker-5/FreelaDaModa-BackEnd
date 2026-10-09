@@ -14,7 +14,7 @@ namespace _02_Application.Interfaces
 
         Task<List<Avaliacao>> ListByOrdemServicoAsync(int ordemServicoId);
 
-        Task<bool> UpdateAsync(int id, AvaliacaoDto dto);
+        Task<bool> UpdateAsync(int id, UpdateAvaliacaoDto dto);
 
         Task<bool> DeleteAsync(int id);
     }

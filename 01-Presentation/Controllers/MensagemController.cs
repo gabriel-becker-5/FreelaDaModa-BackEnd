@@ -96,10 +96,17 @@ namespace _01_Presentation.Controllers
                 return Unauthorized("Não foi possível identificar o usuário logado.");
             }
 
-            Mensagem mensagem =
-                await _mensagemService.CriarAsync(dto, userId.Value);
+            try
+            {
+                Mensagem mensagem =
+                    await _mensagemService.CriarAsync(dto, userId.Value);
 
-            return Ok(mensagem);
+                return Ok(mensagem);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }
