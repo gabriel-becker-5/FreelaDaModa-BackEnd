@@ -18,6 +18,7 @@ using _03_Infrastructure;
 using _03_Infrastructure.Data;
 using _03_Infrastructure.Repositories;
 using _03_Infrastructure.Repositories.Vaga;
+using _03_Infrastructure.Services;
 using _03_Infrastructure.Storage;
 using _04_Domain.Interfaces;
 using Microsoft.AspNetCore.RateLimiting;
@@ -61,6 +62,7 @@ builder.Services.AddScoped<IRoleService, RoleService>();
 
 builder.Services.AddScoped<IOrdemServicoRepository, OrdemServicoRepository>();
 builder.Services.AddScoped<IOrdemServicoService, OrdemServicoService>();
+builder.Services.AddScoped<IOrdemServicoTransicaoService, OrdemServicoTransicaoService>();
 
 builder.Services.AddScoped<IMensagemRepository, MensagemRepository>();
 builder.Services.AddScoped<IMensagemService, MensagemService>();
