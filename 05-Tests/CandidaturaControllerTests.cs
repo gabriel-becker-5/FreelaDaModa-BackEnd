@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using _01_Presentation.Controllers;
+using _02_Application.Services;
 using _03_Infrastructure.Data;
+using _03_Infrastructure.Repositories;
 using _04_Domain.Entities;
 using _04_Domain.Enums;
 
@@ -22,7 +24,8 @@ namespace _05_Tests
 
         private static UserController CriarController(AppDbContext context, int usuarioLogadoId)
         {
-            var controller = new UserController(null!, context, null!);
+            var candidaturaService = new CandidaturaService(new CandidaturaRepository(context));
+            var controller = new UserController(null!, candidaturaService, null!);
 
             var claims = new List<Claim>
             {

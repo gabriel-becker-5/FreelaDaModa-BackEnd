@@ -5,13 +5,10 @@ using _02_Application.DTOs.Freelancer;
 using _02_Application.DTOs.ProfileImage;
 using _02_Application.Enums;
 using _02_Application.Interfaces;
-using _03_Infrastructure.Data;
-using _04_Domain.Entities;
 using _04_Domain.Enums;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -24,16 +21,16 @@ namespace _01_Presentation.Controllers
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly AppDbContext _context;
+        private readonly ICandidaturaService _candidaturaService;
         private readonly IProfileImageService _profileImageService;
 
         public UserController(
             IUserService userService,
-            AppDbContext context,
+            ICandidaturaService candidaturaService,
             IProfileImageService profileImageService)
         {
             _userService = userService;
-            _context = context;
+            _candidaturaService = candidaturaService;
             _profileImageService = profileImageService;
         }
 
@@ -461,82 +458,62 @@ namespace _01_Presentation.Controllers
                     });
             }
 
-            var vaga = await _context.Vagas
-                .FirstOrDefaultAsync(v =>
-                    v.Id == dto.VagaId && !v.IsDeleted);
+            CriarCandidaturaResult result =
+                await _candidaturaService.CriarAsync(
+                    userId.Value,
+                    dto.VagaId,
+                    dto.Mensagem);
 
-            if (vaga == null)
+            return result.Status switch
             {
-                return NotFound(
-                    new
-                    {
-                        sucesso = false,
-                        mensagem =
-                            "A vaga informada não foi encontrada."
-                    });
-            }
+                CriarCandidaturaStatus.Success =>
+                    StatusCode(
+                        201,
+                        new
+                        {
+                            sucesso = true,
+                            mensagem =
+                                "Candidatura realizada com sucesso.",
+                            dados = result.Candidatura
+                        }),
 
-            if (vaga.Status != StatusVaga.Aberta)
-            {
-                return Conflict(
-                    new
-                    {
-                        sucesso = false,
-                        mensagem =
-                            "Esta vaga não está aberta para candidaturas."
-                    });
-            }
+                CriarCandidaturaStatus.VagaNaoEncontrada =>
+                    NotFound(
+                        new
+                        {
+                            sucesso = false,
+                            mensagem =
+                                "A vaga informada não foi encontrada."
+                        }),
 
-            bool candidaturaExistente =
-                await _context.Candidaturas.AnyAsync(c =>
-                    c.VagaId == dto.VagaId &&
-                    c.FreelancerId == userId.Value);
+                CriarCandidaturaStatus.VagaNaoAberta =>
+                    Conflict(
+                        new
+                        {
+                            sucesso = false,
+                            mensagem =
+                                "Esta vaga não está aberta para candidaturas."
+                        }),
 
-            if (candidaturaExistente)
-            {
-                return Conflict(
-                    new
-                    {
-                        sucesso = false,
-                        mensagem =
-                            "Você já se candidatou a esta vaga."
-                    });
-            }
+                CriarCandidaturaStatus.JaCandidatado =>
+                    Conflict(
+                        new
+                        {
+                            sucesso = false,
+                            mensagem =
+                                "Você já se candidatou a esta vaga."
+                        }),
 
-            var novaCandidatura = new Candidatura
-            {
-                VagaId = dto.VagaId,
-                FreelancerId = userId.Value,
-                UsuarioId = userId.Value,
-                DataCandidatura = DateTime.UtcNow,
-                Mensagem = dto.Mensagem,
-                CreatedAt = DateTime.UtcNow,
-                Status = StatusCandidatura.Pendente
+                _ =>
+                    StatusCode(
+                        500,
+                        new
+                        {
+                            sucesso = false,
+                            mensagem =
+                                "Não foi possível realizar a candidatura. Tente novamente."
+                        })
             };
-
-            _context.Candidaturas.Add(novaCandidatura);
-
-            await _context.SaveChangesAsync();
-
-            return StatusCode(
-                201,
-                new
-                {
-                    sucesso = true,
-                    mensagem =
-                        "Candidatura realizada com sucesso.",
-                    dados = new
-                    {
-                        id = novaCandidatura.Id,
-                        vagaId = novaCandidatura.VagaId,
-                        freelancerId = novaCandidatura.FreelancerId,
-                        usuarioId = novaCandidatura.UsuarioId,
-                        dataCandidatura = novaCandidatura.DataCandidatura,
-                        mensagem = novaCandidatura.Mensagem,
-                        status = novaCandidatura.Status,
-                        createdAt = novaCandidatura.CreatedAt
-                    }
-                });
         }
 
         [ProducesResponseType(200)]
@@ -560,24 +537,7 @@ namespace _01_Presentation.Controllers
             }
 
             var candidaturas =
-                await _context.Candidaturas
-                    .Include(c => c.Vaga)
-                    .Where(c =>
-                        c.FreelancerId == userId.Value)
-                    .Select(c => new
-                    {
-                        id = c.Id,
-                        vagaId = c.VagaId,
-                        tituloVaga =
-                            c.Vaga != null
-                                ? c.Vaga.Titulo
-                                : "Vaga",
-                        dataCandidatura = c.DataCandidatura,
-                        createdAt = c.CreatedAt,
-                        status = c.Status,
-                        mensagem = c.Mensagem
-                    })
-                    .ToListAsync();
+                await _candidaturaService.GetMinhasAsync(userId.Value);
 
             return Ok(
                 new
@@ -612,37 +572,12 @@ namespace _01_Presentation.Controllers
                     });
             }
 
-            var query = _context.Candidaturas
-                .Include(c => c.Vaga)
-                .AsQueryable();
-
-            // CORREÇÃO: Restrição por role/ownership - cada usuário só vê as próprias candidaturas
-            if (User.IsInRole(nameof(Roles.Company)))
-            {
-                query = query.Where(c => c.Vaga != null && c.Vaga.UsuarioId == userId.Value);
-            }
-            else
-            {
-                query = query.Where(c => c.FreelancerId == userId.Value);
-            }
-
-            if (vagaId.HasValue)
-                query = query.Where(c => c.VagaId == vagaId.Value);
-
-            if (status.HasValue)
-                query = query.Where(c => c.Status == status.Value);
-
-            var resultado = await query.Select(c => new
-            {
-                id = c.Id,
-                vagaId = c.VagaId,
-                tituloVaga = c.Vaga != null ? c.Vaga.Titulo : "Vaga",
-                freelancerId = c.FreelancerId,
-                dataCandidatura = c.DataCandidatura,
-                createdAt = c.CreatedAt,
-                status = c.Status,
-                mensagem = c.Mensagem
-            }).ToListAsync();
+            var resultado =
+                await _candidaturaService.GetFiltradasAsync(
+                    userId.Value,
+                    User.IsInRole(nameof(Roles.Company)),
+                    vagaId,
+                    status);
 
             return Ok(new
             {
@@ -678,49 +613,44 @@ namespace _01_Presentation.Controllers
                     });
             }
 
-            var candidatura = await _context.Candidaturas
-                .Include(c => c.Vaga)
-                .FirstOrDefaultAsync(c =>
-                    c.VagaId == vagaId &&
-                    c.FreelancerId == freelancerId);
+            AtualizarCandidaturaStatusResult result =
+                await _candidaturaService.AtualizarStatusAsync(
+                    userId.Value,
+                    vagaId,
+                    freelancerId,
+                    statusCandidatura);
 
-            if (candidatura == null || candidatura.Vaga == null)
+            return result.Status switch
             {
-                return NotFound(new
-                {
-                    sucesso = false,
-                    mensagem = "Candidatura não encontrada ou Vaga já está encerrada/excluída."
-                });
-            }
+                AtualizarCandidaturaStatus.Success =>
+                    Ok(new
+                    {
+                        sucesso = true,
+                        mensagem = "Status da candidatura atualizado com sucesso.",
+                        dados = result.Candidatura
+                    }),
 
-            // CORREÇÃO: Validação de Propriedade (Ownership Check) - só a empresa dona da vaga pode alterar o status
-            if (candidatura.Vaga.UsuarioId != userId.Value)
-            {
-                return StatusCode(403, new
-                {
-                    sucesso = false,
-                    mensagem = "Você não tem permissão para alterar o status desta candidatura."
-                });
-            }
+                AtualizarCandidaturaStatus.NaoEncontrada =>
+                    NotFound(new
+                    {
+                        sucesso = false,
+                        mensagem = "Candidatura não encontrada ou Vaga já está encerrada/excluída."
+                    }),
 
-            if (candidatura.Vaga.IsDeleted || candidatura.Vaga.Status == StatusVaga.Encerrada)
-            {
-                return NotFound(new
-                {
-                    sucesso = false,
-                    mensagem = "Candidatura não encontrada ou Vaga já está encerrada/excluída."
-                });
-            }
+                AtualizarCandidaturaStatus.SemPermissao =>
+                    StatusCode(403, new
+                    {
+                        sucesso = false,
+                        mensagem = "Você não tem permissão para alterar o status desta candidatura."
+                    }),
 
-            candidatura.Status = statusCandidatura;
-            await _context.SaveChangesAsync();
-
-            return Ok(new
-            {
-                sucesso = true,
-                mensagem = "Status da candidatura atualizado com sucesso.",
-                dados = candidatura
-            });
+                _ =>
+                    StatusCode(500, new
+                    {
+                        sucesso = false,
+                        mensagem = "Não foi possível atualizar o status. Tente novamente."
+                    })
+            };
         }
 
         /// <summary>Envia ou substitui a foto de perfil do usuário logado (PNG/JPG até 5 MiB).</summary>

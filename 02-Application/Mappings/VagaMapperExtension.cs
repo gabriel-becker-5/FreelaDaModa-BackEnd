@@ -31,4 +31,29 @@ public static class VagaMapperExtension
     {
         return entidades?.Select(e => e.ParaRespostaJson()).ToList() ?? Enumerable.Empty<RespostavagaJson>();
     }
+
+    public static VagaDto ParaVagaDto(this DominioVaga entidade)
+    {
+        return new VagaDto(
+            entidade.Id,
+            entidade.Titulo,
+            entidade.Descricao,
+            entidade.Especialidade,
+            entidade.Modalidade,
+            entidade.Cidade,
+            entidade.Estado,
+            entidade.Orcamento,
+            entidade.PrazoConclusao,
+            entidade.DataPublicacao,
+            entidade.UpdatedAt,
+            entidade.Ativa,
+            entidade.Status,
+            entidade.UsuarioId
+        );
+    }
+
+    public static IEnumerable<VagaDto> ParaVagaDto(this IEnumerable<DominioVaga> entidades)
+    {
+        return entidades?.Select(e => e.ParaVagaDto()).ToList() ?? Enumerable.Empty<VagaDto>();
+    }
 }
