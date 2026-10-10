@@ -44,7 +44,7 @@ namespace _02_Application.Services.Dashboard
                 osAtivas.Add(new OrdemServicoResumoDto(
                     os.Id,
                     os.Titulo,
-                    os.Status ?? "Em andamento",
+                    os.Status ?? StatusOrdemServico.EmAndamento.ParaTexto(),
                     os.Categoria,
                     os.Modalidade,
                     os.Cidade,

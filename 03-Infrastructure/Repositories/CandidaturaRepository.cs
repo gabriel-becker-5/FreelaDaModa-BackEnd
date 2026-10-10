@@ -18,9 +18,11 @@ namespace _03_Infrastructure.Repositories
             _context = context;
         }
 
-        public async Task<bool> VagaExisteAsync(int vagaId)
+        public async Task<_04_Domain.Entities.Vaga?> ObterVagaNaoExcluidaAsync(int vagaId)
         {
-            return await _context.Vagas.AnyAsync(v => v.Id == vagaId);
+            return await _context.Vagas
+                .AsNoTracking()
+                .FirstOrDefaultAsync(v => v.Id == vagaId && !v.IsDeleted);
         }
 
         public async Task<bool> ExisteCandidaturaAsync(int vagaId, int freelancerId)
@@ -71,16 +73,14 @@ namespace _03_Infrastructure.Repositories
             return await query.ToListAsync();
         }
 
-        public async Task<Candidatura?> GetDeVagaAtivaAsync(int vagaId, int freelancerId)
+        public async Task<Candidatura?> GetComVagaAsync(int vagaId, int freelancerId)
         {
             // ATENÇÃO: não alterar para '.AsNoTracking' — A entidade é mutada pelo CandidaturaService
             return await _context.Candidaturas
                 .Include(c => c.Vaga)
                 .FirstOrDefaultAsync(c =>
                     c.VagaId == vagaId &&
-                    c.FreelancerId == freelancerId &&
-                    c.Vaga != null &&
-                    c.Vaga.Ativa == true);
+                    c.FreelancerId == freelancerId);
         }
 
         public async Task UpdateAsync(Candidatura candidatura)

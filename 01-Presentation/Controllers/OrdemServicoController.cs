@@ -88,26 +88,37 @@ namespace _01_Presentation.Controllers
         [Authorize(Roles = nameof(Roles.Company))]
         public async Task<IActionResult> Cadastrar(OrdemServicoDto dto)
         {
-            OrdemServico ordem =
-                await _ordemServicoService.CreateAsync(dto);
-
-            OrdemServicoResponseDto response = new()
+            try
             {
-                Id = ordem.Id,
-                UserId = ordem.UserId,
-                Titulo = ordem.Titulo,
-                Descricao = ordem.Descricao,
-                Categoria = ordem.Categoria,
-                Modalidade = ordem.Modalidade,
-                Cidade = ordem.Cidade,
-                Valor = ordem.Valor,
-                Prazo = ordem.Prazo,
-                Status = ordem.Status,
-                Observacoes = ordem.Observacoes,
-                FreelancerId = ordem.FreelancerId
-            };
+                OrdemServico ordem =
+                    await _ordemServicoService.CreateAsync(dto);
 
-            return Ok(response);
+                OrdemServicoResponseDto response = new()
+                {
+                    Id = ordem.Id,
+                    UserId = ordem.UserId,
+                    Titulo = ordem.Titulo,
+                    Descricao = ordem.Descricao,
+                    Categoria = ordem.Categoria,
+                    Modalidade = ordem.Modalidade,
+                    Cidade = ordem.Cidade,
+                    Valor = ordem.Valor,
+                    Prazo = ordem.Prazo,
+                    Status = ordem.Status,
+                    Observacoes = ordem.Observacoes,
+                    FreelancerId = ordem.FreelancerId
+                };
+
+                return Ok(response);
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, ex.Message);
+            }
         }
 
         [HttpPut("editar")]
@@ -128,6 +139,10 @@ namespace _01_Presentation.Controllers
             catch (ArgumentException ex)
             {
                 return BadRequest(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, ex.Message);
             }
         }
 

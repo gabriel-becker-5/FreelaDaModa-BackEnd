@@ -7,7 +7,8 @@ namespace _04_Domain.Interfaces
 {
     public interface ICandidaturaRepository
     {
-        Task<bool> VagaExisteAsync(int vagaId);
+        // Retorna a vaga se ela existir e não estiver excluída; senão, null
+        Task<Vaga?> ObterVagaNaoExcluidaAsync(int vagaId);
 
         Task<bool> ExisteCandidaturaAsync(int vagaId, int freelancerId);
 
@@ -23,9 +24,9 @@ namespace _04_Domain.Interfaces
             int? vagaId,
             StatusCandidatura? status);
 
-        // Busca a candidatura de uma vaga ATIVA, já com a Vaga carregada
+        // Busca a candidatura já com a Vaga carregada (a vaga pode estar encerrada ou excluída)
         // ATENÇÃO: retorna a entidade rastreada, pois é alterada pelo CandidaturaService
-        Task<Candidatura?> GetDeVagaAtivaAsync(int vagaId, int freelancerId);
+        Task<Candidatura?> GetComVagaAsync(int vagaId, int freelancerId);
 
         Task UpdateAsync(Candidatura candidatura);
 

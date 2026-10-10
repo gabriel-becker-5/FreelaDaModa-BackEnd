@@ -1,5 +1,6 @@
 using _02_Application.DTOs.Dashboard;
 using _03_Infrastructure.Repositories.Vaga;
+using _04_Domain.Enums;
 using _04_Domain.Interfaces;
 
 namespace _02_Application.Services.Dashboard
@@ -64,7 +65,7 @@ namespace _02_Application.Services.Dashboard
                 producoes.Add(new OrdemServicoResumoDto(
                     os.Id,
                     os.Titulo,
-                    os.Status ?? "Em andamento",
+                    os.Status ?? StatusOrdemServico.EmAndamento.ParaTexto(),
                     os.Categoria,
                     os.Modalidade,
                     os.Cidade,

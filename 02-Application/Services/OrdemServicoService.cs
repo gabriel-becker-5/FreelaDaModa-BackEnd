@@ -1,7 +1,9 @@
 ﻿using _02_Application.DTOs;
 using _02_Application.Interfaces;
+using _02_Application.Validation;
 using _04_Domain.Entities;
 using _04_Domain.Entities.Identity;
+using _04_Domain.Enums;
 using _04_Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -15,13 +17,16 @@ namespace _02_Application.Services
     {
         private readonly IOrdemServicoRepository _ordemServicoRepository;
         private readonly IUserService _userService;
+        private readonly IUserRepository _userRepository;
 
         public OrdemServicoService(
         IOrdemServicoRepository ordemServicoRepository,
-        IUserService userService)
+        IUserService userService,
+        IUserRepository userRepository)
         {
             _ordemServicoRepository = ordemServicoRepository;
             _userService = userService;
+            _userRepository = userRepository;
         }
 
         public async Task<List<OrdemServico>> ListAllAsync()
@@ -78,6 +83,11 @@ namespace _02_Application.Services
                 throw new ArgumentException("O prazo da ordem de serviço não pode estar no passado.");
             }
 
+            if (dto.FreelancerId.HasValue)
+            {
+                await ValidarFreelancerAsync(dto.FreelancerId.Value);
+            }
+
             string email = _userService.GetLoggedUserEmailAddress();
 
             User? usuario = await _userService.GetUserByEmailAsync(email);
@@ -97,7 +107,7 @@ namespace _02_Application.Services
                 Cidade = dto.Cidade,
                 Valor = dto.Valor,
                 Prazo = dto.Prazo,
-                Status = dto.Status,
+                Status = StatusOrdemServico.EmAndamento.ParaTexto(),
                 Observacoes = dto.Observacoes,
                 FreelancerId = dto.FreelancerId
             };
@@ -139,6 +149,36 @@ namespace _02_Application.Services
                 return false;
             }
 
+            if (dto.FreelancerId.HasValue && dto.FreelancerId != ordemServico.FreelancerId)
+            {
+                throw new ArgumentException(
+                    "O freelancer da ordem de serviço não pode ser alterado por esta operação.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.Status))
+            {
+                if (!StatusOrdemServicoExtensions.TryParse(dto.Status, out StatusOrdemServico statusInformado))
+                {
+                    throw new ArgumentException(
+                        "O status da ordem de serviço deve ser um dos seguintes valores: " +
+                        $"\"{StatusOrdemServicoExtensions.TextoEmAndamento}\", " +
+                        $"\"{StatusOrdemServicoExtensions.TextoConcluida}\" ou " +
+                        $"\"{StatusOrdemServicoExtensions.TextoCancelada}\".");
+                }
+
+                bool statusAtualReconhecido =
+                    StatusOrdemServicoExtensions.TryParse(ordemServico.Status, out StatusOrdemServico statusAtual);
+
+                // O status só é alterado pelos endpoints de concluir/cancelar (#18): o PUT aceita o
+                // valor quando ele repete o status atual (tolerante a caixa/acento) e rejeita qualquer tentativa de mudá-lo.
+                if (!statusAtualReconhecido || statusInformado != statusAtual)
+                {
+                    throw new ArgumentException(
+                        "O status da ordem de serviço não pode ser alterado por esta operação. " +
+                        "Utilize os endpoints de concluir ou cancelar.");
+                }
+            }
+
             ordemServico.Titulo = dto.Titulo;
             ordemServico.Descricao = dto.Descricao;
             ordemServico.Categoria = dto.Categoria;
@@ -146,13 +186,22 @@ namespace _02_Application.Services
             ordemServico.Cidade = dto.Cidade;
             ordemServico.Valor = dto.Valor;
             ordemServico.Prazo = dto.Prazo;
-            ordemServico.Status = dto.Status;
             ordemServico.Observacoes = dto.Observacoes;
-            ordemServico.FreelancerId = dto.FreelancerId;
+            // FreelancerId e Status não são sobrescritos diretamente pelo dto (ver validações acima).
 
             await _ordemServicoRepository.UpdateAsync(ordemServico);
 
             return true;
+        }
+
+        private async Task ValidarFreelancerAsync(int freelancerId)
+        {
+            string? erro = await FreelancerValidator.ValidarAsync(_userRepository, freelancerId);
+
+            if (erro != null)
+            {
+                throw new ArgumentException(erro);
+            }
         }
 
         public async Task<bool> DeleteAsync(int id)

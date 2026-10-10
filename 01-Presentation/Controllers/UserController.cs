@@ -486,6 +486,15 @@ namespace _01_Presentation.Controllers
                                 "A vaga informada não foi encontrada."
                         }),
 
+                CriarCandidaturaStatus.VagaNaoAberta =>
+                    Conflict(
+                        new
+                        {
+                            sucesso = false,
+                            mensagem =
+                                "Esta vaga não está aberta para candidaturas."
+                        }),
+
                 CriarCandidaturaStatus.JaCandidatado =>
                     Conflict(
                         new
@@ -625,7 +634,7 @@ namespace _01_Presentation.Controllers
                     NotFound(new
                     {
                         sucesso = false,
-                        mensagem = "Candidatura não encontrada ou Vaga já está encerrada."
+                        mensagem = "Candidatura não encontrada ou Vaga já está encerrada/excluída."
                     }),
 
                 AtualizarCandidaturaStatus.SemPermissao =>

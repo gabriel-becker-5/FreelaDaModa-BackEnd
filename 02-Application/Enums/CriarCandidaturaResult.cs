@@ -6,6 +6,7 @@ namespace _02_Application.Enums
     {
         Success,
         VagaNaoEncontrada,
+        VagaNaoAberta,
         JaCandidatado
     }
 

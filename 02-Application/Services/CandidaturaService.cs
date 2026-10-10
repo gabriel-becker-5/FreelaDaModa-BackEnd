@@ -21,11 +21,16 @@ namespace _02_Application.Services
             int vagaId,
             string? mensagem)
         {
-            bool vagaExiste = await _candidaturaRepository.VagaExisteAsync(vagaId);
+            var vaga = await _candidaturaRepository.ObterVagaNaoExcluidaAsync(vagaId);
 
-            if (!vagaExiste)
+            if (vaga == null)
             {
                 return new CriarCandidaturaResult(CriarCandidaturaStatus.VagaNaoEncontrada);
+            }
+
+            if (vaga.Status != StatusVaga.Aberta)
+            {
+                return new CriarCandidaturaResult(CriarCandidaturaStatus.VagaNaoAberta);
             }
 
             bool candidaturaExistente =
@@ -114,19 +119,26 @@ namespace _02_Application.Services
             StatusCandidatura status)
         {
             Candidatura? candidatura =
-                await _candidaturaRepository.GetDeVagaAtivaAsync(vagaId, freelancerId);
+                await _candidaturaRepository.GetComVagaAsync(vagaId, freelancerId);
 
-            if (candidatura == null)
+            if (candidatura == null || candidatura.Vaga == null)
             {
                 return new AtualizarCandidaturaStatusResult(
                     AtualizarCandidaturaStatus.NaoEncontrada);
             }
 
             // Ownership: só a empresa dona da vaga pode alterar o status
-            if (candidatura.Vaga == null || candidatura.Vaga.UsuarioId != empresaId)
+            if (candidatura.Vaga.UsuarioId != empresaId)
             {
                 return new AtualizarCandidaturaStatusResult(
                     AtualizarCandidaturaStatus.SemPermissao);
+            }
+
+            // Vaga excluída ou encerrada não aceita mais mudança de status
+            if (candidatura.Vaga.IsDeleted || candidatura.Vaga.Status == StatusVaga.Encerrada)
+            {
+                return new AtualizarCandidaturaStatusResult(
+                    AtualizarCandidaturaStatus.NaoEncontrada);
             }
 
             candidatura.Status = status;
