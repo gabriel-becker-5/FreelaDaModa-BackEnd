@@ -5,6 +5,7 @@ namespace _02_Application.DTOs.Freelancer
     public class GetFreelancerDto : UserDto
     {
         // Campos de Freelancer
+        public int UserId { get; set; }
         public DateTime BirthDate { get; set; }
         public string ExperienceYearsName { get; set; }
         public ICollection<string> SpecialtyNames { get; set; }

@@ -741,6 +741,7 @@ namespace _02_Application.Services
         {
             return new GetFreelancerDto
             {
+                UserId = user.Id,
                 Email = user.Email,
 
                 PublicProfileDescription =
