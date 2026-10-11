@@ -46,7 +46,8 @@ namespace _01_Presentation.Controllers
 
         /// <summary>Painel do Freelancer: perfil, avaliações, vagas recomendadas, produções ativas e conversas recentes.</summary>
         [ProducesResponseType(200)]
-        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(403)]
         [HttpGet("freelancer")]
         [Authorize(Roles = nameof(Roles.Freelancer))]
         public async Task<IActionResult> GetFreelancerDashboardAsync()
@@ -59,6 +60,11 @@ namespace _01_Presentation.Controllers
             }
 
             var resultado = await _obterDashboardFreelancerUseCase.ExecutarAsync(userId.Value);
+            if (resultado == null)
+            {
+                return Unauthorized(new { message = "Sua conta não está ativa ou não foi encontrada." });
+            }
+
             return Ok(resultado);
         }
 
