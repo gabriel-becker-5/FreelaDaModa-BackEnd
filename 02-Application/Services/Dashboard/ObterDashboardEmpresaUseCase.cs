@@ -69,7 +69,8 @@ namespace _02_Application.Services.Dashboard
                     v.Orcamento,
                     v.DataPublicacao,
                     empresaUserId,
-                    nomeExibicao))
+                    nomeExibicao,
+                    v.PrazoConclusao))
                 .ToList();
 
             var candidaturas = await _candidaturaRepository.ListByEmpresaIdAsync(empresaUserId);

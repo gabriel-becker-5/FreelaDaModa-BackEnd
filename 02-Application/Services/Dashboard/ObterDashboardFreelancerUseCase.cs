@@ -33,10 +33,15 @@ namespace _02_Application.Services.Dashboard
             _mensagemRepository = mensagemRepository;
         }
 
-        public async Task<FreelancerDashboardResponseDto> ExecutarAsync(int freelancerId)
+        public async Task<FreelancerDashboardResponseDto?> ExecutarAsync(int freelancerId)
         {
             var usuario = await _userRepository.GetUserByIdAsync(freelancerId);
-            string nomeExibicao = usuario?.LegalResponsibleFullName ?? string.Empty;
+            if (usuario == null || usuario.IsDeleted)
+            {
+                return null;
+            }
+
+            string nomeExibicao = usuario.LegalResponsibleFullName;
 
             (double? media, int totalAvaliacoes) = await _avaliacaoRepository.GetMediaAvaliacoesRecebidasAsync(freelancerId);
 
@@ -51,7 +56,8 @@ namespace _02_Application.Services.Dashboard
                     vaga.Orcamento,
                     vaga.DataPublicacao,
                     vaga.UsuarioId,
-                    await DashboardHelpers.ResolverNomeEmpresaAsync(_userRepository, vaga.UsuarioId)));
+                    await DashboardHelpers.ResolverNomeEmpresaAsync(_userRepository, vaga.UsuarioId),
+                    vaga.PrazoConclusao));
             }
 
             var ordensServico = await _ordemServicoRepository.ListByFreelancerIdAsync(freelancerId);
@@ -65,7 +71,7 @@ namespace _02_Application.Services.Dashboard
                 producoes.Add(new OrdemServicoResumoDto(
                     os.Id,
                     os.Titulo,
-                    os.Status ?? StatusOrdemServico.EmAndamento.ParaTexto(),
+                    StatusOrdemServico.EmAndamento.ParaTexto(),
                     os.Categoria,
                     os.Modalidade,
                     os.Cidade,
