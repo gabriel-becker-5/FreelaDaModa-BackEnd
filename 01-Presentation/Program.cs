@@ -26,7 +26,7 @@ using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Threading.RateLimiting;
 using System.Text;
-using System.Text.Json.Serialization; // <-- Adicionado para padronizar os Enums como String
+using System.Text.Json.Serialization;
 using _03_Infrastructure.Seed;
 
 var builder = WebApplication.CreateBuilder(args);

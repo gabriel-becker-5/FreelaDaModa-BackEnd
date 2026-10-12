@@ -33,7 +33,7 @@ namespace _01_Presentation.Controllers
                 return BadRequest("O parâmetro 'fieldName' é obrigatório.");
             }
 
-            ICollection<IdLabelDto> result = [];
+            ICollection<IdLabelDto> result;
 
             switch (fieldName.ToUpper())
             {
