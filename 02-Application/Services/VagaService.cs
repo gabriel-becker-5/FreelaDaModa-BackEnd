@@ -56,49 +56,6 @@ public class VagaService : IVagaService
         return entidade.ParaRespostaJson();
     }
 
-    public async Task<IEnumerable<RespostavagaJson>> ObterTodasAsync()
-    {
-        var list = await _vagaRepository.ObterTodasAsync();
-        return list.ParaRespostaJson();
-    }
-
-    public async Task<IEnumerable<RespostavagaJson>> ObterComFiltrosAsync(int? usuarioId, string? status)
-    {
-        var list = await _vagaRepository.ListarComFiltrosAsync(usuarioId, status);
-        return list.ParaRespostaJson();
-    }
-
-    public async Task<RespostavagaJson?> ObterPorIdAsync(int id)
-    {
-        var entidade = await _vagaRepository.ObterPorIdAsync(id);
-        return entidade?.ParaRespostaJson();
-    }
-
-    public async Task<RespostavagaJson?> AtualizarAsync(int id, RequisicaoAtualizarVagaJson requisicao)
-    {
-        var entidade = await _vagaRepository.ObterPorIdAsync(id);
-        if (entidade == null) return null;
-
-        if (!string.IsNullOrWhiteSpace(requisicao.Titulo))
-            entidade.Titulo = requisicao.Titulo;
-
-        if (!string.IsNullOrWhiteSpace(requisicao.Descricao))
-            entidade.Descricao = requisicao.Descricao;
-
-        await _vagaRepository.AtualizarAsync(entidade);
-        return entidade.ParaRespostaJson();
-    }
-
-    public async Task<bool> AtualizarStatusAsync(int id, string status)
-    {
-        return await _vagaRepository.AtualizarStatusAsync(id, status);
-    }
-
-    public async Task<bool> DeletarAsync(int id)
-    {
-        return await _vagaRepository.DeletarAsync(id);
-    }
-
     public async Task<IEnumerable<VagaDto>> ListarAsync(int? usuarioId, StatusVaga? status)
     {
         var vagas = await _vagaRepository.ListarNaoExcluidasAsync(usuarioId, status);
