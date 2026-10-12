@@ -750,9 +750,4 @@ namespace _01_Presentation.Controllers
         public int VagaId { get; set; }
         public string Mensagem { get; set; } = string.Empty;
     }
-
-    public class UpdateCandidaturaStatusDto
-    {
-        public StatusCandidatura Status { get; set; }
-    }
 }
