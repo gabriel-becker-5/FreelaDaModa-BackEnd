@@ -704,8 +704,7 @@ namespace _02_Application.Services
             }
 
             if (!string.IsNullOrEmpty(dto.PublicProfileDescription)
-                && (dto.PublicProfileDescription == null
-                    || !string.Equals(dto.PublicProfileDescription, user.PublicProfileDescription, StringComparison.OrdinalIgnoreCase)))
+                && !string.Equals(dto.PublicProfileDescription, user.PublicProfileDescription, StringComparison.OrdinalIgnoreCase))
             {
                 user.PublicProfileDescription =
                     dto.PublicProfileDescription;

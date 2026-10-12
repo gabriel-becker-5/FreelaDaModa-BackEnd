@@ -68,7 +68,7 @@ namespace _01_Presentation.Controllers
         [HttpDelete("deletaUsuario")]
         public async Task<IActionResult> AdminDeleteUserAsync(int id)
         {
-            if (!await _userService.DeleteUserByIdAsync((int)id))
+            if (!await _userService.DeleteUserByIdAsync(id))
             {
                 return NotFound();
             }
@@ -132,7 +132,7 @@ namespace _01_Presentation.Controllers
         [HttpDelete("revogarTodosAcessos")]
         public async Task<IActionResult> RemoveAllRolesFromUserAsync(int userId)
         {
-            if (!await _roleService.RemoveAllRolesFromUserAsync((int)userId))
+            if (!await _roleService.RemoveAllRolesFromUserAsync(userId))
             {
                 return BadRequest(new { message = "Usuário ou Role não encontrados." });
             }
